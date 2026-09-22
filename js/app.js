@@ -42,6 +42,8 @@ async function logout() {
 async function mostrarApp() {
   document.getElementById('login-screen').style.display = 'none';
   document.getElementById('app').style.display = 'block';
+  document.getElementById('page-dashboard').innerHTML = '<div class="empty-state">Carregando...</div>';
+  await carregarTudo();
   trocarTab('dashboard');
 }
 

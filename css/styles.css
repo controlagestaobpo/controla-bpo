@@ -100,3 +100,57 @@ html,body{background:var(--gradient);background-attachment:fixed;color:var(--tex
   .ov{align-items:center;padding:20px;}
   .md{border-radius:16px;max-height:85vh;}
 }
+
+/* ===== FILTROS (pills) ===== */
+.filter-section{background:rgba(255,255,255,0.95);border-radius:14px;border:1px solid rgba(226,232,240,0.5);margin:0 16px 10px;overflow:hidden;}
+.flbl{font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:1px;padding:8px 12px 0;display:flex;justify-content:space-between;align-items:center;font-weight:700;}
+.clr-btn{font-size:11px;color:var(--green);cursor:pointer;border:1px solid var(--green);border-radius:5px;padding:1px 7px;font-weight:600;}
+.frow{display:flex;gap:6px;padding:6px 12px 10px;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch;align-items:center;}
+.frow::-webkit-scrollbar{display:none;}
+.pill{background:#fff;border:1.5px solid var(--border2);border-radius:16px;padding:4px 12px;font-size:11px;color:var(--text2);cursor:pointer;white-space:nowrap;flex-shrink:0;font-weight:500;}
+.pill.on{background:var(--green);border-color:var(--green);color:#fff;font-weight:600;}
+.search-inp{width:100%;background:var(--bg);border:1.5px solid var(--border2);border-radius:8px;padding:9px 14px;color:var(--text);font-size:14px;outline:none;margin:0 16px 10px;max-width:calc(100% - 32px);}
+
+/* ===== LISTAS / CARDS DE ITEM ===== */
+.list{padding:0 16px 4px;}
+.day-group{margin-bottom:4px;}
+.day-hdr{display:flex;align-items:center;gap:7px;padding:9px 0 4px;}
+.day-tit{font-size:12px;font-weight:700;color:var(--text2);}
+.day-cnt{font-size:10px;color:var(--text3);background:var(--bg3);border-radius:8px;padding:1px 7px;font-weight:600;}
+.item-card{background:#fff;border:1px solid var(--border);border-radius:12px;margin-bottom:7px;overflow:hidden;box-shadow:var(--shadow);}
+.ic-inner{display:flex;}
+.ic-accent{width:4px;flex-shrink:0;}
+.ic-body{flex:1;padding:11px 13px;min-width:0;}
+.ic-top{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;}
+.ic-nome{font-size:13px;font-weight:700;color:var(--text);line-height:1.2;}
+.ic-acts{display:flex;gap:4px;flex-shrink:0;}
+.ic-badges{display:flex;gap:4px;flex-wrap:wrap;margin-top:4px;}
+.ic-ct{font-size:10px;color:var(--text3);margin-top:4px;}
+.ic-obs{margin-top:5px;font-size:12px;color:var(--text2);line-height:1.5;}
+.ic-next{margin-top:5px;padding:5px 9px;background:#F0FDF4;border-left:3px solid var(--green);font-size:11px;color:var(--green2);font-weight:500;}
+
+/* ===== META CARDS (Configurações / Dashboard) ===== */
+.meta-cards-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.meta-card{background:#fff;border-radius:12px;padding:12px 14px;border:1px solid var(--border);}
+.mc-tag{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;color:var(--green2);}
+.mc-lbl{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px;font-weight:600;}
+.mc-num{font-size:22px;font-weight:800;line-height:1;margin-bottom:2px;}
+.mc-sub{font-size:10px;color:var(--text3);margin-bottom:4px;}
+.mc-pct{font-size:11px;font-weight:700;margin-bottom:2px;}
+.mc-bar{height:3px;background:var(--border);border-radius:2px;overflow:hidden;margin-top:6px;}
+.mc-bar-fill{height:100%;border-radius:2px;transition:width .6s;}
+
+/* ===== LISTAS SIMPLES (config/produtos/categorias) ===== */
+.simple-list{display:flex;flex-direction:column;gap:6px;}
+.simple-row{background:#fff;border:1px solid var(--border);border-radius:10px;padding:10px 12px;display:flex;justify-content:space-between;align-items:center;gap:8px;box-shadow:var(--shadow);}
+.simple-row-main{min-width:0;flex:1;}
+.simple-row-title{font-size:13px;font-weight:700;color:var(--text);}
+.simple-row-sub{font-size:11px;color:var(--text3);margin-top:2px;}
+.simple-row-acts{display:flex;gap:4px;flex-shrink:0;}
+
+/* ===== TABELA (DRE etc) ===== */
+.tbl-wrap{overflow-x:auto;}
+table.tbl{width:100%;border-collapse:collapse;font-size:12px;}
+table.tbl th{text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--text3);padding:6px 8px;border-bottom:1.5px solid var(--border);white-space:nowrap;}
+table.tbl td{padding:8px;border-bottom:1px solid var(--border);white-space:nowrap;}
+table.tbl tr:last-child td{border-bottom:none;}

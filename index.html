@@ -52,8 +52,237 @@
   <div class="page" id="page-config"></div>
 </div>
 
+<!-- MODAL PROSPECT -->
+<div class="ov" id="ov-prospect">
+  <div class="md">
+    <div class="md-handle"></div>
+    <h3 id="pr-tit">Novo prospect</h3>
+    <div class="badge badge-red" id="pr-perda-req" style="display:none;margin-bottom:10px;">Informe o motivo da perda para continuar.</div>
+    <div class="fg">
+      <div class="fr"><label>Empresa / Nome</label><input type="text" id="pr-empresa" placeholder="Ex: Clínica Sorriso"></div>
+      <div class="fr"><label>Data da visita</label><input type="date" id="pr-data"></div>
+    </div>
+    <div class="fg">
+      <div class="fr"><label>Segmento</label><select id="pr-nicho"></select></div>
+      <div class="fr"><label>Status</label>
+        <select id="pr-status" onchange="cmTogglePerda()">
+          <option value="visita">Visita</option>
+          <option value="conversa">Conversa</option>
+          <option value="proposta">Proposta enviada</option>
+          <option value="fechado">Fechado</option>
+          <option value="descartado">Descartado</option>
+        </select>
+      </div>
+    </div>
+    <div class="fg">
+      <div class="fr"><label>Contato (nome)</label><input type="text" id="pr-contato"></div>
+      <div class="fr"><label>WhatsApp</label><input type="text" id="pr-whatsapp"></div>
+    </div>
+    <div class="fr"><label>Ticket mensal (R$)</label><input type="number" id="pr-ticket" min="0"></div>
+    <div class="fr"><label>O que aconteceu</label><textarea id="pr-obs" placeholder="Dor identificada, como foi a conversa, objeções..."></textarea></div>
+    <div class="fr" id="row-perda" style="display:none;">
+      <label>Motivo da perda *</label>
+      <select id="pr-motivo"><option value="">Selecione o motivo</option></select>
+    </div>
+    <div class="sec-div">Próximo passo</div>
+    <div class="fg">
+      <div class="fr">
+        <label>Próximo passo</label>
+        <select id="pr-proximo">
+          <option value="">Selecione</option>
+          <option>Visitar novamente</option><option>Enviar WhatsApp</option>
+          <option>Enviar proposta</option><option>Ligar</option>
+          <option>Agendar reunião</option><option>Verificar retorno</option>
+          <option>Cobrar retorno</option><option>Outro</option>
+        </select>
+      </div>
+      <div class="fr"><label>Deadline</label><input type="date" id="pr-deadline"></div>
+    </div>
+    <div class="mda">
+      <button class="btn" onclick="fecharOv('ov-prospect')">Cancelar</button>
+      <button class="btn btn-primary" onclick="salvarProspect()">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL CLIENTE ATIVO -->
+<div class="ov" id="ov-cliente">
+  <div class="md">
+    <div class="md-handle"></div>
+    <h3 id="cl-tit">Novo cliente</h3>
+    <div class="fg">
+      <div class="fr"><label>Empresa</label><input type="text" id="cl-empresa"></div>
+      <div class="fr"><label>Data de fechamento</label><input type="date" id="cl-data"></div>
+    </div>
+    <div class="fg">
+      <div class="fr"><label>Contato</label><input type="text" id="cl-contato"></div>
+      <div class="fr"><label>WhatsApp</label><input type="text" id="cl-whatsapp"></div>
+    </div>
+    <div class="fg">
+      <div class="fr"><label>Ticket mensal (R$)</label><input type="number" id="cl-ticket" min="0"></div>
+      <div class="fr"><label>Frequência</label>
+        <select id="cl-frequencia">
+          <option value="mensal">Mensal</option>
+          <option value="trimestral">Trimestral</option>
+          <option value="semestral">Semestral</option>
+          <option value="anual">Anual</option>
+          <option value="outra">Outra</option>
+        </select>
+      </div>
+    </div>
+    <div class="fr"><label>Produto / Serviço</label><select id="cl-produto"></select></div>
+    <div class="sec-div">Origem</div>
+    <div class="fg">
+      <div class="fr"><label>Como chegou até você?</label>
+        <select id="cl-origem" onchange="cmToggleIndicou()">
+          <option value="">Selecione</option>
+          <option value="indicacao">Indicação</option>
+          <option value="prospeccao">Prospecção</option>
+          <option value="inbound">Inbound</option>
+          <option value="outro">Outro</option>
+        </select>
+      </div>
+      <div class="fr" id="row-indicou" style="display:none;"><label>Quem indicou?</label><input type="text" id="cl-indicou"></div>
+    </div>
+    <div class="fr"><label>Observações</label><textarea id="cl-obs"></textarea></div>
+    <div class="mda">
+      <button class="btn" onclick="fecharOv('ov-cliente')">Cancelar</button>
+      <button class="btn btn-primary" onclick="salvarCliente()">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL ENCERRAR CLIENTE -->
+<div class="ov" id="ov-encerrar">
+  <div class="md">
+    <div class="md-handle"></div>
+    <h3>Encerrar cliente</h3>
+    <div class="fg">
+      <div class="fr"><label>Data de encerramento</label><input type="date" id="enc-data"></div>
+      <div class="fr"><label>Quem cancelou</label>
+        <select id="enc-quem"><option value="cliente">Cliente</option><option value="empresa">Nós</option></select>
+      </div>
+    </div>
+    <div class="fr"><label>Motivo *</label><select id="enc-motivo"><option value="">Selecione</option></select></div>
+    <div class="fr"><label>Observações</label><textarea id="enc-obs"></textarea></div>
+    <div class="mda">
+      <button class="btn" onclick="fecharOv('ov-encerrar')">Cancelar</button>
+      <button class="btn btn-primary" onclick="salvarEncerramento()">Confirmar encerramento</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL RECEITA -->
+<div class="ov" id="ov-receita">
+  <div class="md">
+    <div class="md-handle"></div>
+    <h3 id="rc-tit">Nova receita</h3>
+    <div class="fg">
+      <div class="fr"><label>Valor (R$)</label><input type="number" id="rc-valor" min="0" step="0.01"></div>
+      <div class="fr"><label>Data</label><input type="date" id="rc-data"></div>
+    </div>
+    <div class="fr"><label>Produto / Serviço (opcional)</label><select id="rc-produto"></select></div>
+    <div class="fr"><label>Descrição</label><input type="text" id="rc-descricao" placeholder="Ex: consultoria extra, reembolso..."></div>
+    <div class="fr"><label style="display:flex;align-items:center;gap:8px;text-transform:none;letter-spacing:0;"><input type="checkbox" id="rc-recorrente" style="width:auto;"> É recorrente?</label></div>
+    <div class="mda">
+      <button class="btn" onclick="fecharOv('ov-receita')">Cancelar</button>
+      <button class="btn btn-primary" onclick="salvarReceita()">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL DESPESA -->
+<div class="ov" id="ov-despesa">
+  <div class="md">
+    <div class="md-handle"></div>
+    <h3 id="ds-tit">Nova despesa</h3>
+    <div class="fg">
+      <div class="fr"><label>Valor (R$)</label><input type="number" id="ds-valor" min="0" step="0.01"></div>
+      <div class="fr"><label>Data</label><input type="date" id="ds-data"></div>
+    </div>
+    <div class="fg">
+      <div class="fr"><label>Categoria</label><select id="ds-categoria" onchange="fnAtualizarSubcategorias()"></select></div>
+      <div class="fr" id="row-subcategoria"><label>Subcategoria</label><select id="ds-subcategoria"></select></div>
+    </div>
+    <div class="fr"><label>Descrição</label><input type="text" id="ds-descricao"></div>
+    <div class="fr"><label style="display:flex;align-items:center;gap:8px;text-transform:none;letter-spacing:0;"><input type="checkbox" id="ds-recorrente" onchange="fnToggleRecorrenteAte()" style="width:auto;"> É recorrente?</label></div>
+    <div class="fr" id="row-recorrente-ate" style="display:none;"><label>Até quando?</label><input type="date" id="ds-recorrente-ate"></div>
+    <div class="mda">
+      <button class="btn" onclick="fecharOv('ov-despesa')">Cancelar</button>
+      <button class="btn btn-primary" onclick="salvarDespesa()">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL PRODUTO -->
+<div class="ov" id="ov-produto">
+  <div class="md">
+    <div class="md-handle"></div>
+    <h3 id="pd-tit">Novo produto</h3>
+    <div class="fr"><label>Nome</label><input type="text" id="pd-nome"></div>
+    <div class="fr"><label>Descrição</label><input type="text" id="pd-descricao"></div>
+    <div class="fr"><label>Valor padrão mensal (R$)</label><input type="number" id="pd-valor" min="0"></div>
+    <div class="fr"><label style="display:flex;align-items:center;gap:8px;text-transform:none;letter-spacing:0;"><input type="checkbox" id="pd-ativo" style="width:auto;"> Ativo</label></div>
+    <div class="mda">
+      <button class="btn" onclick="fecharOv('ov-produto')">Cancelar</button>
+      <button class="btn btn-primary" onclick="salvarProduto()">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL CATEGORIA DE DESPESA -->
+<div class="ov" id="ov-categoria">
+  <div class="md">
+    <div class="md-handle"></div>
+    <h3>Nova categoria de despesa</h3>
+    <div class="fr"><label>Nome da categoria</label><input type="text" id="ct-nome" placeholder="Ex: Manutenção"></div>
+    <div class="fr"><label>Subcategorias (separadas por vírgula, opcional)</label><input type="text" id="ct-subs" placeholder="Ex: Peças, Mão de obra"></div>
+    <div class="mda">
+      <button class="btn" onclick="fecharOv('ov-categoria')">Cancelar</button>
+      <button class="btn btn-primary" onclick="salvarCategoria()">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL SEGMENTO -->
+<div class="ov" id="ov-segmento">
+  <div class="md">
+    <div class="md-handle"></div>
+    <h3>Novo segmento</h3>
+    <div class="fr"><label>Nome do segmento</label><input type="text" id="sg-nome" placeholder="Ex: Pet shop"></div>
+    <div class="mda">
+      <button class="btn" onclick="fecharOv('ov-segmento')">Cancelar</button>
+      <button class="btn btn-primary" onclick="salvarSegmento()">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL METAS -->
+<div class="ov" id="ov-metas">
+  <div class="md">
+    <div class="md-handle"></div>
+    <h3>Editar metas</h3>
+    <div class="sec-div">Supermeta</div>
+    <div class="fg">
+      <div class="fr"><label>Meta de clientes</label><input type="number" id="mt-sm-cl" min="1"></div>
+      <div class="fr"><label>Meta faturamento (R$/mês)</label><input type="number" id="mt-sm-fat" min="0"></div>
+    </div>
+    <div class="fr"><label>Prazo da supermeta</label><input type="date" id="mt-sm-prazo"></div>
+    <div class="sec-div">Meta do mês</div>
+    <div class="fg">
+      <div class="fr"><label>Clientes novos no mês</label><input type="number" id="mt-mm-cl" min="0"></div>
+      <div class="fr"><label>Faturamento adicional (R$)</label><input type="number" id="mt-mm-fat" min="0"></div>
+    </div>
+    <div class="mda">
+      <button class="btn" onclick="fecharOv('ov-metas')">Cancelar</button>
+      <button class="btn btn-primary" onclick="salvarMetas()">Salvar</button>
+    </div>
+  </div>
+</div>
+
 <script src="js/supabase-client.js"></script>
 <script src="js/utils.js"></script>
+<script src="js/state.js"></script>
 <script src="js/tabs/dashboard.js"></script>
 <script src="js/tabs/comercial.js"></script>
 <script src="js/tabs/financeiro.js"></script>
