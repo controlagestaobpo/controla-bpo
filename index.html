@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Controla Gestão BPO</title>
+<link rel="stylesheet" href="css/styles.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+</head>
+<body>
+
+<div id="login-screen">
+  <div class="login-box">
+    <div class="login-brand">Controla Gestão BPO</div>
+    <div class="login-title"><span>Gestão</span></div>
+    <div class="inp-row"><label>E-mail</label><input type="email" id="l-email" placeholder="seu@email.com" autocomplete="email"></div>
+    <div class="inp-row"><label>Senha</label><input type="password" id="l-senha" placeholder="••••••••" autocomplete="current-password"></div>
+    <button class="btn-login" onclick="login()">Entrar</button>
+    <div class="login-err" id="l-err">E-mail ou senha incorretos.</div>
+    <div class="login-load" id="l-load">Entrando...</div>
+  </div>
+</div>
+
+<div id="app">
+  <div class="nav-accent"></div>
+  <div class="nav">
+    <div>
+      <div class="nav-brand">Controla Gestão BPO</div>
+      <div class="nav-title"><span>Gestão</span></div>
+    </div>
+    <div class="nav-right">
+      <span class="saving-badge" id="saving">salvando...</span>
+      <button class="btn btn-sm" onclick="logout()">Sair</button>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <div class="tab" id="tab-dashboard" onclick="trocarTab('dashboard')">Dashboard</div>
+    <div class="tab" id="tab-comercial" onclick="trocarTab('comercial')">Comercial</div>
+    <div class="tab" id="tab-financeiro" onclick="trocarTab('financeiro')">Financeiro</div>
+    <div class="tab" id="tab-historico" onclick="trocarTab('historico')">Histórico</div>
+    <div class="tab" id="tab-metas" onclick="trocarTab('metas')">Metas</div>
+    <div class="tab" id="tab-config" onclick="trocarTab('config')">Configurações</div>
+  </div>
+
+  <div class="page" id="page-dashboard"></div>
+  <div class="page" id="page-comercial"></div>
+  <div class="page" id="page-financeiro"></div>
+  <div class="page" id="page-historico"></div>
+  <div class="page" id="page-metas"></div>
+  <div class="page" id="page-config"></div>
+</div>
+
+<script src="js/supabase-client.js"></script>
+<script src="js/utils.js"></script>
+<script src="js/tabs/dashboard.js"></script>
+<script src="js/tabs/comercial.js"></script>
+<script src="js/tabs/financeiro.js"></script>
+<script src="js/tabs/historico.js"></script>
+<script src="js/tabs/metas.js"></script>
+<script src="js/tabs/config.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
