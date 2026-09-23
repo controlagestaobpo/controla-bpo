@@ -9,9 +9,29 @@ let cmEncerrarId = null; // cliente ativo a encerrar
 const STATUS_COR = { visita: '#2563EB', conversa: '#D97706', proposta: '#7C3AED', fechado: '#059669', descartado: '#DC2626' };
 const STATUS_LBL = { visita: 'Visita', conversa: 'Conversa', proposta: 'Proposta enviada', fechado: 'Fechado', descartado: 'Descartado' };
 const STATUS_CLS = { visita: 'badge-blue', conversa: 'badge-amber', proposta: 'badge-purple', fechado: 'badge-green', descartado: 'badge-red' };
+const ORIGEM_LBL = { indicacao: 'Indicação', prospeccao: 'Prospecção', inbound: 'Inbound', outro: 'Outro' };
+
+let cmCharts = {};
 
 function prospectsPipeline() {
   return State.prospects.filter((p) => p.status !== 'fechado' && p.status !== 'descartado');
+}
+
+function calcularOrigemClientes() {
+  const porOrigem = {};
+  State.clientesAtivos.forEach((c) => {
+    const o = c.origem || 'não informado';
+    porOrigem[o] = (porOrigem[o] || 0) + 1;
+  });
+  return Object.entries(porOrigem).map(([k, v]) => ({ nome: ORIGEM_LBL[k] || (k === 'não informado' ? 'Não informado' : k), valor: v }));
+}
+
+function gerarInsightComercial() {
+  const segmentos = calcularTopSegmentos().filter((s) => s.v >= 1);
+  if (!segmentos.length) return 'Cadastre prospects com segmento pra começar a ver insights aqui.';
+  const top = segmentos[0];
+  if (top.valor === 0) return `Nenhum segmento com conversão ainda. Foque em fechar os primeiros clientes de "${top.nome}" ou de outro nicho pra começar a enxergar padrão.`;
+  return `Seu melhor segmento é <strong>${top.nome}</strong>, com ${top.valor}% de conversão (${top.f} de ${top.v}). Vale concentrar a prospecção nesse nicho.`;
 }
 
 function renderComercial() {
@@ -62,10 +82,20 @@ function renderComercial() {
     </div>
 
     <div class="section">
-      <div class="section-title">Indicações</div>
-      <div class="card-grid-2">
+      <div class="section-title">Insights</div>
+      <div class="panel" style="border-left:4px solid var(--purple);">
+        <div style="font-size:12px;color:var(--text2);line-height:1.6;">${gerarInsightComercial()}</div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">Origem dos clientes</div>
+      <div class="card-grid-2" style="margin-bottom:10px;">
         <div class="stat-card"><div class="stat-lbl">Total indicações</div><div class="stat-val">${indicacoes.length}</div></div>
         <div class="stat-card"><div class="stat-lbl">Taxa de indicações</div><div class="stat-val">${taxaIndicacoes}%</div><div class="stat-sub">dos clientes</div></div>
+      </div>
+      <div class="chart-box panel" id="cm-origem-wrap">
+        <div style="position:relative;height:200px;"><canvas id="cm-chart-origem"></canvas></div>
       </div>
     </div>
   `;
@@ -74,6 +104,23 @@ function renderComercial() {
   renderCanceladosLista();
   renderFiltrosProspect();
   renderProspectsLista();
+  renderGraficosComercial();
+}
+
+function renderGraficosComercial() {
+  Object.values(cmCharts).forEach((c) => { try { c.destroy(); } catch (e) {} });
+  cmCharts = {};
+  const origem = calcularOrigemClientes();
+  const canvas = document.getElementById('cm-chart-origem');
+  if (origem.length) {
+    cmCharts.origem = new Chart(canvas, {
+      type: 'doughnut',
+      data: { labels: origem.map((o) => o.nome), datasets: [{ data: origem.map((o) => o.valor), backgroundColor: CORES_CATEGORIA }] },
+      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { font: { size: 10 }, boxWidth: 10 } } } },
+    });
+  } else {
+    canvas.parentElement.innerHTML = '<div class="empty-state">Feche clientes pra ver a origem deles aqui.</div>';
+  }
 }
 
 // ===================== CLIENTES ATIVOS =====================

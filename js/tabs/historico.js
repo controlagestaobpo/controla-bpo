@@ -1,3 +1,11 @@
+function gerarInsightHistorico(churnRate, totalAllTime) {
+  if (totalAllTime === 0) return 'Ainda não há clientes suficientes pra calcular o churn.';
+  if (churnRate === 0) return 'Nenhum cancelamento registrado — ótima retenção.';
+  if (churnRate <= 10) return `Seu churn de ${churnRate}% está baixo — continue assim.`;
+  if (churnRate <= 25) return `Seu churn de ${churnRate}% é aceitável, mas dá pra melhorar — considere aumentar os pontos de contato com clientes ativos.`;
+  return `Seu churn de ${churnRate}% está alto — vale investigar os motivos de cancelamento mais recorrentes abaixo.`;
+}
+
 function renderHistorico() {
   const encerrados = State.clientesAtivos.filter((c) => c.status === 'encerrado');
   const ativos = State.clientesAtivos.filter((c) => c.status === 'ativo');
@@ -13,6 +21,9 @@ function renderHistorico() {
         <div class="stat-card"><div class="stat-lbl">Ativos</div><div class="stat-val" style="color:var(--green2)">${ativos.length}</div></div>
         <div class="stat-card"><div class="stat-lbl">Cancelados</div><div class="stat-val" style="color:var(--red)">${encerrados.length}</div></div>
         <div class="stat-card"><div class="stat-lbl">Churn rate</div><div class="stat-val">${churnRate}%</div></div>
+      </div>
+      <div class="panel" style="border-left:4px solid var(--amber);">
+        <div style="font-size:12px;color:var(--text2);line-height:1.6;">${gerarInsightHistorico(churnRate, totalAllTime)}</div>
       </div>
     </div>
 
