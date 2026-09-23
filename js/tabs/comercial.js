@@ -432,13 +432,16 @@ async function salvarProspect() {
 
       // Alimenta o Financeiro automaticamente: lança a receita do mês do fechamento.
       if (novoClienteId && ticketMensal > 0) {
+        const produtoId = document.getElementById('pr-fc-produto').value || null;
+        const produto = produtoId ? State.produtos.find((p) => p.id === produtoId) : null;
         await db.from('receitas').insert([{
           cliente_id: novoClienteId,
-          produto_id: document.getElementById('pr-fc-produto').value || null,
+          produto_id: produtoId,
           valor: ticketMensal,
           data: dataFechamento,
           mes_projecao: dataFechamento.slice(0, 7),
-          categoria: 'Serviços recorrentes',
+          categoria: 'Receita de Serviços',
+          subcategoria: produto ? produto.nome : null,
           e_recorrente: frequencia === 'mensal',
           origem: 'cliente_crm',
           descricao: `${empresa} — fechamento via Comercial`,

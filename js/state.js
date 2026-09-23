@@ -19,10 +19,18 @@ const GRUPO_RECEITA_LABELS = {
 };
 
 const CATEGORIAS_RECEITA_PADRAO = [
-  { nome_principal: 'Serviços recorrentes', subcategorias: [], grupo_dre: 'operacional' },
-  { nome_principal: 'Serviços pontuais', subcategorias: [], grupo_dre: 'operacional' },
-  { nome_principal: 'Receitas financeiras', subcategorias: ['Juros', 'Rendimentos de aplicação'], grupo_dre: 'nao_operacional' },
-  { nome_principal: 'Outras receitas', subcategorias: ['Reembolso', 'Diversos'], grupo_dre: 'nao_operacional' },
+  { nome_principal: 'Receita de Serviços', grupo_dre: 'operacional', subcategorias: [
+    'BPO Financeiro', 'Consultoria Empresarial', 'Análise Financeira', 'Consultoria Gestão', 'Serviços Customizados',
+  ] },
+  { nome_principal: 'Receitas Complementares', grupo_dre: 'operacional', subcategorias: [
+    'Reembolso de Despesas', 'Venda de Materiais', 'Serviço Extra/Ad-Hoc', 'Treinamentos/Workshops',
+  ] },
+  { nome_principal: 'Receitas Financeiras', grupo_dre: 'nao_operacional', subcategorias: [
+    'Juros Ativos', 'Desconto Recebido', 'Rendimentos de Aplicações Financeiras', 'Devolução de Fornecedor',
+  ] },
+  { nome_principal: 'Outras Receitas', grupo_dre: 'nao_operacional', subcategorias: [
+    'Venda de Ativos', 'Aluguel de Equipamentos', 'Diversos',
+  ] },
 ];
 
 // Grupos do DRE enxuto: deducao (sai da receita antes da receita liquida),
@@ -36,16 +44,109 @@ const GRUPO_DRE_LABELS = {
 };
 const GRUPO_DRE_ORDEM = ['administrativas', 'comerciais', 'pessoal', 'financeiras'];
 
+// Plano de contas completo (grupo DRE -> categoria -> subcategorias).
 const CATEGORIAS_DESPESA_PADRAO = [
-  { nome_principal: 'Impostos', subcategorias: [], grupo_dre: 'deducao' },
-  { nome_principal: 'Administrativas', subcategorias: [], grupo_dre: 'administrativas' },
-  { nome_principal: 'Apps e Softwares', subcategorias: [], grupo_dre: 'administrativas' },
-  { nome_principal: 'Alimentação', subcategorias: [], grupo_dre: 'administrativas' },
-  { nome_principal: 'Outros', subcategorias: [], grupo_dre: 'administrativas' },
-  { nome_principal: 'Transporte', subcategorias: ['Combustível', 'Pedágio', 'Uber/Táxi', 'Manutenção'], grupo_dre: 'comerciais' },
-  { nome_principal: 'Marketing', subcategorias: [], grupo_dre: 'comerciais' },
-  { nome_principal: 'Pessoal', subcategorias: ['Salários', 'Pró-labore', 'Retirada de lucro', 'Encargos/INSS', 'Benefícios'], grupo_dre: 'pessoal' },
-  { nome_principal: 'Tarifas bancárias', subcategorias: [], grupo_dre: 'financeiras' },
+  // ===== PESSOAL =====
+  { nome_principal: 'Pró-Labore / Salários', grupo_dre: 'pessoal', subcategorias: [
+    'Pró-Labore Sócio(s)', 'Salários Funcionários', 'Comissões', 'Bônus Desempenho', 'Retirada de Lucro',
+  ] },
+  { nome_principal: 'Encargos e Benefícios', grupo_dre: 'pessoal', subcategorias: [
+    'INSS Patronal', 'FGTS', 'Plano de Saúde', 'Seguro de Vida',
+  ] },
+
+  // ===== ADMINISTRATIVAS =====
+  { nome_principal: 'Infraestrutura', grupo_dre: 'administrativas', subcategorias: [
+    'Aluguel Escritório', 'IPTU', 'Manutenção/Reforma Escritório', 'Decoração/Ambientação',
+  ] },
+  { nome_principal: 'Utilidades', grupo_dre: 'administrativas', subcategorias: [
+    'Energia Elétrica', 'Água', 'Internet', 'Telefone Celular Corporativo',
+  ] },
+  { nome_principal: 'Limpeza e Manutenção', grupo_dre: 'administrativas', subcategorias: [
+    'Limpeza Escritório', 'Manutenção Equipamentos', 'Toner/Tinta Impressora', 'Papel/Material de Escritório', 'Higiene e Limpeza',
+  ] },
+  { nome_principal: 'Alimentação', grupo_dre: 'administrativas', subcategorias: [
+    'Almoço/Janta', 'Café/Café da Manhã', 'Refeição Reuniões', 'Lanches/Café Escritório',
+  ] },
+  { nome_principal: 'Vestuário', grupo_dre: 'administrativas', subcategorias: [
+    'Uniforme', 'Vestuário Corporativo',
+  ] },
+
+  // ===== TECNOLOGIA =====
+  { nome_principal: 'Software e Aplicações', grupo_dre: 'administrativas', subcategorias: [
+    'Supabase (Backend)', 'IA / Claude (APIs)', 'Ferramentas Gestão (ERP, CRM)', 'Contabilidade (E-Ged, etc)',
+    'Chat/Comunicação', 'Nuvem (Drive, OneDrive)', 'Analytics', 'Outros Softwares',
+  ] },
+  { nome_principal: 'Hardware e Equipamentos', grupo_dre: 'administrativas', subcategorias: [
+    'Computador/Notebook', 'Monitor', 'Impressora', 'Telefone IP', 'Modem/Roteador', 'Webcam', 'Outros Periféricos',
+  ] },
+  { nome_principal: 'Suporte Técnico', grupo_dre: 'administrativas', subcategorias: [
+    'Help Desk / Assistência Técnica', 'Backup e Armazenamento', 'Segurança (antivírus, firewall)', 'Manutenção IT',
+  ] },
+
+  // ===== TRANSPORTE =====
+  { nome_principal: 'Combustível', grupo_dre: 'comerciais', subcategorias: ['Gasolina', 'Diesel', 'Etanol'] },
+  { nome_principal: 'Manutenção Veículo', grupo_dre: 'comerciais', subcategorias: [
+    'Óleo e Filtro', 'Revisão Preventiva', 'Pneus', 'Bateria', 'Conserto/Reparo', 'Peças',
+  ] },
+  { nome_principal: 'Deslocamento/Mobilidade', grupo_dre: 'comerciais', subcategorias: [
+    'Uber/Táxi', 'Passagem Aérea', 'Hospedagem', 'Pedágio', 'Estacionamento',
+  ] },
+  { nome_principal: 'Documentação Veículo', grupo_dre: 'comerciais', subcategorias: [
+    'IPVA', 'Seguro Veículo', 'Licenciamento', 'Multa de Trânsito',
+  ] },
+
+  // ===== MARKETING =====
+  { nome_principal: 'Marketing Digital', grupo_dre: 'comerciais', subcategorias: [
+    'Google Ads', 'Facebook/Instagram Ads', 'Criação de Conteúdo', 'Domínio Website', 'Hospedagem Website',
+    'Desenvolvimento Website', 'Email Marketing', 'Ferramentas Social Media',
+  ] },
+  { nome_principal: 'Marketing Tradicional', grupo_dre: 'comerciais', subcategorias: [
+    'Cartão de Visita', 'Papel Timbrado', 'Impressão Panfleto', 'Outdoor / Mídia Externa', 'Publicidade Geral',
+  ] },
+  { nome_principal: 'Relacionamento e Eventos', grupo_dre: 'comerciais', subcategorias: [
+    'Patrocínio Eventos', 'Evento Próprio', 'Brindes/Presentes Clientes', 'Almoço Relacionamento', 'Viagem Relacionamento',
+  ] },
+
+  // ===== FINANCEIRAS =====
+  { nome_principal: 'Tarifas Bancárias', grupo_dre: 'financeiras', subcategorias: [
+    'Tarifa Mensal Conta', 'Tarifa Transferência', 'Tarifa Boleto', 'Cheque', 'Extrato', 'Tarifa PIX', 'Outras Tarifas Banco',
+  ] },
+  { nome_principal: 'Juros e Encargos', grupo_dre: 'financeiras', subcategorias: [
+    'Juros Pessoa Jurídica', 'Juros Financiamento', 'Juros Empréstimo', 'Multa Pagamento Atrasado', 'Juros de Mora',
+  ] },
+  { nome_principal: 'Câmbio e Conversão', grupo_dre: 'financeiras', subcategorias: [
+    'Taxa Câmbio', 'Transferência Internacional', 'Conversão Moeda',
+  ] },
+
+  // ===== TRIBUTÁRIAS (dedução) =====
+  { nome_principal: 'Impostos Federais', grupo_dre: 'deducao', subcategorias: [
+    'IRPJ', 'CSLL', 'PIS/PASEP', 'COFINS', 'INSS Empresa', 'ISS Estimado',
+  ] },
+  { nome_principal: 'Impostos Estaduais', grupo_dre: 'deducao', subcategorias: [
+    'ICMS', 'ITBI', 'Outras Taxas Estaduais',
+  ] },
+  { nome_principal: 'Impostos Municipais', grupo_dre: 'deducao', subcategorias: [
+    'ISS', 'IPTU', 'Alvará', 'Licença Municipal',
+  ] },
+
+  // ===== PROFISSIONAIS =====
+  { nome_principal: 'Consultoria e Serviços', grupo_dre: 'administrativas', subcategorias: [
+    'Advogado / Assessoria Jurídica', 'Consultor de Negócios', 'Consultor Financeiro', 'Designer', 'Redator', 'Freelancer / Pessoa Física',
+  ] },
+  { nome_principal: 'Terceirização', grupo_dre: 'administrativas', subcategorias: [
+    'Serviço de Limpeza', 'Segurança', 'Manutenção Predial', 'Serviços Diversos',
+  ] },
+
+  // ===== GERAIS =====
+  { nome_principal: 'Seguros', grupo_dre: 'administrativas', subcategorias: [
+    'Seguro Responsabilidade Civil', 'Seguro Profissional', 'Seguro Patrimônio', 'Seguro Veículo', 'Outros Seguros',
+  ] },
+  { nome_principal: 'Assinaturas e Filiações', grupo_dre: 'administrativas', subcategorias: [
+    'Assinatura Revistas/Publicações', 'Associação Classe', 'Filiação Sindicato', 'Membros de Plataformas',
+  ] },
+  { nome_principal: 'Diversas', grupo_dre: 'administrativas', subcategorias: [
+    'Presente Funcionário', 'Licença/Permissão', 'Multa/Processo Judicial', 'Doação/Caridade', 'Outros Diversos',
+  ] },
 ];
 
 const SEGMENTOS_PADRAO = [

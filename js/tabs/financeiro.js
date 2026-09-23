@@ -209,23 +209,44 @@ async function fnGerarRecorrencias() {
   const mes = mesAtual();
   const pendentes = clientesSemRecorrenciaNoMes(mes);
   if (!pendentes.length) return;
-  const payload = pendentes.map((c) => ({
-    cliente_id: c.id,
-    produto_id: c.produto_id || null,
-    valor: c.ticket_mensal,
-    data: hj(),
-    mes_projecao: mes,
-    categoria: 'Serviços recorrentes',
-    e_recorrente: true,
-    origem: 'cliente_crm',
-    descricao: `${c.empresa} — recorrência mensal`,
-  }));
+  const payload = pendentes.map((c) => {
+    const produto = c.produto_id ? State.produtos.find((p) => p.id === c.produto_id) : null;
+    return {
+      cliente_id: c.id,
+      produto_id: c.produto_id || null,
+      valor: c.ticket_mensal,
+      data: hj(),
+      mes_projecao: mes,
+      categoria: 'Receita de Serviços',
+      subcategoria: produto ? produto.nome : null,
+      e_recorrente: true,
+      origem: 'cliente_crm',
+      descricao: `${c.empresa} — recorrência mensal`,
+    };
+  });
   const { error } = await db.from('receitas').insert(payload);
   if (error) { alert('Erro: ' + error.message); return; }
   showSaving();
   const r = await db.from('receitas').select('*').order('data', { ascending: false });
   State.receitas = r.data || [];
   renderFinanceiro();
+}
+
+// ===================== SELECTS AGRUPADOS POR GRUPO DRE =====================
+function fnOpcoesCategoriaDespesa() {
+  return ['deducao', ...GRUPO_DRE_ORDEM].map((g) => {
+    const cats = State.categoriasDespesa.filter((c) => (c.grupo_dre || 'administrativas') === g);
+    if (!cats.length) return '';
+    return `<optgroup label="${GRUPO_DRE_LABELS[g]}">${cats.map((c) => `<option>${c.nome_principal}</option>`).join('')}</optgroup>`;
+  }).join('');
+}
+
+function fnOpcoesCategoriaReceita() {
+  return ['operacional', 'nao_operacional'].map((g) => {
+    const cats = State.categoriasReceita.filter((c) => (c.grupo_dre || 'operacional') === g);
+    if (!cats.length) return '';
+    return `<optgroup label="${GRUPO_RECEITA_LABELS[g]}">${cats.map((c) => `<option>${c.nome_principal}</option>`).join('')}</optgroup>`;
+  }).join('');
 }
 
 // ===================== RECEITA =====================
@@ -243,7 +264,7 @@ function abrirModalReceita(id) {
   const selProd = document.getElementById('rc-produto');
   selProd.innerHTML = '<option value="">Nenhum</option>' + State.produtos.filter(p => p.ativo).map((p) => `<option value="${p.id}">${p.nome}</option>`).join('');
   const selCat = document.getElementById('rc-categoria');
-  selCat.innerHTML = State.categoriasReceita.map((c) => `<option>${c.nome_principal}</option>`).join('');
+  selCat.innerHTML = fnOpcoesCategoriaReceita();
   if (id) {
     const r = State.receitas.find((x) => x.id === id);
     selCat.value = r.categoria || (State.categoriasReceita[0] && State.categoriasReceita[0].nome_principal) || '';
@@ -317,7 +338,7 @@ function abrirModalDespesa(id) {
   fnDespesaEditId = id || null;
   document.getElementById('ds-tit').textContent = id ? 'Editar despesa' : 'Nova despesa';
   const selCat = document.getElementById('ds-categoria');
-  selCat.innerHTML = State.categoriasDespesa.map((c) => `<option>${c.nome_principal}</option>`).join('');
+  selCat.innerHTML = fnOpcoesCategoriaDespesa();
   if (id) {
     const d = State.despesas.find((x) => x.id === id);
     selCat.value = d.categoria;
