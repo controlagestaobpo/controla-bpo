@@ -3,7 +3,6 @@ const State = {
   clientesAtivos: [],
   receitas: [],
   despesas: [],
-  retiradas: [],
   produtos: [],
   categoriasDespesa: [],
   categoriasReceita: [],
@@ -44,7 +43,7 @@ const CATEGORIAS_DESPESA_PADRAO = [
   { nome_principal: 'Outros', subcategorias: [], grupo_dre: 'administrativas' },
   { nome_principal: 'Transporte', subcategorias: ['Combustível', 'Pedágio', 'Uber/Táxi', 'Manutenção'], grupo_dre: 'comerciais' },
   { nome_principal: 'Marketing', subcategorias: [], grupo_dre: 'comerciais' },
-  { nome_principal: 'Pessoal', subcategorias: ['Salários', 'Pró-labore', 'Encargos/INSS', 'Benefícios'], grupo_dre: 'pessoal' },
+  { nome_principal: 'Pessoal', subcategorias: ['Salários', 'Pró-labore', 'Retirada de lucro', 'Encargos/INSS', 'Benefícios'], grupo_dre: 'pessoal' },
   { nome_principal: 'Tarifas bancárias', subcategorias: [], grupo_dre: 'financeiras' },
 ];
 
@@ -83,14 +82,13 @@ async function semearPadroes() {
 
 async function carregarTudo() {
   const [
-    prospects, clientesAtivos, receitas, despesas, retiradas, produtos,
+    prospects, clientesAtivos, receitas, despesas, produtos,
     categoriasDespesa, categoriasReceita, segmentos, metasFinanceiras, metasRow, configRow,
   ] = await Promise.all([
     db.from('prospects').select('*').order('data_visita', { ascending: false }),
     db.from('clientes_ativos').select('*').order('data_fechamento', { ascending: false }),
     db.from('receitas').select('*').order('data', { ascending: false }),
     db.from('despesas').select('*').order('data', { ascending: false }),
-    db.from('retiradas').select('*').order('data', { ascending: false }),
     db.from('produtos').select('*').order('nome'),
     db.from('categorias_despesa').select('*').order('nome_principal'),
     db.from('categorias_receita').select('*').order('nome_principal'),
@@ -104,7 +102,6 @@ async function carregarTudo() {
   State.clientesAtivos = clientesAtivos.data || [];
   State.receitas = receitas.data || [];
   State.despesas = despesas.data || [];
-  State.retiradas = retiradas.data || [];
   State.produtos = produtos.data || [];
   State.categoriasDespesa = categoriasDespesa.data || [];
   State.categoriasReceita = categoriasReceita.data || [];

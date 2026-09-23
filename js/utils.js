@@ -40,6 +40,8 @@ function showSaving() {
 function abrirOv(id) { document.getElementById(id).classList.add('open'); }
 function fecharOv(id) { document.getElementById(id).classList.remove('open'); }
 
+const CORES_CATEGORIA = ['#1A3A6B', '#00C896', '#D97706', '#7C3AED', '#2563EB', '#DC2626', '#EA580C', '#00A86B', '#8A97A8', '#0F1B3C'];
+
 // ===== Projeção de ritmo (pace) até o fim do mês =====
 function diasNoMes(ym) {
   const [y, m] = ym.split('-').map(Number);
@@ -60,14 +62,10 @@ function receitasDoMes(mes) {
 function despesasDoMes(mes) {
   return State.despesas.filter((d) => d.mes_projecao === mes);
 }
-function retiradasDoMes(mes) {
-  return State.retiradas.filter((r) => r.mes_projecao === mes);
-}
 
 function montarDRE(mes) {
   const receitasMes = receitasDoMes(mes);
   const despesasMes = despesasDoMes(mes);
-  const retiradasMes = retiradasDoMes(mes).reduce((s, r) => s + Number(r.valor || 0), 0);
 
   // ---- Receita, agrupada por categoria (operacional x não operacional) ----
   const receitaPorCategoria = {};
@@ -105,12 +103,11 @@ function montarDRE(mes) {
   const resultadoOperacional = receitaLiquidaOperacional - totalDespesasOperacionais;
   const lucroLiquido = resultadoOperacional + receitaNaoOperacional;
   const margem = receitaTotal > 0 ? Math.round(lucroLiquido / receitaTotal * 100) : 0;
-  const lucroRetido = lucroLiquido - retiradasMes;
 
   return {
     mes, receitaOperacional, receitaOperacionalDetalhe, deducoes, receitaLiquidaOperacional,
     grupos, despPorGrupo, totalDespesasOperacionais, resultadoOperacional,
     receitaNaoOperacional, receitaNaoOperacionalDetalhe, receitaTotal,
-    lucroLiquido, margem, retiradasMes, lucroRetido,
+    lucroLiquido, margem,
   };
 }
