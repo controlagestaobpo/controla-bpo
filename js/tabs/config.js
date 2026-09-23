@@ -125,18 +125,25 @@ async function excluirProduto(id) {
 function renderCategoriasLista() {
   const el = document.getElementById('cf-categorias-list');
   if (!State.categoriasDespesa.length) { el.innerHTML = '<div class="empty-state">Nenhuma categoria.</div>'; return; }
-  el.innerHTML = State.categoriasDespesa.map((c) => `<div class="simple-row">
-    <div class="simple-row-main">
-      <div class="simple-row-title">${c.nome_principal}</div>
-      ${c.subcategorias && c.subcategorias.length ? `<div class="simple-row-sub">${c.subcategorias.join(' · ')}</div>` : ''}
-    </div>
-    <button class="btn btn-xs btn-danger" onclick="excluirCategoria('${c.id}')">×</button>
-  </div>`).join('');
+  const grupos = ['deducao', ...GRUPO_DRE_ORDEM];
+  el.innerHTML = grupos.map((g) => {
+    const cats = State.categoriasDespesa.filter((c) => (c.grupo_dre || 'administrativas') === g);
+    if (!cats.length) return '';
+    return `<div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;font-weight:700;margin:10px 0 4px;">${GRUPO_DRE_LABELS[g]}</div>` +
+      cats.map((c) => `<div class="simple-row">
+        <div class="simple-row-main">
+          <div class="simple-row-title">${c.nome_principal}</div>
+          ${c.subcategorias && c.subcategorias.length ? `<div class="simple-row-sub">${c.subcategorias.join(' · ')}</div>` : ''}
+        </div>
+        <button class="btn btn-xs btn-danger" onclick="excluirCategoria('${c.id}')">×</button>
+      </div>`).join('');
+  }).join('');
 }
 
 function abrirModalCategoria() {
   document.getElementById('ct-nome').value = '';
   document.getElementById('ct-subs').value = '';
+  document.getElementById('ct-grupo').value = 'administrativas';
   abrirOv('ov-categoria');
 }
 
@@ -144,7 +151,8 @@ async function salvarCategoria() {
   const nome = document.getElementById('ct-nome').value.trim();
   if (!nome) { alert('Informe o nome da categoria.'); return; }
   const subs = document.getElementById('ct-subs').value.split(',').map((s) => s.trim()).filter(Boolean);
-  const { error } = await db.from('categorias_despesa').insert([{ nome_principal: nome, subcategorias: subs }]);
+  const grupo_dre = document.getElementById('ct-grupo').value;
+  const { error } = await db.from('categorias_despesa').insert([{ nome_principal: nome, subcategorias: subs, grupo_dre }]);
   if (error) { alert('Erro: ' + error.message); return; }
   showSaving();
   fecharOv('ov-categoria');

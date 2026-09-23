@@ -254,22 +254,24 @@ function renderProspectsLista() {
         else if (p.deadline === h) deadlineBadge = `<span class="badge badge-red">deadline hoje</span>`;
         else deadlineBadge = `<span class="badge badge-green">prazo ${fmtD(p.deadline)}</span>`;
       }
+      const fechou = p.status === 'fechado';
       return `<div class="item-card"><div class="ic-inner">
-        <div class="ic-accent" style="background:${STATUS_COR[p.status] || '#9CA3AF'};"></div>
+        <div class="ic-accent" style="background:${STATUS_COR[p.status] || '#9CA3AF'};width:${fechou ? '6px' : '4px'};"></div>
         <div class="ic-body">
           <div class="ic-top">
-            <div class="ic-nome">${p.empresa}</div>
+            <div class="ic-nome">${fechou ? '<span style="color:var(--green2);">✓</span> ' : ''}${p.empresa}</div>
             <div class="ic-acts">
               <button class="btn btn-xs" onclick="abrirModalProspect('${p.id}')">editar</button>
               <button class="btn btn-xs btn-danger" onclick="excluirProspect('${p.id}')">×</button>
             </div>
           </div>
           <div class="ic-badges">
-            <span class="badge ${STATUS_CLS[p.status] || 'badge-blue'}">${STATUS_LBL[p.status] || p.status}</span>
+            <span class="badge ${STATUS_CLS[p.status] || 'badge-blue'}" style="${fechou ? 'font-weight:800;' : ''}">${fechou ? '✓ Fechou' : STATUS_LBL[p.status] || p.status}</span>
             ${p.nicho ? `<span class="badge badge-gray">${p.nicho}</span>` : ''}
             ${deadlineBadge}
             ${p.motivo_perda ? `<span class="badge badge-red">${p.motivo_perda}</span>` : ''}
           </div>
+          ${fechou ? `<div class="ic-next" style="background:#F0FDF4;">Lembre de cadastrar em "+ Novo cliente" se ainda não fez.</div>` : ''}
           ${(p.contato || p.whatsapp) ? `<div class="ic-ct">${[p.contato, p.whatsapp].filter(Boolean).join(' · ')}</div>` : ''}
           ${p.obs ? `<div class="ic-obs">${p.obs}</div>` : ''}
           ${p.proximo ? `<div class="ic-next">&rarr; ${p.proximo}</div>` : ''}

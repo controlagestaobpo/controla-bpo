@@ -7,11 +7,9 @@ function renderDashboard() {
   const valorFunil = pipeline.reduce((s, p) => s + (p.ticket || 0), 0);
 
   const mes = mesAtual();
-  const receitaMes = receitasDoMes ? receitasDoMes(mes).reduce((s, r) => s + Number(r.valor || 0), 0) : 0;
-  const despesaMes = despesasDoMes ? despesasDoMes(mes).reduce((s, d) => s + Number(d.valor || 0), 0) : 0;
-  const lucroMes = receitaMes - despesaMes;
-  const margemMes = receitaMes > 0 ? Math.round(lucroMes / receitaMes * 100) : 0;
-  const projecaoAno = Math.round(receitaMes * 12);
+  const dre = montarDRE(mes);
+  const despesaTotalMes = dre.deducoes + dre.totalDespesasOperacionais;
+  const projecaoMes = projecaoFimDeMes(dre.receitaBruta, mes);
 
   const h = hj();
   const acoes = [];
@@ -37,10 +35,11 @@ function renderDashboard() {
     <div class="section">
       <div class="section-title">Resumo financeiro · ${nomeMesLongo(mes)}</div>
       <div class="card-grid-2" style="margin-bottom:14px;">
-        <div class="stat-card"><div class="stat-lbl">Receita</div><div class="stat-val" style="color:var(--green2)">${fmtMoeda(receitaMes)}</div><div class="stat-sub">meta: ${fmtMoeda(State.metas.mm_fat)}</div></div>
-        <div class="stat-card"><div class="stat-lbl">Despesas</div><div class="stat-val" style="color:var(--red)">${fmtMoeda(despesaMes)}</div></div>
-        <div class="stat-card"><div class="stat-lbl">Lucro líquido</div><div class="stat-val">${fmtMoeda(lucroMes)}</div><div class="stat-sub">margem ${margemMes}%</div></div>
-        <div class="stat-card"><div class="stat-lbl">Projeção (ano)</div><div class="stat-val">${fmtMoeda(projecaoAno)}</div><div class="stat-sub">no ritmo atual</div></div>
+        <div class="stat-card"><div class="stat-lbl">Receita</div><div class="stat-val" style="color:var(--green2)">${fmtMoeda(dre.receitaBruta)}</div><div class="stat-sub">meta: ${fmtMoeda(State.metas.mm_fat)}</div></div>
+        <div class="stat-card"><div class="stat-lbl">Despesas</div><div class="stat-val" style="color:var(--red)">${fmtMoeda(despesaTotalMes)}</div></div>
+        <div class="stat-card"><div class="stat-lbl">Lucro líquido</div><div class="stat-val" style="color:${dre.lucroLiquido >= 0 ? 'var(--green2)' : 'var(--red)'}">${fmtMoeda(dre.lucroLiquido)}</div></div>
+        <div class="stat-card"><div class="stat-lbl">Margem</div><div class="stat-val">${dre.margem}%</div></div>
+        <div class="stat-card" style="grid-column:1/-1;"><div class="stat-lbl">Projeção (fim do mês)</div><div class="stat-val">${fmtMoeda(projecaoMes)}</div><div class="stat-sub">no ritmo atual de faturamento</div></div>
       </div>
     </div>
 

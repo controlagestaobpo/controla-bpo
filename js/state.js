@@ -3,6 +3,7 @@ const State = {
   clientesAtivos: [],
   receitas: [],
   despesas: [],
+  retiradas: [],
   produtos: [],
   categoriasDespesa: [],
   segmentos: [],
@@ -11,15 +12,27 @@ const State = {
   perfil: { nome_empresa: '' },
 };
 
+// Grupos do DRE enxuto: deducao (sai da receita antes da receita liquida),
+// depois as 4 famílias de despesa operacional.
+const GRUPO_DRE_LABELS = {
+  deducao: 'Dedução (impostos sobre serviço)',
+  administrativas: 'Despesas administrativas',
+  comerciais: 'Despesas comerciais',
+  pessoal: 'Despesas com pessoal',
+  financeiras: 'Despesas financeiras',
+};
+const GRUPO_DRE_ORDEM = ['administrativas', 'comerciais', 'pessoal', 'financeiras'];
+
 const CATEGORIAS_DESPESA_PADRAO = [
-  { nome_principal: 'Impostos', subcategorias: [] },
-  { nome_principal: 'Administrativas', subcategorias: [] },
-  { nome_principal: 'Tarifas bancárias', subcategorias: [] },
-  { nome_principal: 'Apps e Softwares', subcategorias: [] },
-  { nome_principal: 'Alimentação', subcategorias: [] },
-  { nome_principal: 'Transporte', subcategorias: ['Combustível', 'Pedágio', 'Uber/Táxi', 'Manutenção'] },
-  { nome_principal: 'Marketing', subcategorias: [] },
-  { nome_principal: 'Outros', subcategorias: [] },
+  { nome_principal: 'Impostos', subcategorias: [], grupo_dre: 'deducao' },
+  { nome_principal: 'Administrativas', subcategorias: [], grupo_dre: 'administrativas' },
+  { nome_principal: 'Apps e Softwares', subcategorias: [], grupo_dre: 'administrativas' },
+  { nome_principal: 'Alimentação', subcategorias: [], grupo_dre: 'administrativas' },
+  { nome_principal: 'Outros', subcategorias: [], grupo_dre: 'administrativas' },
+  { nome_principal: 'Transporte', subcategorias: ['Combustível', 'Pedágio', 'Uber/Táxi', 'Manutenção'], grupo_dre: 'comerciais' },
+  { nome_principal: 'Marketing', subcategorias: [], grupo_dre: 'comerciais' },
+  { nome_principal: 'Pessoal', subcategorias: ['Salários', 'Pró-labore', 'Encargos/INSS', 'Benefícios'], grupo_dre: 'pessoal' },
+  { nome_principal: 'Tarifas bancárias', subcategorias: [], grupo_dre: 'financeiras' },
 ];
 
 const SEGMENTOS_PADRAO = [
@@ -42,7 +55,7 @@ const MOTIVOS_CANCELAMENTO = [
 async function semearPadroes() {
   if (State.categoriasDespesa.length === 0) {
     await db.from('categorias_despesa').insert(
-      CATEGORIAS_DESPESA_PADRAO.map((c) => ({ nome_principal: c.nome_principal, subcategorias: c.subcategorias }))
+      CATEGORIAS_DESPESA_PADRAO.map((c) => ({ nome_principal: c.nome_principal, subcategorias: c.subcategorias, grupo_dre: c.grupo_dre }))
     );
   }
   if (State.segmentos.length === 0) {
@@ -52,13 +65,14 @@ async function semearPadroes() {
 
 async function carregarTudo() {
   const [
-    prospects, clientesAtivos, receitas, despesas, produtos,
+    prospects, clientesAtivos, receitas, despesas, retiradas, produtos,
     categoriasDespesa, segmentos, metasFinanceiras, metasRow, configRow,
   ] = await Promise.all([
     db.from('prospects').select('*').order('data_visita', { ascending: false }),
     db.from('clientes_ativos').select('*').order('data_fechamento', { ascending: false }),
     db.from('receitas').select('*').order('data', { ascending: false }),
     db.from('despesas').select('*').order('data', { ascending: false }),
+    db.from('retiradas').select('*').order('data', { ascending: false }),
     db.from('produtos').select('*').order('nome'),
     db.from('categorias_despesa').select('*').order('nome_principal'),
     db.from('segmentos').select('*').order('nome'),
@@ -71,6 +85,7 @@ async function carregarTudo() {
   State.clientesAtivos = clientesAtivos.data || [];
   State.receitas = receitas.data || [];
   State.despesas = despesas.data || [];
+  State.retiradas = retiradas.data || [];
   State.produtos = produtos.data || [];
   State.categoriasDespesa = categoriasDespesa.data || [];
   State.segmentos = segmentos.data || [];

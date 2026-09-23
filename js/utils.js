@@ -39,3 +39,56 @@ function showSaving() {
 
 function abrirOv(id) { document.getElementById(id).classList.add('open'); }
 function fecharOv(id) { document.getElementById(id).classList.remove('open'); }
+
+// ===== Projeção de ritmo (pace) até o fim do mês =====
+function diasNoMes(ym) {
+  const [y, m] = ym.split('-').map(Number);
+  return new Date(y, m, 0).getDate();
+}
+function projecaoFimDeMes(valorAcumulado, mes) {
+  const total = diasNoMes(mes);
+  const hoje = new Date();
+  const ehMesAtual = mes === mesAtual();
+  const diaAtual = ehMesAtual ? hoje.getDate() : total;
+  return diaAtual > 0 ? Math.round(valorAcumulado / diaAtual * total) : 0;
+}
+
+// ===== DRE enxuto, com detalhamento por categoria =====
+function receitasDoMes(mes) {
+  return State.receitas.filter((r) => r.mes_projecao === mes && r.status === 'ativa');
+}
+function despesasDoMes(mes) {
+  return State.despesas.filter((d) => d.mes_projecao === mes);
+}
+function retiradasDoMes(mes) {
+  return State.retiradas.filter((r) => r.mes_projecao === mes);
+}
+
+function montarDRE(mes) {
+  const receitaBruta = receitasDoMes(mes).reduce((s, r) => s + Number(r.valor || 0), 0);
+  const despesasMes = despesasDoMes(mes);
+  const retiradasMes = retiradasDoMes(mes).reduce((s, r) => s + Number(r.valor || 0), 0);
+
+  const porCategoria = {};
+  despesasMes.forEach((d) => { porCategoria[d.categoria] = (porCategoria[d.categoria] || 0) + Number(d.valor || 0); });
+
+  const grupos = { deducao: [], administrativas: [], comerciais: [], pessoal: [], financeiras: [] };
+  Object.entries(porCategoria).forEach(([nome, total]) => {
+    const catDef = State.categoriasDespesa.find((c) => c.nome_principal === nome);
+    const grupo = (catDef && catDef.grupo_dre) || 'administrativas';
+    (grupos[grupo] || grupos.administrativas).push({ nome, total });
+  });
+  Object.values(grupos).forEach((lista) => lista.sort((a, b) => b.total - a.total));
+
+  const totalGrupo = (g) => grupos[g].reduce((s, c) => s + c.total, 0);
+  const deducoes = totalGrupo('deducao');
+  const receitaLiquida = receitaBruta - deducoes;
+  const despPorGrupo = {};
+  GRUPO_DRE_ORDEM.forEach((g) => { despPorGrupo[g] = totalGrupo(g); });
+  const totalDespesasOperacionais = GRUPO_DRE_ORDEM.reduce((s, g) => s + despPorGrupo[g], 0);
+  const lucroLiquido = receitaLiquida - totalDespesasOperacionais;
+  const margem = receitaBruta > 0 ? Math.round(lucroLiquido / receitaBruta * 100) : 0;
+  const lucroRetido = lucroLiquido - retiradasMes;
+
+  return { mes, receitaBruta, deducoes, receitaLiquida, grupos, despPorGrupo, totalDespesasOperacionais, lucroLiquido, margem, retiradasMes, lucroRetido };
+}
