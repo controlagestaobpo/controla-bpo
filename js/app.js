@@ -49,6 +49,7 @@ async function mostrarApp() {
   document.getElementById('app').style.display = 'block';
   document.getElementById('page-dashboard').innerHTML = '<div class="empty-state">Carregando...</div>';
   await carregarTudo();
+  State.periodo = mesAtual();
   trocarTab('dashboard');
 }
 

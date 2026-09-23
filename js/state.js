@@ -10,6 +10,7 @@ const State = {
   metasFinanceiras: [],
   metas: { sm_clientes: 20, sm_fat: 20000, sm_prazo: '', mm_clientes: 5, mm_fat: 5000 },
   perfil: { nome_empresa: '' },
+  periodo: null, // 'YYYY-MM' selecionado no navegador de período (Dashboard/Financeiro)
 };
 
 const GRUPO_RECEITA_LABELS = {

@@ -44,6 +44,27 @@ function fecharOv(id) { document.getElementById(id).classList.remove('open'); }
 
 const CORES_CATEGORIA = ['#1A3A6B', '#00C896', '#D97706', '#7C3AED', '#2563EB', '#DC2626', '#EA580C', '#00A86B', '#8A97A8', '#0F1B3C'];
 
+// ===== Navegador de período (mês/ano) — Dashboard e Financeiro =====
+function somarMes(ym, delta) {
+  const [y, m] = ym.split('-').map(Number);
+  const d = new Date(y, m - 1 + delta, 1);
+  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+}
+
+function mudarPeriodoTab(delta) {
+  State.periodo = delta === 0 ? mesAtual() : somarMes(State.periodo, delta);
+  RENDERERS[tabAtual]();
+}
+
+function htmlSeletorPeriodo() {
+  return `<div class="periodo-nav">
+    <button class="periodo-btn" onclick="mudarPeriodoTab(-1)">‹</button>
+    <div class="periodo-label">${nomeMesLongo(State.periodo)}</div>
+    <button class="periodo-btn" onclick="mudarPeriodoTab(1)">›</button>
+    ${State.periodo !== mesAtual() ? `<button class="btn btn-xs" onclick="mudarPeriodoTab(0)">Hoje</button>` : ''}
+  </div>`;
+}
+
 // ===== Projeção de ritmo (pace) até o fim do mês =====
 function diasNoMes(ym) {
   const [y, m] = ym.split('-').map(Number);

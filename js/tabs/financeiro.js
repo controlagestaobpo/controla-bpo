@@ -2,6 +2,10 @@ let fnReceitaEditId = null;
 let fnDespesaEditId = null;
 let fnCharts2 = {};
 
+function dataPadraoPeriodo() {
+  return State.periodo === mesAtual() ? hj() : State.periodo + '-01';
+}
+
 function clientesSemRecorrenciaNoMes(mes) {
   return State.clientesAtivos.filter((c) =>
     c.status === 'ativo' && c.frequencia === 'mensal' && Number(c.ticket_mensal) > 0 &&
@@ -22,49 +26,99 @@ function calcularEvolucaoTicketMedio(nMeses) {
   });
 }
 
-function calcularReceitaVsMeta() {
-  const mes = mesAtual();
+function calcularReceitaVsMeta(mes) {
   const dre = montarDRE(mes);
   const metaSalva = State.metasFinanceiras.find((m) => m.mes === mes);
   const meta = metaSalva ? metaSalva.meta_receita : State.metas.mm_fat;
   return { atual: dre.receitaTotal, meta };
 }
 
-function gerarInsightsFinanceiro() {
-  const mes = mesAtual();
+function gerarInsightsFinanceiro(mes) {
   const dre = montarDRE(mes);
-  const drePassado = montarDRE(mesesAtras(1));
-  const projecao = projecaoFimDeMes(dre.receitaTotal, mes);
-  const { meta } = calcularReceitaVsMeta();
+  const drePassado = montarDRE(somarMes(mes, -1));
   const insights = [];
 
-  if (meta > 0) {
-    insights.push(projecao >= meta
-      ? `No ritmo atual, você deve fechar o mês em ${fmtMoeda(projecao)} — acima da meta de ${fmtMoeda(meta)}.`
-      : `No ritmo atual, você deve fechar o mês em ${fmtMoeda(projecao)} — abaixo da meta de ${fmtMoeda(meta)}. Faltam ${fmtMoeda(Math.max(meta - projecao, 0))}.`);
+  if (mes === mesAtual()) {
+    const projecao = projecaoFimDeMes(dre.receitaTotal, mes);
+    const { meta } = calcularReceitaVsMeta(mes);
+    if (meta > 0) {
+      insights.push(projecao >= meta
+        ? `No ritmo atual, você deve fechar o mês em ${fmtMoeda(projecao)} — acima da meta de ${fmtMoeda(meta)}.`
+        : `No ritmo atual, você deve fechar o mês em ${fmtMoeda(projecao)} — abaixo da meta de ${fmtMoeda(meta)}. Faltam ${fmtMoeda(Math.max(meta - projecao, 0))}.`);
+    }
   }
 
   const despesaAtual = dre.deducoes + dre.totalDespesasOperacionais;
   const despesaPassada = drePassado.deducoes + drePassado.totalDespesasOperacionais;
   if (despesaPassada > 0) {
     const variacao = Math.round((despesaAtual - despesaPassada) / despesaPassada * 100);
-    if (variacao > 10) insights.push(`Despesas subiram ${variacao}% em relação ao mês passado — vale revisar.`);
-    else if (variacao < -10) insights.push(`Despesas caíram ${Math.abs(variacao)}% em relação ao mês passado.`);
+    if (variacao > 10) insights.push(`Despesas subiram ${variacao}% em relação ao mês anterior — vale revisar.`);
+    else if (variacao < -10) insights.push(`Despesas caíram ${Math.abs(variacao)}% em relação ao mês anterior.`);
   }
 
   if (!insights.length) insights.push('Lance receitas e despesas por alguns meses pra começar a ver tendências aqui.');
   return insights;
 }
 
+// ===================== FLUXO DE CAIXA =====================
+function fluxoDoPeriodo(mes) {
+  const receitas = State.receitas.filter((r) => r.mes_projecao === mes).map((r) => {
+    const cliente = State.clientesAtivos.find((c) => c.id === r.cliente_id);
+    return {
+      tipo: 'receita', id: r.id, data: r.data, valor: Number(r.valor || 0),
+      titulo: cliente ? cliente.empresa : (r.categoria || 'Receita'),
+      sub: [r.categoria, r.subcategoria, r.descricao].filter(Boolean).join(' · '),
+    };
+  });
+  const despesas = State.despesas.filter((d) => d.mes_projecao === mes).map((d) => ({
+    tipo: 'despesa', id: d.id, data: d.data, valor: Number(d.valor || 0),
+    titulo: d.categoria,
+    sub: [d.subcategoria, d.descricao].filter(Boolean).join(' · '),
+  }));
+  return [...receitas, ...despesas].sort((a, b) => (b.data || '').localeCompare(a.data || ''));
+}
+
+function renderFluxoCaixa(mes) {
+  const el = document.getElementById('fn-fluxo-list');
+  if (!el) return;
+  const itens = fluxoDoPeriodo(mes);
+  if (!itens.length) { el.innerHTML = `<div class="empty-state">Nenhum lançamento em ${nomeMesLongo(mes)}.</div>`; return; }
+
+  const porDia = {};
+  itens.forEach((it) => { if (!porDia[it.data]) porDia[it.data] = []; porDia[it.data].push(it); });
+  const dias = Object.keys(porDia).sort((a, b) => b.localeCompare(a));
+
+  el.innerHTML = dias.map((d) => {
+    const linhas = porDia[d];
+    const totalDia = linhas.reduce((s, it) => s + (it.tipo === 'receita' ? it.valor : -it.valor), 0);
+    const header = `<div class="day-hdr"><div class="day-tit">${fmtD(d)}</div><div class="day-cnt">${linhas.length}</div><div class="day-hdr-total" style="color:${totalDia >= 0 ? 'var(--green2)' : 'var(--red)'}">${totalDia >= 0 ? '+' : '−'}${fmtMoeda2(Math.abs(totalDia))}</div></div>`;
+    const rows = linhas.map((it) => `<div class="fluxo-row">
+      <div class="fluxo-desc">
+        <div class="fluxo-desc-cat">${it.titulo}</div>
+        ${it.sub ? `<div class="fluxo-desc-sub">${it.sub}</div>` : ''}
+      </div>
+      <div class="fluxo-valor" style="color:${it.tipo === 'receita' ? 'var(--green2)' : 'var(--red)'}">${it.tipo === 'receita' ? '+' : '−'}${fmtMoeda2(it.valor)}</div>
+      <div class="fluxo-acts">
+        <button class="btn btn-xs" onclick="${it.tipo === 'receita' ? 'abrirModalReceita' : 'abrirModalDespesa'}('${it.id}')">editar</button>
+        <button class="btn btn-xs btn-danger" onclick="${it.tipo === 'receita' ? 'excluirReceita' : 'excluirDespesa'}('${it.id}')">×</button>
+      </div>
+    </div>`).join('');
+    return `<div class="day-group">${header}<div class="item-card">${rows}</div></div>`;
+  }).join('');
+}
+
 function renderFinanceiro() {
-  const mes = mesAtual();
+  if (!State.periodo) State.periodo = mesAtual();
+  const mes = State.periodo;
   const dre = montarDRE(mes);
-  const pendentes = clientesSemRecorrenciaNoMes(mes);
+  const pendentes = mes === mesAtual() ? clientesSemRecorrenciaNoMes(mes) : [];
 
   const el = document.getElementById('page-financeiro');
   el.innerHTML = `
+    ${htmlSeletorPeriodo()}
+
     <div class="section">
-      <div class="section-title">Resumo financeiro · ${nomeMesLongo(mes)}</div>
+      <div class="section-title">Resumo financeiro</div>
       <div class="panel-sub" style="margin-top:-4px;">O DRE completo e os gráficos por categoria estão no Dashboard.</div>
       <div class="card-grid-2" style="margin-bottom:14px;">
         <div class="stat-card"><div class="stat-lbl">Receita</div><div class="stat-val" style="color:var(--green2)">${fmtMoeda(dre.receitaTotal)}</div></div>
@@ -86,7 +140,7 @@ function renderFinanceiro() {
     <div class="section">
       <div class="section-title">Insights</div>
       <div class="panel" style="border-left:4px solid var(--blue);">
-        ${gerarInsightsFinanceiro().map((i) => `<div style="font-size:12px;color:var(--text2);line-height:1.7;">• ${i}</div>`).join('')}
+        ${gerarInsightsFinanceiro(mes).map((i) => `<div style="font-size:12px;color:var(--text2);line-height:1.7;">• ${i}</div>`).join('')}
       </div>
     </div>
 
@@ -106,28 +160,24 @@ function renderFinanceiro() {
     </div>
 
     <div class="section">
-      <div class="section-title">Receitas</div>
-      <div style="margin-bottom:10px;"><button class="btn btn-primary btn-sm" onclick="abrirModalReceita()">+ Nova receita</button></div>
-      <div class="simple-list" id="fn-receitas-list" style="margin-bottom:6px;"></div>
-    </div>
-
-    <div class="section">
-      <div class="section-title">Despesas</div>
-      <div class="panel-sub" style="margin-top:-4px;">Retiradas de lucro e pró-labore também entram aqui, na categoria "Pessoal".</div>
-      <div style="margin-bottom:10px;"><button class="btn btn-primary btn-sm" onclick="abrirModalDespesa()">+ Nova despesa</button></div>
-      <div class="simple-list" id="fn-despesas-list"></div>
+      <div class="section-title">Fluxo de caixa</div>
+      <div class="panel-sub" style="margin-top:-4px;">Retiradas de lucro e pró-labore entram como despesa, categoria "Pessoal".</div>
+      <div style="display:flex;gap:8px;margin-bottom:10px;">
+        <button class="btn btn-primary btn-sm" style="flex:1;" onclick="abrirModalReceita()">+ Receita</button>
+        <button class="btn btn-sm" style="flex:1;border-color:#FECACA;color:var(--red);" onclick="abrirModalDespesa()">+ Despesa</button>
+      </div>
+      <div class="list" id="fn-fluxo-list" style="padding:0;"></div>
     </div>
   `;
-  renderReceitasLista();
-  renderDespesasLista();
-  renderGraficosFinanceiro2();
+  renderFluxoCaixa(mes);
+  renderGraficosFinanceiro2(mes);
 }
 
-function renderGraficosFinanceiro2() {
+function renderGraficosFinanceiro2(mes) {
   Object.values(fnCharts2).forEach((c) => { try { c.destroy(); } catch (e) {} });
   fnCharts2 = {};
 
-  const { atual, meta } = calcularReceitaVsMeta();
+  const { atual, meta } = calcularReceitaVsMeta(mes);
   const canvasMeta = document.getElementById('fn-chart-meta');
   if (meta > 0 || atual > 0) {
     fnCharts2.meta = new Chart(canvasMeta, {
@@ -153,43 +203,6 @@ function renderGraficosFinanceiro2() {
   } else {
     canvasTicket.parentElement.innerHTML = '<div class="empty-state">Ainda não há receita vinculada a clientes nos últimos 12 meses.</div>';
   }
-}
-
-function renderReceitasLista() {
-  const el = document.getElementById('fn-receitas-list');
-  if (!el) return;
-  const lista = [...State.receitas].sort((a, b) => (b.data || '').localeCompare(a.data || '')).slice(0, 30);
-  if (!lista.length) { el.innerHTML = '<div class="empty-state">Nenhuma receita lançada ainda.</div>'; return; }
-  el.innerHTML = lista.map((r) => {
-    const cliente = State.clientesAtivos.find((c) => c.id === r.cliente_id);
-    return `<div class="simple-row">
-      <div class="simple-row-main">
-        <div class="simple-row-title">${fmtMoeda2(r.valor)} <span class="badge badge-gray">${r.categoria || 'sem categoria'}${r.subcategoria ? ' · ' + r.subcategoria : ''}</span>${r.e_recorrente ? ' <span class="badge badge-green">recorrente</span>' : ''}</div>
-        <div class="simple-row-sub">${fmtD(r.data)} · ${cliente ? cliente.empresa : (r.descricao || 'sem descrição')}${r.origem === 'cliente_crm' ? ' · via Comercial' : ''}</div>
-      </div>
-      <div class="simple-row-acts">
-        <button class="btn btn-xs" onclick="abrirModalReceita('${r.id}')">editar</button>
-        <button class="btn btn-xs btn-danger" onclick="excluirReceita('${r.id}')">×</button>
-      </div>
-    </div>`;
-  }).join('');
-}
-
-function renderDespesasLista() {
-  const el = document.getElementById('fn-despesas-list');
-  if (!el) return;
-  const lista = [...State.despesas].sort((a, b) => (b.data || '').localeCompare(a.data || '')).slice(0, 30);
-  if (!lista.length) { el.innerHTML = '<div class="empty-state">Nenhuma despesa lançada ainda.</div>'; return; }
-  el.innerHTML = lista.map((d) => `<div class="simple-row">
-    <div class="simple-row-main">
-      <div class="simple-row-title">${fmtMoeda2(d.valor)} <span class="badge badge-gray">${d.categoria}${d.subcategoria ? ' · ' + d.subcategoria : ''}</span></div>
-      <div class="simple-row-sub">${fmtD(d.data)}${d.descricao ? ' · ' + d.descricao : ''}${d.e_recorrente ? ' · recorrente' : ''}</div>
-    </div>
-    <div class="simple-row-acts">
-      <button class="btn btn-xs" onclick="abrirModalDespesa('${d.id}')">editar</button>
-      <button class="btn btn-xs btn-danger" onclick="excluirDespesa('${d.id}')">×</button>
-    </div>
-  </div>`).join('');
 }
 
 async function fnGerarRecorrencias() {
@@ -246,7 +259,7 @@ function abrirModalReceita(id) {
     selCat.value = State.categoriasReceita[0] ? State.categoriasReceita[0].nome_principal : '';
     fnAtualizarSubcategoriasReceita();
     document.getElementById('rc-valor').value = '';
-    document.getElementById('rc-data').value = hj();
+    document.getElementById('rc-data').value = dataPadraoPeriodo();
     selProd.value = '';
     document.getElementById('rc-descricao').value = '';
     document.getElementById('rc-recorrente').checked = false;
@@ -321,7 +334,7 @@ function abrirModalDespesa(id) {
     selCat.value = State.categoriasDespesa[0] ? State.categoriasDespesa[0].nome_principal : '';
     fnAtualizarSubcategorias();
     document.getElementById('ds-valor').value = '';
-    document.getElementById('ds-data').value = hj();
+    document.getElementById('ds-data').value = dataPadraoPeriodo();
     document.getElementById('ds-descricao').value = '';
     document.getElementById('ds-recorrente').checked = false;
     document.getElementById('ds-recorrente-ate').value = '';

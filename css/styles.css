@@ -158,6 +158,22 @@ table.tbl td{padding:9px 4px;border-bottom:1px solid rgba(226,232,240,0.6);white
 table.tbl tr:last-child td{border-bottom:none;}
 table.tbl tr:hover td{background:rgba(0,200,150,0.05);}
 
+/* ===== NAVEGADOR DE PERÍODO (mês/ano) ===== */
+.periodo-nav{display:flex;align-items:center;justify-content:center;gap:10px;background:rgba(255,255,255,0.95);backdrop-filter:blur(10px);border:1px solid rgba(226,232,240,0.5);border-radius:12px;padding:8px 12px;margin:0 16px 14px;box-shadow:var(--shadow);position:sticky;top:96px;z-index:15;}
+.periodo-btn{background:var(--bg3);border:none;border-radius:8px;width:30px;height:30px;font-size:17px;color:var(--navy);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.periodo-btn:hover{background:var(--green);color:#fff;}
+.periodo-label{font-size:13px;font-weight:700;color:var(--navy);text-transform:capitalize;min-width:130px;text-align:center;}
+
+/* ===== FLUXO DE CAIXA (Financeiro) ===== */
+.fluxo-row{display:flex;align-items:center;gap:10px;padding:8px 12px;border-bottom:1px solid rgba(226,232,240,0.5);}
+.fluxo-row:last-child{border-bottom:none;}
+.fluxo-desc{flex:1;min-width:0;}
+.fluxo-desc-cat{font-size:12.5px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.fluxo-desc-sub{font-size:10.5px;color:var(--text3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px;}
+.fluxo-valor{font-weight:800;font-size:13px;flex-shrink:0;white-space:nowrap;}
+.fluxo-acts{display:flex;gap:3px;flex-shrink:0;}
+.day-hdr-total{margin-left:auto;font-size:11px;font-weight:700;}
+
 /* ===== RELATÓRIOS / IMPRESSÃO ===== */
 #print-container{position:absolute;left:-9999px;top:0;width:800px;background:#fff;color:#1A2332;padding:32px;font-size:12px;}
 @media print{

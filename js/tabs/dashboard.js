@@ -8,10 +8,12 @@ function renderDashboard() {
   const taxaConversao = totalContatos > 0 ? Math.round(totalFechadosAllTime / totalContatos * 100) : 0;
   const valorFunil = pipeline.reduce((s, p) => s + (p.ticket || 0), 0);
 
-  const mes = mesAtual();
+  if (!State.periodo) State.periodo = mesAtual();
+  const mes = State.periodo;
   const dre = montarDRE(mes);
   const despesaTotalMes = dre.deducoes + dre.totalDespesasOperacionais;
   const projecaoMes = projecaoFimDeMes(dre.receitaTotal, mes);
+  const projecaoLabel = mes === mesAtual() ? 'Projeção (fim do mês)' : (mes < mesAtual() ? 'Total do mês' : 'Projeção do mês');
 
   const h = hj();
   const acoes = [];
@@ -34,14 +36,16 @@ function renderDashboard() {
       </div>
     </div>
 
+    ${htmlSeletorPeriodo()}
+
     <div class="section">
-      <div class="section-title">Resumo financeiro · ${nomeMesLongo(mes)}</div>
+      <div class="section-title">Resumo financeiro</div>
       <div class="card-grid-2" style="margin-bottom:14px;">
         <div class="stat-card"><div class="stat-lbl">Receita</div><div class="stat-val" style="color:var(--green2)">${fmtMoeda(dre.receitaTotal)}</div><div class="stat-sub">meta: ${fmtMoeda(State.metas.mm_fat)}</div></div>
         <div class="stat-card"><div class="stat-lbl">Despesas</div><div class="stat-val" style="color:var(--red)">${fmtMoeda(despesaTotalMes)}</div></div>
         <div class="stat-card"><div class="stat-lbl">Lucro líquido</div><div class="stat-val" style="color:${dre.lucroLiquido >= 0 ? 'var(--green2)' : 'var(--red)'}">${fmtMoeda(dre.lucroLiquido)}</div></div>
         <div class="stat-card"><div class="stat-lbl">Margem</div><div class="stat-val">${dre.margem}%</div></div>
-        <div class="stat-card" style="grid-column:1/-1;"><div class="stat-lbl">Projeção (fim do mês)</div><div class="stat-val">${fmtMoeda(projecaoMes)}</div><div class="stat-sub">no ritmo atual de faturamento</div></div>
+        <div class="stat-card" style="grid-column:1/-1;"><div class="stat-lbl">${projecaoLabel}</div><div class="stat-val">${fmtMoeda(projecaoMes)}</div><div class="stat-sub">no ritmo atual de faturamento</div></div>
       </div>
     </div>
 
