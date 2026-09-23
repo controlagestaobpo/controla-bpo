@@ -1,3 +1,8 @@
+if (window.Chart) {
+  Chart.defaults.font.family = "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
+  Chart.defaults.color = '#8A97A8';
+}
+
 const TABS = ['dashboard', 'comercial', 'financeiro', 'historico', 'metas', 'config'];
 const RENDERERS = {
   dashboard: renderDashboard,
