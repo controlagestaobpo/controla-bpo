@@ -12,6 +12,20 @@ function renderConfig() {
     </div>
 
     <div class="section">
+      <div class="section-title">Relatórios</div>
+      <div class="panel">
+        <div class="panel-sub" style="margin-top:-4px;">Gera um PDF (via impressão do navegador) ou exporta os dados brutos.</div>
+        <div style="display:flex;flex-direction:column;gap:8px;">
+          <button class="btn" onclick="gerarRelatorioComercial()">📄 Relatório Comercial</button>
+          <button class="btn" onclick="gerarRelatorioFinanceiro()">📄 Relatório Financeiro</button>
+          <button class="btn" onclick="gerarRelatorioIntegrado()">📄 Relatório Integrado (Visão 360°)</button>
+          <button class="btn" onclick="rlExportarJSON()">⬇ Exportar dados brutos (JSON)</button>
+          <button class="btn" onclick="rlCopiarResumoIA()">📋 Copiar resumo para IA</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
       <div class="section-title">Produtos / Serviços</div>
       <div style="margin-bottom:10px;"><button class="btn btn-primary btn-sm" onclick="abrirModalProduto()">+ Novo produto</button></div>
       <div class="simple-list" id="cf-produtos-list" style="margin-bottom:6px;"></div>

@@ -157,3 +157,12 @@ table.tbl th{text-align:left;font-size:10px;text-transform:uppercase;letter-spac
 table.tbl td{padding:9px 4px;border-bottom:1px solid rgba(226,232,240,0.6);white-space:nowrap;}
 table.tbl tr:last-child td{border-bottom:none;}
 table.tbl tr:hover td{background:rgba(0,200,150,0.05);}
+
+/* ===== RELATÓRIOS / IMPRESSÃO ===== */
+#print-container{position:absolute;left:-9999px;top:0;width:800px;background:#fff;color:#1A2332;padding:32px;font-size:12px;}
+@media print{
+  @page{margin:1.5cm;}
+  body *{visibility:hidden;}
+  #print-container,#print-container *{visibility:visible;}
+  #print-container{position:absolute;left:0;top:0;width:100%;padding:0;}
+}
