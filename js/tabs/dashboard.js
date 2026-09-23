@@ -72,9 +72,28 @@ function renderDashboard() {
       </div>
     </div>
 
-    <div class="placeholder-box">
-      <strong>Mais gráficos chegam na Fase 3</strong>
-      Funil de conversão, top segmentos e crescimento dos últimos meses.
+    <div class="section">
+      <div class="section-title">Funil de conversão</div>
+      <div class="chart-box panel">
+        <div class="panel-sub">Todos os prospects já cadastrados</div>
+        <div style="position:relative;height:200px;"><canvas id="db-chart-funil"></canvas></div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">Top segmentos</div>
+      <div class="chart-box panel">
+        <div class="panel-sub">Taxa de conversão por segmento (mín. 1 prospect)</div>
+        <div style="position:relative;height:200px;"><canvas id="db-chart-segmentos"></canvas></div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">Crescimento</div>
+      <div class="chart-box panel">
+        <div class="panel-sub">Receita bruta dos últimos 6 meses</div>
+        <div style="position:relative;height:220px;"><canvas id="db-chart-crescimento"></canvas></div>
+      </div>
     </div>
   `;
   renderDreTabelaDashboard(dre);
@@ -131,6 +150,62 @@ function fnBarChartOrdenado(canvas, itens, corBase) {
   });
 }
 
+function calcularFunil() {
+  const todos = State.prospects;
+  const nC = todos.filter((p) => p.status === 'conversa').length;
+  const nP = todos.filter((p) => p.status === 'proposta').length;
+  const nF = todos.filter((p) => p.status === 'fechado').length;
+  return [
+    { nome: 'Visitas totais', valor: todos.length, cor: '#1A3A6B' },
+    { nome: 'Chegaram em conversa', valor: nC + nP + nF, cor: '#D97706' },
+    { nome: 'Propostas enviadas', valor: nP + nF, cor: '#7C3AED' },
+    { nome: 'Clientes fechados', valor: nF, cor: '#059669' },
+  ];
+}
+
+function calcularTopSegmentos() {
+  const porNicho = {};
+  State.prospects.forEach((p) => {
+    if (!p.nicho) return;
+    if (!porNicho[p.nicho]) porNicho[p.nicho] = { v: 0, f: 0 };
+    porNicho[p.nicho].v += 1;
+    if (p.status === 'fechado') porNicho[p.nicho].f += 1;
+  });
+  return Object.entries(porNicho)
+    .map(([nome, d]) => ({ nome, valor: d.v > 0 ? Math.round(d.f / d.v * 100) : 0, v: d.v, f: d.f }))
+    .sort((a, b) => b.valor - a.valor || b.f - a.f)
+    .slice(0, 6);
+}
+
+function calcularCrescimento(nMeses) {
+  const meses = [];
+  for (let i = nMeses - 1; i >= 0; i--) meses.push(mesesAtras(i));
+  return meses.map((m) => ({ mes: m, receita: montarDRE(m).receitaTotal }));
+}
+
+function fnBarChartOrdem(canvas, itens, cores, sufixo) {
+  return new Chart(canvas, {
+    type: 'bar',
+    data: {
+      labels: itens.map((c) => c.nome),
+      datasets: [{ data: itens.map((c) => c.valor), backgroundColor: itens.map((c) => c.cor) || cores, borderRadius: 4 }],
+    },
+    options: {
+      indexAxis: 'y',
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: { callbacks: { label: (ctx) => ctx.parsed.x + (sufixo || '') } },
+      },
+      scales: {
+        x: { beginAtZero: true, ticks: { font: { size: 10 }, color: '#9CA3AF', callback: (v) => v + (sufixo || '') }, grid: { color: 'rgba(0,0,0,0.04)' } },
+        y: { ticks: { font: { size: 10 }, color: '#374151' } },
+      },
+    },
+  });
+}
+
 function renderGraficosDashboard(mes, dre) {
   Object.values(dbCharts).forEach((c) => { try { c.destroy(); } catch (e) {} });
   dbCharts = {};
@@ -149,5 +224,44 @@ function renderGraficosDashboard(mes, dre) {
     dbCharts.receitas = fnBarChartOrdenado(canvasReceitas, todasReceitas, '#00C896');
   } else {
     canvasReceitas.parentElement.innerHTML = '<div class="empty-state">Nenhuma receita lançada em ' + nomeMesLongo(mes) + '.</div>';
+  }
+
+  const funil = calcularFunil();
+  const canvasFunil = document.getElementById('db-chart-funil');
+  if (funil[0].valor > 0) {
+    dbCharts.funil = fnBarChartOrdem(canvasFunil, funil, CORES_CATEGORIA);
+  } else {
+    canvasFunil.parentElement.innerHTML = '<div class="empty-state">Nenhum prospect cadastrado ainda.</div>';
+  }
+
+  const segmentos = calcularTopSegmentos();
+  const canvasSegmentos = document.getElementById('db-chart-segmentos');
+  if (segmentos.length) {
+    dbCharts.segmentos = fnBarChartOrdem(canvasSegmentos, segmentos, '#7C3AED', '%');
+  } else {
+    canvasSegmentos.parentElement.innerHTML = '<div class="empty-state">Cadastre prospects com segmento pra ver este gráfico.</div>';
+  }
+
+  const crescimento = calcularCrescimento(6);
+  const canvasCrescimento = document.getElementById('db-chart-crescimento');
+  if (crescimento.some((c) => c.receita > 0)) {
+    dbCharts.crescimento = new Chart(canvasCrescimento, {
+      type: 'bar',
+      data: {
+        labels: crescimento.map((c) => nomeMesShort(c.mes)),
+        datasets: [{ data: crescimento.map((c) => c.receita), backgroundColor: '#1A3A6B', borderRadius: 4 }],
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+          x: { ticks: { font: { size: 10 }, color: '#9CA3AF' }, grid: { display: false } },
+          y: { beginAtZero: true, ticks: { font: { size: 10 }, color: '#9CA3AF' }, grid: { color: 'rgba(0,0,0,0.04)' } },
+        },
+      },
+    });
+  } else {
+    canvasCrescimento.parentElement.innerHTML = '<div class="empty-state">Ainda não há receita lançada nos últimos 6 meses.</div>';
   }
 }

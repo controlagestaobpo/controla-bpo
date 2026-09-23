@@ -365,20 +365,45 @@ async function salvarProspect() {
     const jaTemCliente = State.clientesAtivos.some((c) => c.prospect_id === prospectId);
     if (!jaTemCliente) {
       const origem = document.getElementById('pr-fc-origem').value;
-      await db.from('clientes_ativos').insert([{
+      const frequencia = document.getElementById('pr-fc-frequencia').value;
+      const dataFechamento = payload.data_visita || hj();
+      const ticketMensal = parseFloat(document.getElementById('pr-fc-ticket').value) || payload.ticket;
+
+      const rCliente = await db.from('clientes_ativos').insert([{
         prospect_id: prospectId,
         empresa,
-        data_fechamento: payload.data_visita || hj(),
+        data_fechamento: dataFechamento,
         contato,
         whatsapp,
-        ticket_mensal: parseFloat(document.getElementById('pr-fc-ticket').value) || payload.ticket,
-        frequencia: document.getElementById('pr-fc-frequencia').value,
+        ticket_mensal: ticketMensal,
+        frequencia,
         produto_id: document.getElementById('pr-fc-produto').value || null,
         origem,
         quem_indicou: origem === 'indicacao' ? document.getElementById('pr-fc-indicou').value.trim() : null,
-      }]);
-      const rc = await db.from('clientes_ativos').select('*').order('data_fechamento', { ascending: false });
+      }]).select().single();
+      const novoClienteId = rCliente.data && rCliente.data.id;
+
+      // Alimenta o Financeiro automaticamente: lança a receita do mês do fechamento.
+      if (novoClienteId && ticketMensal > 0) {
+        await db.from('receitas').insert([{
+          cliente_id: novoClienteId,
+          produto_id: document.getElementById('pr-fc-produto').value || null,
+          valor: ticketMensal,
+          data: dataFechamento,
+          mes_projecao: dataFechamento.slice(0, 7),
+          categoria: 'Serviços recorrentes',
+          e_recorrente: frequencia === 'mensal',
+          origem: 'cliente_crm',
+          descricao: `${empresa} — fechamento via Comercial`,
+        }]);
+      }
+
+      const [rc, rr] = await Promise.all([
+        db.from('clientes_ativos').select('*').order('data_fechamento', { ascending: false }),
+        db.from('receitas').select('*').order('data', { ascending: false }),
+      ]);
       State.clientesAtivos = rc.data || [];
+      State.receitas = rr.data || [];
     }
   }
 

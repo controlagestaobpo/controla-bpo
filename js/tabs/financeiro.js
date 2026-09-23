@@ -1,9 +1,17 @@
 let fnReceitaEditId = null;
 let fnDespesaEditId = null;
 
+function clientesSemRecorrenciaNoMes(mes) {
+  return State.clientesAtivos.filter((c) =>
+    c.status === 'ativo' && c.frequencia === 'mensal' && Number(c.ticket_mensal) > 0 &&
+    !State.receitas.some((r) => r.cliente_id === c.id && r.mes_projecao === mes)
+  );
+}
+
 function renderFinanceiro() {
   const mes = mesAtual();
   const dre = montarDRE(mes);
+  const pendentes = clientesSemRecorrenciaNoMes(mes);
 
   const el = document.getElementById('page-financeiro');
   el.innerHTML = `
@@ -17,6 +25,15 @@ function renderFinanceiro() {
         <div class="stat-card"><div class="stat-lbl">Margem</div><div class="stat-val">${dre.margem}%</div></div>
       </div>
     </div>
+
+    ${pendentes.length ? `
+    <div class="section">
+      <div class="panel" style="border-left:4px solid var(--amber);background:#FFFBEB;">
+        <div class="panel-title">${pendentes.length} cliente${pendentes.length === 1 ? '' : 's'} recorrente${pendentes.length === 1 ? '' : 's'} sem receita lançada em ${nomeMesLongo(mes)}</div>
+        <div class="panel-sub">${pendentes.map((c) => c.empresa).join(', ')}</div>
+        <button class="btn btn-primary btn-sm" onclick="fnGerarRecorrencias()">Gerar receitas do mês</button>
+      </div>
+    </div>` : ''}
 
     <div class="section">
       <div class="section-title">Receitas</div>
@@ -70,6 +87,29 @@ function renderDespesasLista() {
       <button class="btn btn-xs btn-danger" onclick="excluirDespesa('${d.id}')">×</button>
     </div>
   </div>`).join('');
+}
+
+async function fnGerarRecorrencias() {
+  const mes = mesAtual();
+  const pendentes = clientesSemRecorrenciaNoMes(mes);
+  if (!pendentes.length) return;
+  const payload = pendentes.map((c) => ({
+    cliente_id: c.id,
+    produto_id: c.produto_id || null,
+    valor: c.ticket_mensal,
+    data: hj(),
+    mes_projecao: mes,
+    categoria: 'Serviços recorrentes',
+    e_recorrente: true,
+    origem: 'cliente_crm',
+    descricao: `${c.empresa} — recorrência mensal`,
+  }));
+  const { error } = await db.from('receitas').insert(payload);
+  if (error) { alert('Erro: ' + error.message); return; }
+  showSaving();
+  const r = await db.from('receitas').select('*').order('data', { ascending: false });
+  State.receitas = r.data || [];
+  renderFinanceiro();
 }
 
 // ===================== RECEITA =====================
