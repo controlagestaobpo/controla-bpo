@@ -6,6 +6,8 @@ const iMes = () => { const d = new Date(); return d.getFullYear() + '-' + String
 const fimMes = () => { const d = new Date(); return new Date(d.getFullYear(), d.getMonth() + 1, 0).toISOString().split('T')[0]; };
 const mesAtual = () => { const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0'); };
 const proximoMes = () => { const d = new Date(); const p = new Date(d.getFullYear(), d.getMonth() + 1, 1); return p.getFullYear() + '-' + String(p.getMonth() + 1).padStart(2, '0'); };
+const mesesAtras = (n) => { const d = new Date(); const p = new Date(d.getFullYear(), d.getMonth() - n, 1); return p.getFullYear() + '-' + String(p.getMonth() + 1).padStart(2, '0'); };
+const mesesAdiante = (n) => { const d = new Date(); const p = new Date(d.getFullYear(), d.getMonth() + n, 1); return p.getFullYear() + '-' + String(p.getMonth() + 1).padStart(2, '0'); };
 
 function fmtD(d) {
   if (!d) return '';
@@ -62,11 +64,28 @@ function receitasDoMes(mes) {
 function despesasDoMes(mes) {
   return State.despesas.filter((d) => d.mes_projecao === mes);
 }
+function dataDesde(dias) {
+  const d = new Date();
+  d.setDate(d.getDate() - dias);
+  return d.toISOString().split('T')[0];
+}
+function receitasUltimosDias(dias) {
+  const desde = dataDesde(dias);
+  return State.receitas.filter((r) => r.status === 'ativa' && r.data >= desde);
+}
+function despesasUltimosDias(dias) {
+  const desde = dataDesde(dias);
+  return State.despesas.filter((d) => d.data >= desde);
+}
 
 function montarDRE(mes) {
-  const receitasMes = receitasDoMes(mes);
-  const despesasMes = despesasDoMes(mes);
+  return montarDREdeListas(receitasDoMes(mes), despesasDoMes(mes), mes);
+}
+function montarDREUltimosDias(dias) {
+  return montarDREdeListas(receitasUltimosDias(dias), despesasUltimosDias(dias), null);
+}
 
+function montarDREdeListas(receitasMes, despesasMes, mes) {
   // ---- Receita, agrupada por categoria (operacional x não operacional) ----
   const receitaPorCategoria = {};
   receitasMes.forEach((r) => { const k = r.categoria || 'Sem categoria'; receitaPorCategoria[k] = (receitaPorCategoria[k] || 0) + Number(r.valor || 0); });
