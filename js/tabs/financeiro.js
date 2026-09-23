@@ -235,7 +235,6 @@ function fnAtualizarSubcategoriasReceita() {
   const selSub = document.getElementById('rc-subcategoria');
   const subs = (cat && cat.subcategorias) || [];
   selSub.innerHTML = '<option value="">Nenhuma</option>' + subs.map((s) => `<option>${s}</option>`).join('');
-  document.getElementById('row-subcategoria-receita').style.display = subs.length ? 'block' : 'none';
 }
 
 function abrirModalReceita(id) {
@@ -308,7 +307,6 @@ function fnAtualizarSubcategorias() {
   const selSub = document.getElementById('ds-subcategoria');
   const subs = (cat && cat.subcategorias) || [];
   selSub.innerHTML = '<option value="">Nenhuma</option>' + subs.map((s) => `<option>${s}</option>`).join('');
-  document.getElementById('row-subcategoria').style.display = subs.length ? 'block' : 'none';
 }
 
 function fnToggleRecorrenteAte() {
