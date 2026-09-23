@@ -65,10 +65,26 @@ function retiradasDoMes(mes) {
 }
 
 function montarDRE(mes) {
-  const receitaBruta = receitasDoMes(mes).reduce((s, r) => s + Number(r.valor || 0), 0);
+  const receitasMes = receitasDoMes(mes);
   const despesasMes = despesasDoMes(mes);
   const retiradasMes = retiradasDoMes(mes).reduce((s, r) => s + Number(r.valor || 0), 0);
 
+  // ---- Receita, agrupada por categoria (operacional x não operacional) ----
+  const receitaPorCategoria = {};
+  receitasMes.forEach((r) => { const k = r.categoria || 'Sem categoria'; receitaPorCategoria[k] = (receitaPorCategoria[k] || 0) + Number(r.valor || 0); });
+  const receitaOperacionalDetalhe = [];
+  const receitaNaoOperacionalDetalhe = [];
+  Object.entries(receitaPorCategoria).forEach(([nome, total]) => {
+    const catDef = State.categoriasReceita.find((c) => c.nome_principal === nome);
+    const grupo = (catDef && catDef.grupo_dre) || 'operacional';
+    (grupo === 'operacional' ? receitaOperacionalDetalhe : receitaNaoOperacionalDetalhe).push({ nome, total });
+  });
+  [receitaOperacionalDetalhe, receitaNaoOperacionalDetalhe].forEach((l) => l.sort((a, b) => b.total - a.total));
+  const receitaOperacional = receitaOperacionalDetalhe.reduce((s, c) => s + c.total, 0);
+  const receitaNaoOperacional = receitaNaoOperacionalDetalhe.reduce((s, c) => s + c.total, 0);
+  const receitaTotal = receitaOperacional + receitaNaoOperacional;
+
+  // ---- Despesas, agrupadas por categoria dentro de cada grupo DRE ----
   const porCategoria = {};
   despesasMes.forEach((d) => { porCategoria[d.categoria] = (porCategoria[d.categoria] || 0) + Number(d.valor || 0); });
 
@@ -82,13 +98,19 @@ function montarDRE(mes) {
 
   const totalGrupo = (g) => grupos[g].reduce((s, c) => s + c.total, 0);
   const deducoes = totalGrupo('deducao');
-  const receitaLiquida = receitaBruta - deducoes;
+  const receitaLiquidaOperacional = receitaOperacional - deducoes;
   const despPorGrupo = {};
   GRUPO_DRE_ORDEM.forEach((g) => { despPorGrupo[g] = totalGrupo(g); });
   const totalDespesasOperacionais = GRUPO_DRE_ORDEM.reduce((s, g) => s + despPorGrupo[g], 0);
-  const lucroLiquido = receitaLiquida - totalDespesasOperacionais;
-  const margem = receitaBruta > 0 ? Math.round(lucroLiquido / receitaBruta * 100) : 0;
+  const resultadoOperacional = receitaLiquidaOperacional - totalDespesasOperacionais;
+  const lucroLiquido = resultadoOperacional + receitaNaoOperacional;
+  const margem = receitaTotal > 0 ? Math.round(lucroLiquido / receitaTotal * 100) : 0;
   const lucroRetido = lucroLiquido - retiradasMes;
 
-  return { mes, receitaBruta, deducoes, receitaLiquida, grupos, despPorGrupo, totalDespesasOperacionais, lucroLiquido, margem, retiradasMes, lucroRetido };
+  return {
+    mes, receitaOperacional, receitaOperacionalDetalhe, deducoes, receitaLiquidaOperacional,
+    grupos, despPorGrupo, totalDespesasOperacionais, resultadoOperacional,
+    receitaNaoOperacional, receitaNaoOperacionalDetalhe, receitaTotal,
+    lucroLiquido, margem, retiradasMes, lucroRetido,
+  };
 }

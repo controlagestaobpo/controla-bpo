@@ -9,7 +9,7 @@ function renderDashboard() {
   const mes = mesAtual();
   const dre = montarDRE(mes);
   const despesaTotalMes = dre.deducoes + dre.totalDespesasOperacionais;
-  const projecaoMes = projecaoFimDeMes(dre.receitaBruta, mes);
+  const projecaoMes = projecaoFimDeMes(dre.receitaTotal, mes);
 
   const h = hj();
   const acoes = [];
@@ -35,7 +35,7 @@ function renderDashboard() {
     <div class="section">
       <div class="section-title">Resumo financeiro · ${nomeMesLongo(mes)}</div>
       <div class="card-grid-2" style="margin-bottom:14px;">
-        <div class="stat-card"><div class="stat-lbl">Receita</div><div class="stat-val" style="color:var(--green2)">${fmtMoeda(dre.receitaBruta)}</div><div class="stat-sub">meta: ${fmtMoeda(State.metas.mm_fat)}</div></div>
+        <div class="stat-card"><div class="stat-lbl">Receita</div><div class="stat-val" style="color:var(--green2)">${fmtMoeda(dre.receitaTotal)}</div><div class="stat-sub">meta: ${fmtMoeda(State.metas.mm_fat)}</div></div>
         <div class="stat-card"><div class="stat-lbl">Despesas</div><div class="stat-val" style="color:var(--red)">${fmtMoeda(despesaTotalMes)}</div></div>
         <div class="stat-card"><div class="stat-lbl">Lucro líquido</div><div class="stat-val" style="color:${dre.lucroLiquido >= 0 ? 'var(--green2)' : 'var(--red)'}">${fmtMoeda(dre.lucroLiquido)}</div></div>
         <div class="stat-card"><div class="stat-lbl">Margem</div><div class="stat-val">${dre.margem}%</div></div>

@@ -39,7 +39,7 @@ function renderComercial() {
 
     <div class="section">
       <div class="section-title">Clientes ativos</div>
-      <div style="margin-bottom:10px;"><button class="btn btn-primary btn-sm" onclick="abrirModalCliente()">+ Novo cliente</button></div>
+      <div class="panel-sub" style="margin-top:-4px;">Todo cliente nasce de um prospect fechado — não existe cadastro avulso.</div>
       <div class="simple-list" id="cm-clientes-list" style="margin-bottom:6px;"></div>
     </div>
 
@@ -81,7 +81,7 @@ function renderClientesAtivosLista() {
   const el = document.getElementById('cm-clientes-list');
   if (!el) return;
   const lista = State.clientesAtivos.filter((c) => c.status === 'ativo');
-  if (!lista.length) { el.innerHTML = '<div class="empty-state">Nenhum cliente ativo ainda.</div>'; return; }
+  if (!lista.length) { el.innerHTML = '<div class="empty-state">Nenhum cliente ativo ainda.<br>Marque um prospect como "Fechado" pra criar o primeiro.</div>'; return; }
   el.innerHTML = lista.map((c) => {
     const produto = State.produtos.find((p) => p.id === c.produto_id);
     return `<div class="simple-row">
@@ -99,30 +99,21 @@ function renderClientesAtivosLista() {
 }
 
 function abrirModalCliente(id) {
-  cmClienteEditId = id || null;
-  document.getElementById('cl-tit').textContent = id ? 'Editar cliente' : 'Novo cliente';
+  cmClienteEditId = id;
+  document.getElementById('cl-tit').textContent = 'Editar cliente';
   const selProd = document.getElementById('cl-produto');
   selProd.innerHTML = '<option value="">Nenhum</option>' + State.produtos.filter(p => p.ativo).map((p) => `<option value="${p.id}">${p.nome}</option>`).join('');
-  if (id) {
-    const c = State.clientesAtivos.find((x) => x.id === id);
-    document.getElementById('cl-empresa').value = c.empresa;
-    document.getElementById('cl-data').value = c.data_fechamento;
-    document.getElementById('cl-contato').value = c.contato || '';
-    document.getElementById('cl-whatsapp').value = c.whatsapp || '';
-    document.getElementById('cl-ticket').value = c.ticket_mensal;
-    document.getElementById('cl-frequencia').value = c.frequencia;
-    selProd.value = c.produto_id || '';
-    document.getElementById('cl-origem').value = c.origem || '';
-    document.getElementById('cl-indicou').value = c.quem_indicou || '';
-    document.getElementById('cl-obs').value = c.obs || '';
-  } else {
-    ['cl-empresa', 'cl-contato', 'cl-whatsapp', 'cl-indicou', 'cl-obs'].forEach((i) => document.getElementById(i).value = '');
-    document.getElementById('cl-data').value = hj();
-    document.getElementById('cl-ticket').value = '';
-    document.getElementById('cl-frequencia').value = 'mensal';
-    selProd.value = '';
-    document.getElementById('cl-origem').value = '';
-  }
+  const c = State.clientesAtivos.find((x) => x.id === id);
+  document.getElementById('cl-empresa').value = c.empresa;
+  document.getElementById('cl-data').value = c.data_fechamento;
+  document.getElementById('cl-contato').value = c.contato || '';
+  document.getElementById('cl-whatsapp').value = c.whatsapp || '';
+  document.getElementById('cl-ticket').value = c.ticket_mensal;
+  document.getElementById('cl-frequencia').value = c.frequencia;
+  selProd.value = c.produto_id || '';
+  document.getElementById('cl-origem').value = c.origem || '';
+  document.getElementById('cl-indicou').value = c.quem_indicou || '';
+  document.getElementById('cl-obs').value = c.obs || '';
   cmToggleIndicou();
   abrirOv('ov-cliente');
 }
@@ -271,7 +262,6 @@ function renderProspectsLista() {
             ${deadlineBadge}
             ${p.motivo_perda ? `<span class="badge badge-red">${p.motivo_perda}</span>` : ''}
           </div>
-          ${fechou ? `<div class="ic-next" style="background:#F0FDF4;">Lembre de cadastrar em "+ Novo cliente" se ainda não fez.</div>` : ''}
           ${(p.contato || p.whatsapp) ? `<div class="ic-ct">${[p.contato, p.whatsapp].filter(Boolean).join(' · ')}</div>` : ''}
           ${p.obs ? `<div class="ic-obs">${p.obs}</div>` : ''}
           ${p.proximo ? `<div class="ic-next">&rarr; ${p.proximo}</div>` : ''}
@@ -289,6 +279,8 @@ function abrirModalProspect(id) {
   const selNicho = document.getElementById('pr-nicho');
   selNicho.innerHTML = '<option value="">Selecione</option>' + State.segmentos.map((s) => `<option>${s.nome}</option>`).join('') + '<option>Outro</option>';
   document.getElementById('pr-motivo').innerHTML = '<option value="">Selecione o motivo</option>' + MOTIVOS_PERDA.map((m) => `<option>${m}</option>`).join('');
+  const selProd = document.getElementById('pr-fc-produto');
+  selProd.innerHTML = '<option value="">Nenhum</option>' + State.produtos.filter((p) => p.ativo).map((p) => `<option value="${p.id}">${p.nome}</option>`).join('');
   if (id) {
     const p = State.prospects.find((x) => x.id === id);
     document.getElementById('pr-empresa').value = p.empresa;
@@ -302,21 +294,38 @@ function abrirModalProspect(id) {
     document.getElementById('pr-proximo').value = p.proximo || '';
     document.getElementById('pr-deadline').value = p.deadline || '';
     document.getElementById('pr-motivo').value = p.motivo_perda || '';
+    document.getElementById('pr-fc-ticket').value = p.ticket || '';
+    document.getElementById('pr-fc-frequencia').value = 'mensal';
+    document.getElementById('pr-fc-origem').value = 'prospeccao';
+    document.getElementById('pr-fc-indicou').value = '';
   } else {
-    ['pr-empresa', 'pr-contato', 'pr-whatsapp', 'pr-obs', 'pr-proximo', 'pr-deadline', 'pr-motivo'].forEach((i) => document.getElementById(i).value = '');
+    ['pr-empresa', 'pr-contato', 'pr-whatsapp', 'pr-obs', 'pr-proximo', 'pr-deadline', 'pr-motivo', 'pr-fc-indicou'].forEach((i) => document.getElementById(i).value = '');
     document.getElementById('pr-data').value = hj();
     selNicho.value = '';
     document.getElementById('pr-status').value = 'visita';
     document.getElementById('pr-ticket').value = '1000';
+    document.getElementById('pr-fc-ticket').value = '1000';
+    document.getElementById('pr-fc-frequencia').value = 'mensal';
+    document.getElementById('pr-fc-origem').value = 'prospeccao';
   }
-  cmTogglePerda();
+  cmToggleIndicouProspect();
+  cmStatusChange();
   abrirOv('ov-prospect');
 }
 
-function cmTogglePerda() {
+function cmStatusChange() {
   const st = document.getElementById('pr-status').value;
   document.getElementById('row-perda').style.display = st === 'descartado' ? 'block' : 'none';
   document.getElementById('pr-perda-req').classList.remove('show');
+
+  const jaTemCliente = cmEditId && State.clientesAtivos.some((c) => c.prospect_id === cmEditId);
+  document.getElementById('row-fechado').style.display = st === 'fechado' ? 'block' : 'none';
+  document.querySelectorAll('#row-fechado .fg, #row-fechado > .fr').forEach((el) => { el.style.display = jaTemCliente ? 'none' : ''; });
+  document.getElementById('pr-fc-ja-cliente').style.display = (st === 'fechado' && jaTemCliente) ? 'block' : 'none';
+}
+
+function cmToggleIndicouProspect() {
+  document.getElementById('row-fc-indicou').style.display = document.getElementById('pr-fc-origem').value === 'indicacao' ? 'block' : 'none';
 }
 
 async function salvarProspect() {
@@ -327,23 +336,52 @@ async function salvarProspect() {
     document.getElementById('pr-perda-req').classList.add('show');
     return;
   }
+  const contato = document.getElementById('pr-contato').value.trim();
+  const whatsapp = document.getElementById('pr-whatsapp').value.trim();
   const payload = {
     empresa,
     data_visita: document.getElementById('pr-data').value,
     nicho: document.getElementById('pr-nicho').value,
     status,
-    contato: document.getElementById('pr-contato').value.trim(),
-    whatsapp: document.getElementById('pr-whatsapp').value.trim(),
+    contato,
+    whatsapp,
     ticket: parseInt(document.getElementById('pr-ticket').value) || 1000,
     obs: document.getElementById('pr-obs').value.trim(),
     proximo: document.getElementById('pr-proximo').value,
     deadline: document.getElementById('pr-deadline').value || null,
     motivo_perda: status === 'descartado' ? document.getElementById('pr-motivo').value : null,
   };
-  let error;
-  if (cmEditId) ({ error } = await db.from('prospects').update(payload).eq('id', cmEditId));
-  else ({ error } = await db.from('prospects').insert([payload]));
+  let error, prospectId = cmEditId;
+  if (cmEditId) {
+    ({ error } = await db.from('prospects').update(payload).eq('id', cmEditId));
+  } else {
+    const r = await db.from('prospects').insert([payload]).select().single();
+    error = r.error;
+    prospectId = r.data && r.data.id;
+  }
   if (error) { alert('Erro: ' + error.message); return; }
+
+  if (status === 'fechado' && prospectId) {
+    const jaTemCliente = State.clientesAtivos.some((c) => c.prospect_id === prospectId);
+    if (!jaTemCliente) {
+      const origem = document.getElementById('pr-fc-origem').value;
+      await db.from('clientes_ativos').insert([{
+        prospect_id: prospectId,
+        empresa,
+        data_fechamento: payload.data_visita || hj(),
+        contato,
+        whatsapp,
+        ticket_mensal: parseFloat(document.getElementById('pr-fc-ticket').value) || payload.ticket,
+        frequencia: document.getElementById('pr-fc-frequencia').value,
+        produto_id: document.getElementById('pr-fc-produto').value || null,
+        origem,
+        quem_indicou: origem === 'indicacao' ? document.getElementById('pr-fc-indicou').value.trim() : null,
+      }]);
+      const rc = await db.from('clientes_ativos').select('*').order('data_fechamento', { ascending: false });
+      State.clientesAtivos = rc.data || [];
+    }
+  }
+
   showSaving();
   fecharOv('ov-prospect');
   const r = await db.from('prospects').select('*').order('data_visita', { ascending: false });

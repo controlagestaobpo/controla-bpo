@@ -6,11 +6,24 @@ const State = {
   retiradas: [],
   produtos: [],
   categoriasDespesa: [],
+  categoriasReceita: [],
   segmentos: [],
   metasFinanceiras: [],
   metas: { sm_clientes: 20, sm_fat: 20000, sm_prazo: '', mm_clientes: 5, mm_fat: 5000 },
   perfil: { nome_empresa: '' },
 };
+
+const GRUPO_RECEITA_LABELS = {
+  operacional: 'Receita operacional',
+  nao_operacional: 'Outras receitas (não operacionais)',
+};
+
+const CATEGORIAS_RECEITA_PADRAO = [
+  { nome_principal: 'Serviços recorrentes', subcategorias: [], grupo_dre: 'operacional' },
+  { nome_principal: 'Serviços pontuais', subcategorias: [], grupo_dre: 'operacional' },
+  { nome_principal: 'Receitas financeiras', subcategorias: ['Juros', 'Rendimentos de aplicação'], grupo_dre: 'nao_operacional' },
+  { nome_principal: 'Outras receitas', subcategorias: ['Reembolso', 'Diversos'], grupo_dre: 'nao_operacional' },
+];
 
 // Grupos do DRE enxuto: deducao (sai da receita antes da receita liquida),
 // depois as 4 famílias de despesa operacional.
@@ -58,6 +71,11 @@ async function semearPadroes() {
       CATEGORIAS_DESPESA_PADRAO.map((c) => ({ nome_principal: c.nome_principal, subcategorias: c.subcategorias, grupo_dre: c.grupo_dre }))
     );
   }
+  if (State.categoriasReceita.length === 0) {
+    await db.from('categorias_receita').insert(
+      CATEGORIAS_RECEITA_PADRAO.map((c) => ({ nome_principal: c.nome_principal, subcategorias: c.subcategorias, grupo_dre: c.grupo_dre }))
+    );
+  }
   if (State.segmentos.length === 0) {
     await db.from('segmentos').insert(SEGMENTOS_PADRAO.map((nome) => ({ nome })));
   }
@@ -66,7 +84,7 @@ async function semearPadroes() {
 async function carregarTudo() {
   const [
     prospects, clientesAtivos, receitas, despesas, retiradas, produtos,
-    categoriasDespesa, segmentos, metasFinanceiras, metasRow, configRow,
+    categoriasDespesa, categoriasReceita, segmentos, metasFinanceiras, metasRow, configRow,
   ] = await Promise.all([
     db.from('prospects').select('*').order('data_visita', { ascending: false }),
     db.from('clientes_ativos').select('*').order('data_fechamento', { ascending: false }),
@@ -75,6 +93,7 @@ async function carregarTudo() {
     db.from('retiradas').select('*').order('data', { ascending: false }),
     db.from('produtos').select('*').order('nome'),
     db.from('categorias_despesa').select('*').order('nome_principal'),
+    db.from('categorias_receita').select('*').order('nome_principal'),
     db.from('segmentos').select('*').order('nome'),
     db.from('metas_financeiras').select('*'),
     db.from('metas').select('*').order('updated_at', { ascending: false }).limit(1),
@@ -88,6 +107,7 @@ async function carregarTudo() {
   State.retiradas = retiradas.data || [];
   State.produtos = produtos.data || [];
   State.categoriasDespesa = categoriasDespesa.data || [];
+  State.categoriasReceita = categoriasReceita.data || [];
   State.segmentos = segmentos.data || [];
   State.metasFinanceiras = metasFinanceiras.data || [];
 
@@ -107,6 +127,10 @@ async function carregarTudo() {
   if (State.categoriasDespesa.length === 0) {
     const r = await db.from('categorias_despesa').select('*').order('nome_principal');
     State.categoriasDespesa = r.data || [];
+  }
+  if (State.categoriasReceita.length === 0) {
+    const r = await db.from('categorias_receita').select('*').order('nome_principal');
+    State.categoriasReceita = r.data || [];
   }
   if (State.segmentos.length === 0) {
     const r = await db.from('segmentos').select('*').order('nome');

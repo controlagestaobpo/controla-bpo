@@ -18,6 +18,12 @@ function renderConfig() {
     </div>
 
     <div class="section">
+      <div class="section-title">Categorias de receita</div>
+      <div style="margin-bottom:10px;"><button class="btn btn-sm" onclick="abrirModalCategoriaReceita()">+ Adicionar categoria</button></div>
+      <div class="simple-list" id="cf-categorias-receita-list" style="margin-bottom:6px;"></div>
+    </div>
+
+    <div class="section">
       <div class="section-title">Categorias de despesa</div>
       <div style="margin-bottom:10px;"><button class="btn btn-sm" onclick="abrirModalCategoria()">+ Adicionar categoria</button></div>
       <div class="simple-list" id="cf-categorias-list" style="margin-bottom:6px;"></div>
@@ -38,6 +44,7 @@ function renderConfig() {
     </div>
   `;
   renderProdutosLista();
+  renderCategoriasReceitaLista();
   renderCategoriasLista();
   renderSegmentosLista();
   renderMetasResumo();
@@ -166,6 +173,54 @@ async function excluirCategoria(id) {
   await db.from('categorias_despesa').delete().eq('id', id);
   showSaving();
   State.categoriasDespesa = State.categoriasDespesa.filter((c) => c.id !== id);
+  renderConfig();
+}
+
+// ===================== CATEGORIAS DE RECEITA =====================
+function renderCategoriasReceitaLista() {
+  const el = document.getElementById('cf-categorias-receita-list');
+  if (!State.categoriasReceita.length) { el.innerHTML = '<div class="empty-state">Nenhuma categoria.</div>'; return; }
+  const grupos = ['operacional', 'nao_operacional'];
+  el.innerHTML = grupos.map((g) => {
+    const cats = State.categoriasReceita.filter((c) => (c.grupo_dre || 'operacional') === g);
+    if (!cats.length) return '';
+    return `<div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;font-weight:700;margin:10px 0 4px;">${GRUPO_RECEITA_LABELS[g]}</div>` +
+      cats.map((c) => `<div class="simple-row">
+        <div class="simple-row-main">
+          <div class="simple-row-title">${c.nome_principal}</div>
+          ${c.subcategorias && c.subcategorias.length ? `<div class="simple-row-sub">${c.subcategorias.join(' · ')}</div>` : ''}
+        </div>
+        <button class="btn btn-xs btn-danger" onclick="excluirCategoriaReceita('${c.id}')">×</button>
+      </div>`).join('');
+  }).join('');
+}
+
+function abrirModalCategoriaReceita() {
+  document.getElementById('cr-nome').value = '';
+  document.getElementById('cr-subs').value = '';
+  document.getElementById('cr-grupo').value = 'operacional';
+  abrirOv('ov-categoria-receita');
+}
+
+async function salvarCategoriaReceita() {
+  const nome = document.getElementById('cr-nome').value.trim();
+  if (!nome) { alert('Informe o nome da categoria.'); return; }
+  const subs = document.getElementById('cr-subs').value.split(',').map((s) => s.trim()).filter(Boolean);
+  const grupo_dre = document.getElementById('cr-grupo').value;
+  const { error } = await db.from('categorias_receita').insert([{ nome_principal: nome, subcategorias: subs, grupo_dre }]);
+  if (error) { alert('Erro: ' + error.message); return; }
+  showSaving();
+  fecharOv('ov-categoria-receita');
+  const r = await db.from('categorias_receita').select('*').order('nome_principal');
+  State.categoriasReceita = r.data || [];
+  renderConfig();
+}
+
+async function excluirCategoriaReceita(id) {
+  if (!confirm('Excluir esta categoria?')) return;
+  await db.from('categorias_receita').delete().eq('id', id);
+  showSaving();
+  State.categoriasReceita = State.categoriasReceita.filter((c) => c.id !== id);
   renderConfig();
 }
 

@@ -14,7 +14,7 @@ function renderFinanceiro() {
     <div class="section">
       <div class="section-title">Resumo financeiro · ${nomeMesLongo(mes)}</div>
       <div class="card-grid-2" style="margin-bottom:14px;">
-        <div class="stat-card"><div class="stat-lbl">Receita</div><div class="stat-val" style="color:var(--green2)">${fmtMoeda(dre.receitaBruta)}</div></div>
+        <div class="stat-card"><div class="stat-lbl">Receita</div><div class="stat-val" style="color:var(--green2)">${fmtMoeda(dre.receitaTotal)}</div></div>
         <div class="stat-card"><div class="stat-lbl">Despesas</div><div class="stat-val" style="color:var(--red)">${fmtMoeda(dre.deducoes + dre.totalDespesasOperacionais)}</div></div>
         <div class="stat-card"><div class="stat-lbl">Lucro líquido</div><div class="stat-val" style="color:${dre.lucroLiquido >= 0 ? 'var(--green2)' : 'var(--red)'}">${fmtMoeda(dre.lucroLiquido)}</div></div>
         <div class="stat-card"><div class="stat-lbl">Margem</div><div class="stat-val">${dre.margem}%</div></div>
@@ -34,7 +34,7 @@ function renderFinanceiro() {
         <div style="position:relative;height:220px;"><canvas id="fn-chart-despesas"></canvas></div>
       </div>
       <div class="chart-box panel">
-        <div class="panel-title">Entradas por tipo</div>
+        <div class="panel-title">Entradas por categoria</div>
         <div class="panel-sub">Receitas de ${nomeMesLongo(mes)}</div>
         <div style="position:relative;height:220px;"><canvas id="fn-chart-receitas"></canvas></div>
       </div>
@@ -67,23 +67,28 @@ function renderFinanceiro() {
 
 function renderDreTabela(dre) {
   const el = document.getElementById('fn-dre');
-  const linhaGrupo = (grupo) => {
+  const linhaDetalhe = (it) => `<tr><td style="padding-left:22px;color:var(--text3);font-size:11px;">· ${it.nome}</td><td style="text-align:right;color:var(--text3);font-size:11px;">${fmtMoeda2(it.total)}</td></tr>`;
+
+  const linhaGrupoDespesa = (grupo) => {
     const total = dre.despPorGrupo[grupo];
-    const itens = dre.grupos[grupo];
     if (total === 0) return '';
-    const detalhes = itens.map((it) => `<tr><td style="padding-left:22px;color:var(--text3);font-size:11px;">· ${it.nome}</td><td style="text-align:right;color:var(--text3);font-size:11px;">${fmtMoeda2(it.total)}</td></tr>`).join('');
-    return `<tr><td>(−) ${GRUPO_DRE_LABELS[grupo]}</td><td style="text-align:right;">${fmtMoeda2(total)}</td></tr>${detalhes}`;
+    return `<tr><td>(−) ${GRUPO_DRE_LABELS[grupo]}</td><td style="text-align:right;">${fmtMoeda2(total)}</td></tr>${dre.grupos[grupo].map(linhaDetalhe).join('')}`;
   };
   const linhaDeducao = dre.deducoes > 0
-    ? `<tr><td>(−) Impostos sobre serviço</td><td style="text-align:right;">${fmtMoeda2(dre.deducoes)}</td></tr>` +
-      dre.grupos.deducao.map((it) => `<tr><td style="padding-left:22px;color:var(--text3);font-size:11px;">· ${it.nome}</td><td style="text-align:right;color:var(--text3);font-size:11px;">${fmtMoeda2(it.total)}</td></tr>`).join('')
+    ? `<tr><td>(−) Impostos sobre serviço</td><td style="text-align:right;">${fmtMoeda2(dre.deducoes)}</td></tr>${dre.grupos.deducao.map(linhaDetalhe).join('')}`
+    : '';
+  const linhaNaoOperacional = dre.receitaNaoOperacional > 0
+    ? `<tr><td>(+) Outras receitas</td><td style="text-align:right;">${fmtMoeda2(dre.receitaNaoOperacional)}</td></tr>${dre.receitaNaoOperacionalDetalhe.map(linhaDetalhe).join('')}`
     : '';
 
   el.innerHTML = `<div class="tbl-wrap"><table class="tbl">
-    <tr><td><strong>Receita operacional</strong></td><td style="text-align:right;"><strong>${fmtMoeda2(dre.receitaBruta)}</strong></td></tr>
+    <tr><td><strong>Receita operacional</strong></td><td style="text-align:right;"><strong>${fmtMoeda2(dre.receitaOperacional)}</strong></td></tr>
+    ${dre.receitaOperacionalDetalhe.map(linhaDetalhe).join('')}
     ${linhaDeducao}
-    <tr style="border-top:1.5px solid var(--border);"><td><strong>Receita líquida</strong></td><td style="text-align:right;"><strong>${fmtMoeda2(dre.receitaLiquida)}</strong></td></tr>
-    ${GRUPO_DRE_ORDEM.map(linhaGrupo).join('')}
+    <tr style="border-top:1.5px solid var(--border);"><td>Receita operacional líquida</td><td style="text-align:right;">${fmtMoeda2(dre.receitaLiquidaOperacional)}</td></tr>
+    ${GRUPO_DRE_ORDEM.map(linhaGrupoDespesa).join('')}
+    <tr style="border-top:1.5px solid var(--border);"><td>Resultado operacional</td><td style="text-align:right;">${fmtMoeda2(dre.resultadoOperacional)}</td></tr>
+    ${linhaNaoOperacional}
     <tr style="border-top:1.5px solid var(--border);"><td><strong>Lucro líquido</strong></td><td style="text-align:right;"><strong style="color:${dre.lucroLiquido >= 0 ? 'var(--green2)' : 'var(--red)'}">${fmtMoeda2(dre.lucroLiquido)}</strong></td></tr>
     <tr><td style="color:var(--text3);font-size:11px;">margem de ${dre.margem}%</td><td></td></tr>
     <tr><td>(−) Retiradas</td><td style="text-align:right;">${fmtMoeda2(dre.retiradasMes)}</td></tr>
@@ -95,14 +100,14 @@ function renderGraficosFinanceiro(mes, dre) {
   Object.values(fnCharts).forEach((c) => { try { c.destroy(); } catch (e) {} });
   fnCharts = {};
 
-  const todasCategorias = [...dre.grupos.deducao, ...GRUPO_DRE_ORDEM.flatMap((g) => dre.grupos[g])];
+  const todasDespesas = [...dre.grupos.deducao, ...GRUPO_DRE_ORDEM.flatMap((g) => dre.grupos[g])];
   const canvasDespesas = document.getElementById('fn-chart-despesas');
-  if (todasCategorias.length) {
+  if (todasDespesas.length) {
     fnCharts.despesas = new Chart(canvasDespesas, {
       type: 'doughnut',
       data: {
-        labels: todasCategorias.map((c) => c.nome),
-        datasets: [{ data: todasCategorias.map((c) => c.total), backgroundColor: CORES_CATEGORIA }],
+        labels: todasDespesas.map((c) => c.nome),
+        datasets: [{ data: todasDespesas.map((c) => c.total), backgroundColor: CORES_CATEGORIA }],
       },
       options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { font: { size: 10 }, boxWidth: 10 } } } },
     });
@@ -110,14 +115,15 @@ function renderGraficosFinanceiro(mes, dre) {
     canvasDespesas.parentElement.innerHTML = '<div class="empty-state">Nenhuma despesa lançada em ' + nomeMesLongo(mes) + '.</div>';
   }
 
-  const receitasMes = receitasDoMes(mes);
-  const recorrente = receitasMes.filter((r) => r.e_recorrente).reduce((s, r) => s + Number(r.valor || 0), 0);
-  const pontual = receitasMes.filter((r) => !r.e_recorrente).reduce((s, r) => s + Number(r.valor || 0), 0);
+  const todasReceitas = [...dre.receitaOperacionalDetalhe, ...dre.receitaNaoOperacionalDetalhe];
   const canvasReceitas = document.getElementById('fn-chart-receitas');
-  if (recorrente + pontual > 0) {
+  if (todasReceitas.length) {
     fnCharts.receitas = new Chart(canvasReceitas, {
       type: 'doughnut',
-      data: { labels: ['Recorrente', 'Pontual'], datasets: [{ data: [recorrente, pontual], backgroundColor: ['#00C896', '#2563EB'] }] },
+      data: {
+        labels: todasReceitas.map((c) => c.nome),
+        datasets: [{ data: todasReceitas.map((c) => c.total), backgroundColor: CORES_CATEGORIA }],
+      },
       options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { font: { size: 10 }, boxWidth: 10 } } } },
     });
   } else {
@@ -134,7 +140,7 @@ function renderReceitasLista() {
     const cliente = State.clientesAtivos.find((c) => c.id === r.cliente_id);
     return `<div class="simple-row">
       <div class="simple-row-main">
-        <div class="simple-row-title">${fmtMoeda2(r.valor)} ${r.e_recorrente ? '<span class="badge badge-green">recorrente</span>' : '<span class="badge badge-gray">pontual</span>'}</div>
+        <div class="simple-row-title">${fmtMoeda2(r.valor)} <span class="badge badge-gray">${r.categoria || 'sem categoria'}${r.subcategoria ? ' · ' + r.subcategoria : ''}</span>${r.e_recorrente ? ' <span class="badge badge-green">recorrente</span>' : ''}</div>
         <div class="simple-row-sub">${fmtD(r.data)} · ${cliente ? cliente.empresa : (r.descricao || 'sem descrição')}${r.origem === 'cliente_crm' ? ' · via Comercial' : ''}</div>
       </div>
       <div class="simple-row-acts">
@@ -180,19 +186,35 @@ function renderRetiradasLista() {
 }
 
 // ===================== RECEITA =====================
+function fnAtualizarSubcategoriasReceita() {
+  const catNome = document.getElementById('rc-categoria').value;
+  const cat = State.categoriasReceita.find((c) => c.nome_principal === catNome);
+  const selSub = document.getElementById('rc-subcategoria');
+  const subs = (cat && cat.subcategorias) || [];
+  selSub.innerHTML = '<option value="">Nenhuma</option>' + subs.map((s) => `<option>${s}</option>`).join('');
+  document.getElementById('row-subcategoria-receita').style.display = subs.length ? 'block' : 'none';
+}
+
 function abrirModalReceita(id) {
   fnReceitaEditId = id || null;
   document.getElementById('rc-tit').textContent = id ? 'Editar receita' : 'Nova receita';
   const selProd = document.getElementById('rc-produto');
   selProd.innerHTML = '<option value="">Nenhum</option>' + State.produtos.filter(p => p.ativo).map((p) => `<option value="${p.id}">${p.nome}</option>`).join('');
+  const selCat = document.getElementById('rc-categoria');
+  selCat.innerHTML = State.categoriasReceita.map((c) => `<option>${c.nome_principal}</option>`).join('');
   if (id) {
     const r = State.receitas.find((x) => x.id === id);
+    selCat.value = r.categoria || (State.categoriasReceita[0] && State.categoriasReceita[0].nome_principal) || '';
+    fnAtualizarSubcategoriasReceita();
+    document.getElementById('rc-subcategoria').value = r.subcategoria || '';
     document.getElementById('rc-valor').value = r.valor;
     document.getElementById('rc-data').value = r.data;
     selProd.value = r.produto_id || '';
     document.getElementById('rc-descricao').value = r.descricao || '';
     document.getElementById('rc-recorrente').checked = r.e_recorrente;
   } else {
+    selCat.value = State.categoriasReceita[0] ? State.categoriasReceita[0].nome_principal : '';
+    fnAtualizarSubcategoriasReceita();
     document.getElementById('rc-valor').value = '';
     document.getElementById('rc-data').value = hj();
     selProd.value = '';
@@ -206,15 +228,15 @@ async function salvarReceita() {
   const valor = parseFloat(document.getElementById('rc-valor').value);
   if (!valor) { alert('Informe o valor.'); return; }
   const data = document.getElementById('rc-data').value;
-  const eRecorrente = document.getElementById('rc-recorrente').checked;
   const payload = {
     valor,
     data,
     mes_projecao: data.slice(0, 7),
+    categoria: document.getElementById('rc-categoria').value,
+    subcategoria: document.getElementById('rc-subcategoria').value || null,
     produto_id: document.getElementById('rc-produto').value || null,
     descricao: document.getElementById('rc-descricao').value.trim(),
-    e_recorrente: eRecorrente,
-    categoria: eRecorrente ? 'recorrente' : 'pontual',
+    e_recorrente: document.getElementById('rc-recorrente').checked,
     origem: 'manual',
   };
   let error;

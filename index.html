@@ -65,7 +65,7 @@
     <div class="fg">
       <div class="fr"><label>Segmento</label><select id="pr-nicho"></select></div>
       <div class="fr"><label>Status</label>
-        <select id="pr-status" onchange="cmTogglePerda()">
+        <select id="pr-status" onchange="cmStatusChange()">
           <option value="visita">Visita</option>
           <option value="conversa">Conversa</option>
           <option value="proposta">Proposta enviada</option>
@@ -83,6 +83,34 @@
     <div class="fr" id="row-perda" style="display:none;">
       <label>Motivo da perda *</label>
       <select id="pr-motivo"><option value="">Selecione o motivo</option></select>
+    </div>
+    <div id="row-fechado" style="display:none;">
+      <div class="sec-div">Fechou! Dados do contrato</div>
+      <div class="fg">
+        <div class="fr"><label>Valor mensal (R$)</label><input type="number" id="pr-fc-ticket" min="0"></div>
+        <div class="fr"><label>Frequência</label>
+          <select id="pr-fc-frequencia">
+            <option value="mensal">Mensal</option>
+            <option value="trimestral">Trimestral</option>
+            <option value="semestral">Semestral</option>
+            <option value="anual">Anual</option>
+            <option value="outra">Outra</option>
+          </select>
+        </div>
+      </div>
+      <div class="fr"><label>Produto / Serviço</label><select id="pr-fc-produto"></select></div>
+      <div class="fg">
+        <div class="fr"><label>Como chegou até você?</label>
+          <select id="pr-fc-origem" onchange="cmToggleIndicouProspect()">
+            <option value="prospeccao">Prospecção</option>
+            <option value="indicacao">Indicação</option>
+            <option value="inbound">Inbound</option>
+            <option value="outro">Outro</option>
+          </select>
+        </div>
+        <div class="fr" id="row-fc-indicou" style="display:none;"><label>Quem indicou?</label><input type="text" id="pr-fc-indicou"></div>
+      </div>
+      <div class="badge badge-green" id="pr-fc-ja-cliente" style="display:none;margin-bottom:10px;">Este prospect já virou cliente — edite os dados do contrato em "Clientes ativos".</div>
     </div>
     <div class="sec-div">Próximo passo</div>
     <div class="fg">
@@ -181,6 +209,10 @@
       <div class="fr"><label>Valor (R$)</label><input type="number" id="rc-valor" min="0" step="0.01"></div>
       <div class="fr"><label>Data</label><input type="date" id="rc-data"></div>
     </div>
+    <div class="fg">
+      <div class="fr"><label>Categoria</label><select id="rc-categoria" onchange="fnAtualizarSubcategoriasReceita()"></select></div>
+      <div class="fr" id="row-subcategoria-receita"><label>Subcategoria</label><select id="rc-subcategoria"></select></div>
+    </div>
     <div class="fr"><label>Produto / Serviço (opcional)</label><select id="rc-produto"></select></div>
     <div class="fr"><label>Descrição</label><input type="text" id="rc-descricao" placeholder="Ex: consultoria extra, reembolso..."></div>
     <div class="fr"><label style="display:flex;align-items:center;gap:8px;text-transform:none;letter-spacing:0;"><input type="checkbox" id="rc-recorrente" style="width:auto;"> É recorrente?</label></div>
@@ -266,6 +298,26 @@
     <div class="mda">
       <button class="btn" onclick="fecharOv('ov-categoria')">Cancelar</button>
       <button class="btn btn-primary" onclick="salvarCategoria()">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL CATEGORIA DE RECEITA -->
+<div class="ov" id="ov-categoria-receita">
+  <div class="md">
+    <div class="md-handle"></div>
+    <h3>Nova categoria de receita</h3>
+    <div class="fr"><label>Nome da categoria</label><input type="text" id="cr-nome" placeholder="Ex: Assinaturas"></div>
+    <div class="fr"><label>Grupo no DRE</label>
+      <select id="cr-grupo">
+        <option value="operacional">Receita operacional</option>
+        <option value="nao_operacional">Outras receitas (não operacionais)</option>
+      </select>
+    </div>
+    <div class="fr"><label>Subcategorias (separadas por vírgula, opcional)</label><input type="text" id="cr-subs" placeholder="Ex: Mensalidade, Setup"></div>
+    <div class="mda">
+      <button class="btn" onclick="fecharOv('ov-categoria-receita')">Cancelar</button>
+      <button class="btn btn-primary" onclick="salvarCategoriaReceita()">Salvar</button>
     </div>
   </div>
 </div>
