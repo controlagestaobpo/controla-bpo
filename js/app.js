@@ -4,9 +4,10 @@ if (window.Chart) {
   Chart.defaults.borderColor = 'rgba(255,255,255,0.08)';
 }
 
-const TABS = ['dashboard', 'comercial', 'financeiro', 'historico', 'metas', 'config'];
+const TABS = ['dashboard-comercial', 'dashboard-financeiro', 'comercial', 'financeiro', 'historico', 'metas', 'config'];
 const RENDERERS = {
-  dashboard: renderDashboard,
+  'dashboard-comercial': renderDashboardComercial,
+  'dashboard-financeiro': renderDashboardFinanceiro,
   comercial: renderComercial,
   financeiro: renderFinanceiro,
   historico: renderHistorico,
@@ -14,7 +15,7 @@ const RENDERERS = {
   config: renderConfig,
 };
 
-let tabAtual = 'dashboard';
+let tabAtual = 'dashboard-comercial';
 
 function trocarTab(tab) {
   tabAtual = tab;
@@ -22,7 +23,35 @@ function trocarTab(tab) {
     document.getElementById('page-' + t).classList.toggle('active', t === tab);
     document.getElementById('tab-' + t).classList.toggle('active', t === tab);
   });
+  fecharSidebarMobile();
   RENDERERS[tab]();
+}
+
+// ===== Menu lateral =====
+function sidebarEhDesktop() {
+  return window.matchMedia('(min-width: 860px)').matches;
+}
+
+function toggleSidebar() {
+  const app = document.getElementById('app');
+  if (sidebarEhDesktop()) {
+    const collapsed = app.classList.toggle('sidebar-collapsed');
+    try { localStorage.setItem('cgb_sidebar_collapsed', collapsed ? '1' : '0'); } catch (e) {}
+  } else {
+    app.classList.toggle('sidebar-mobile-open');
+  }
+}
+
+function fecharSidebarMobile() {
+  document.getElementById('app').classList.remove('sidebar-mobile-open');
+}
+
+function initSidebar() {
+  try {
+    if (localStorage.getItem('cgb_sidebar_collapsed') === '1') {
+      document.getElementById('app').classList.add('sidebar-collapsed');
+    }
+  } catch (e) {}
 }
 
 async function login() {
@@ -47,11 +76,12 @@ async function logout() {
 
 async function mostrarApp() {
   document.getElementById('login-screen').style.display = 'none';
-  document.getElementById('app').style.display = 'block';
-  document.getElementById('page-dashboard').innerHTML = '<div class="empty-state">Carregando...</div>';
+  document.getElementById('app').style.display = 'flex';
+  initSidebar();
+  document.getElementById('page-dashboard-comercial').innerHTML = '<div class="empty-state">Carregando...</div>';
   await carregarTudo();
   State.periodo = mesAtual();
-  trocarTab('dashboard');
+  trocarTab('dashboard-comercial');
 }
 
 db.auth.getSession().then(({ data: { session } }) => {

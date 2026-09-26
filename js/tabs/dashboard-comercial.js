@@ -1,0 +1,172 @@
+let dcCharts = {};
+
+function calcularFunilConversao() {
+  const todos = State.prospects;
+  const nC = todos.filter((p) => p.status === 'conversa').length;
+  const nP = todos.filter((p) => p.status === 'proposta').length;
+  const nF = todos.filter((p) => p.status === 'fechado').length;
+  const nD = todos.filter((p) => p.status === 'descartado').length;
+  const total = todos.length;
+  const etapas = [
+    { nome: 'Visita', valor: total },
+    { nome: 'Conversa', valor: nC + nP + nF },
+    { nome: 'Proposta', valor: nP + nF },
+    { nome: 'Fechado', valor: nF },
+  ];
+  const passos = [];
+  for (let i = 1; i < etapas.length; i++) {
+    const anterior = etapas[i - 1].valor;
+    const atual = etapas[i].valor;
+    passos.push({ de: etapas[i - 1].nome, para: etapas[i].nome, anterior, atual, pct: anterior > 0 ? Math.round(atual / anterior * 100) : 0 });
+  }
+  return { passos, descartados: nD, pctDescartados: total > 0 ? Math.round(nD / total * 100) : 0, total };
+}
+
+function corFunilPct(pct) {
+  return pct >= 50 ? 'var(--positivo)' : pct >= 25 ? '#F5A623' : 'var(--negativo)';
+}
+
+function calcularOrigemClientes() {
+  const porOrigem = {};
+  State.clientesAtivos.forEach((c) => {
+    const o = c.origem || 'não informado';
+    porOrigem[o] = (porOrigem[o] || 0) + 1;
+  });
+  return Object.entries(porOrigem).map(([k, v]) => ({ nome: ORIGEM_LBL[k] || (k === 'não informado' ? 'Não informado' : k), valor: v }));
+}
+
+function gerarInsightComercial() {
+  const segmentos = calcularTopSegmentos().filter((s) => s.v >= 1);
+  if (!segmentos.length) return 'Cadastre prospects com segmento pra começar a ver insights aqui.';
+  const top = segmentos[0];
+  if (top.valor === 0) return `Nenhum segmento com conversão ainda. Foque em fechar os primeiros clientes de "${top.nome}" ou de outro nicho pra começar a enxergar padrão.`;
+  return `Seu melhor segmento é <strong>${top.nome}</strong>, com ${top.valor}% de conversão (${top.f} de ${top.v}). Vale concentrar a prospecção nesse nicho.`;
+}
+
+function renderDashboardComercial() {
+  const clientesAtivos = State.clientesAtivos.filter((c) => c.status === 'ativo');
+  const pipeline = prospectsPipeline();
+  const totalFechadosAllTime = State.clientesAtivos.length;
+  const totalContatos = pipeline.length + totalFechadosAllTime;
+  const taxaConversao = totalContatos > 0 ? Math.round(totalFechadosAllTime / totalContatos * 100) : 0;
+  const valorFunil = pipeline.reduce((s, p) => s + (p.ticket || 0), 0);
+
+  const h = hj();
+  const acoes = [];
+  State.prospects.forEach((p) => {
+    if (p.deadline && p.deadline <= h && p.status !== 'fechado' && p.status !== 'descartado') {
+      const atrasado = p.deadline < h;
+      acoes.push({ texto: `${p.empresa} — ${p.proximo || 'próximo passo'}`, tag: atrasado ? `atrasado ${fmtD(p.deadline)}` : 'hoje' });
+    }
+  });
+
+  const funilConv = calcularFunilConversao();
+  const indicacoes = State.clientesAtivos.filter((c) => c.origem === 'indicacao');
+  const taxaIndicacoes = State.clientesAtivos.length > 0 ? Math.round(indicacoes.length / State.clientesAtivos.length * 100) : 0;
+
+  const el = document.getElementById('page-dashboard-comercial');
+  el.innerHTML = `
+    <div class="section">
+      <div class="section-title">Resumo comercial</div>
+      <div class="card-grid-2" style="margin-bottom:14px;">
+        <div class="stat-card"><div class="stat-lbl">Clientes ativos</div><div class="stat-val" style="color:var(--positivo)">${clientesAtivos.length}</div><div class="stat-sub">meta: ${State.metas.sm_clientes}</div></div>
+        <div class="stat-card"><div class="stat-lbl">Prospects</div><div class="stat-val" style="color:var(--blue)">${pipeline.length}</div><div class="stat-sub">em funil</div></div>
+        <div class="stat-card"><div class="stat-lbl">Taxa conversão</div><div class="stat-val">${taxaConversao}%</div></div>
+        <div class="stat-card"><div class="stat-lbl">Valor em funil</div><div class="stat-val">${fmtMoeda(valorFunil)}</div></div>
+      </div>
+    </div>
+
+    ${acoes.length ? `
+    <div class="section">
+      <div class="section-title" style="color:var(--negativo);">Ações imediatas</div>
+      <div class="panel" style="border-left:4px solid var(--negativo);">
+        ${acoes.map((a) => `<div style="display:flex;justify-content:space-between;gap:8px;padding:5px 0;font-size:12px;"><span>${a.texto}</span><span class="badge badge-red">${a.tag}</span></div>`).join('')}
+      </div>
+    </div>` : ''}
+
+    <div class="section">
+      <div class="section-title">Funil de conversão</div>
+      <div class="chart-box panel">
+        <div class="panel-sub">Todos os prospects já cadastrados</div>
+        <div style="position:relative;height:200px;"><canvas id="db-chart-funil"></canvas></div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">Onde você está perdendo prospects</div>
+      <div class="panel">
+        ${funilConv.total === 0 ? '<div class="empty-state">Cadastre prospects pra ver a taxa de conversão entre etapas.</div>' : `
+          ${funilConv.passos.map((p) => `
+            <div class="funil-step">
+              <div class="funil-step-lbl">${p.de} → ${p.para}</div>
+              <div class="funil-step-bar-wrap"><div class="funil-step-bar" style="width:${p.pct}%;background:${corFunilPct(p.pct)}"></div></div>
+              <div class="funil-step-pct" style="color:${corFunilPct(p.pct)}">${p.pct}% <span style="font-weight:500;color:var(--cinza-claro);">(${p.atual}/${p.anterior})</span></div>
+            </div>
+          `).join('')}
+          ${funilConv.descartados > 0 ? `<div class="funil-step-perda">${funilConv.descartados} prospect${funilConv.descartados === 1 ? '' : 's'} descartado${funilConv.descartados === 1 ? '' : 's'} (${funilConv.pctDescartados}% do total cadastrado)</div>` : ''}
+        `}
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">Top segmentos</div>
+      <div class="chart-box panel">
+        <div class="panel-sub">Taxa de conversão por segmento (mín. 1 prospect)</div>
+        <div style="position:relative;height:200px;"><canvas id="db-chart-segmentos"></canvas></div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">Origem dos clientes</div>
+      <div class="card-grid-2" style="margin-bottom:10px;">
+        <div class="stat-card"><div class="stat-lbl">Total indicações</div><div class="stat-val">${indicacoes.length}</div></div>
+        <div class="stat-card"><div class="stat-lbl">Taxa de indicações</div><div class="stat-val">${taxaIndicacoes}%</div><div class="stat-sub">dos clientes</div></div>
+      </div>
+      <div class="chart-box panel" id="cm-origem-wrap">
+        <div style="position:relative;height:200px;"><canvas id="cm-chart-origem"></canvas></div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">Insights</div>
+      <div class="panel" style="border-left:4px solid var(--purple);">
+        <div style="font-size:12px;color:var(--text2);line-height:1.6;">${gerarInsightComercial()}</div>
+      </div>
+    </div>
+  `;
+
+  renderGraficosDashboardComercial();
+}
+
+function renderGraficosDashboardComercial() {
+  Object.values(dcCharts).forEach((c) => { try { c.destroy(); } catch (e) {} });
+  dcCharts = {};
+
+  const funil = calcularFunil();
+  const canvasFunil = document.getElementById('db-chart-funil');
+  if (funil[0].valor > 0) {
+    dcCharts.funil = fnBarChartOrdem(canvasFunil, funil, CORES_CATEGORIA);
+  } else {
+    canvasFunil.parentElement.innerHTML = '<div class="empty-state">Nenhum prospect cadastrado ainda.</div>';
+  }
+
+  const segmentos = calcularTopSegmentos();
+  const canvasSegmentos = document.getElementById('db-chart-segmentos');
+  if (segmentos.length) {
+    dcCharts.segmentos = fnBarChartOrdem(canvasSegmentos, segmentos, '#9B7BF0', '%');
+  } else {
+    canvasSegmentos.parentElement.innerHTML = '<div class="empty-state">Cadastre prospects com segmento pra ver este gráfico.</div>';
+  }
+
+  const origem = calcularOrigemClientes();
+  const canvasOrigem = document.getElementById('cm-chart-origem');
+  if (origem.length) {
+    dcCharts.origem = new Chart(canvasOrigem, {
+      type: 'doughnut',
+      data: { labels: origem.map((o) => o.nome), datasets: [{ data: origem.map((o) => o.valor), backgroundColor: CORES_CATEGORIA }] },
+      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { font: { size: 10 }, boxWidth: 10 } } } },
+    });
+  } else {
+    canvasOrigem.parentElement.innerHTML = '<div class="empty-state">Feche clientes pra ver a origem deles aqui.</div>';
+  }
+}

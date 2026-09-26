@@ -26,30 +26,40 @@
 </div>
 
 <div id="app">
-  <div class="nav-accent"></div>
-  <div class="nav">
-    <img class="nav-logo" src="assets/controla-horizontal-branca.svg" alt="Controla Gestão">
-    <div class="nav-right">
-      <span class="saving-badge" id="saving">salvando...</span>
-      <button class="btn btn-sm" onclick="logout()">Sair</button>
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-head">
+      <img class="sidebar-logo" src="assets/controla-horizontal-branca.svg" alt="Controla Gestão">
     </div>
-  </div>
+    <nav class="sidebar-nav">
+      <div class="nav-item" id="tab-dashboard-comercial" onclick="trocarTab('dashboard-comercial')">Dashboard Comercial</div>
+      <div class="nav-item" id="tab-dashboard-financeiro" onclick="trocarTab('dashboard-financeiro')">Dashboard Financeiro</div>
+      <div class="nav-item" id="tab-comercial" onclick="trocarTab('comercial')">Comercial</div>
+      <div class="nav-item" id="tab-financeiro" onclick="trocarTab('financeiro')">Financeiro</div>
+      <div class="nav-item" id="tab-historico" onclick="trocarTab('historico')">Histórico</div>
+      <div class="nav-item" id="tab-metas" onclick="trocarTab('metas')">Metas</div>
+      <div class="nav-item" id="tab-config" onclick="trocarTab('config')">Configurações</div>
+    </nav>
+    <div class="sidebar-foot">
+      <button class="btn btn-sm" style="width:100%;" onclick="logout()">Sair</button>
+    </div>
+  </aside>
+  <div class="sidebar-backdrop" id="sidebarBackdrop" onclick="fecharSidebarMobile()"></div>
 
-  <div class="tabs">
-    <div class="tab" id="tab-dashboard" onclick="trocarTab('dashboard')">Dashboard</div>
-    <div class="tab" id="tab-comercial" onclick="trocarTab('comercial')">Comercial</div>
-    <div class="tab" id="tab-financeiro" onclick="trocarTab('financeiro')">Financeiro</div>
-    <div class="tab" id="tab-historico" onclick="trocarTab('historico')">Histórico</div>
-    <div class="tab" id="tab-metas" onclick="trocarTab('metas')">Metas</div>
-    <div class="tab" id="tab-config" onclick="trocarTab('config')">Configurações</div>
-  </div>
+  <div class="main">
+    <div class="topbar">
+      <button class="sidebar-toggle" onclick="toggleSidebar()" aria-label="Menu">☰</button>
+      <img class="topbar-logo" src="assets/controla-simbolo-branco.svg" alt="Controla Gestão">
+      <span class="saving-badge" id="saving">salvando...</span>
+    </div>
 
-  <div class="page" id="page-dashboard"></div>
-  <div class="page" id="page-comercial"></div>
-  <div class="page" id="page-financeiro"></div>
-  <div class="page" id="page-historico"></div>
-  <div class="page" id="page-metas"></div>
-  <div class="page" id="page-config"></div>
+    <div class="page" id="page-dashboard-comercial"></div>
+    <div class="page" id="page-dashboard-financeiro"></div>
+    <div class="page" id="page-comercial"></div>
+    <div class="page" id="page-financeiro"></div>
+    <div class="page" id="page-historico"></div>
+    <div class="page" id="page-metas"></div>
+    <div class="page" id="page-config"></div>
+  </div>
 </div>
 
 <!-- MODAL PROSPECT -->
@@ -350,6 +360,8 @@
 <script src="js/tabs/dashboard.js"></script>
 <script src="js/tabs/comercial.js"></script>
 <script src="js/tabs/financeiro.js"></script>
+<script src="js/tabs/dashboard-comercial.js"></script>
+<script src="js/tabs/dashboard-financeiro.js"></script>
 <script src="js/tabs/historico.js"></script>
 <script src="js/tabs/metas.js"></script>
 <script src="js/tabs/config.js"></script>
