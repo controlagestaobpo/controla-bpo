@@ -143,7 +143,7 @@ function renderDashboardFinanceiro() {
         <div class="card-grid-2" style="margin-bottom:0;">
           <div class="stat-card"><div class="stat-lbl">Receita prevista</div><div class="stat-val" style="color:var(--positivo);font-size:18px;">${fmtMoeda(proj.receitaPrevista)}</div></div>
           <div class="stat-card"><div class="stat-lbl">Despesas previstas</div><div class="stat-val" style="color:var(--negativo);font-size:18px;">${fmtMoeda(proj.despesaPrevista)}</div></div>
-          <div class="stat-card" style="grid-column:1/-1;"><div class="stat-lbl">Lucro líquido previsto</div><div class="stat-val" style="color:${proj.lucroPrevisto >= 0 ? 'var(--positivo)' : 'var(--negativo)'};">${fmtMoeda(proj.lucroPrevisto)}</div><div class="stat-sub">margem prevista de ${proj.margemPrevista}%</div></div>
+          <div class="stat-card"><div class="stat-lbl">Lucro líquido previsto</div><div class="stat-val" style="color:${proj.lucroPrevisto >= 0 ? 'var(--positivo)' : 'var(--negativo)'};font-size:18px;">${fmtMoeda(proj.lucroPrevisto)}</div><div class="stat-sub">margem de ${proj.margemPrevista}%</div></div>
         </div>
       </div>
     </div>
