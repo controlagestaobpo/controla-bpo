@@ -135,8 +135,8 @@ function renderFluxoCaixa(mes) {
     const rows = linhas.map((it) => {
       const st = fnStatusConta(it.data, it.confirmado);
       const toggleFn = it.tipo === 'receita'
-        ? (it.confirmado ? `fnDesmarcarRecebido('${it.id}')` : `fnMarcarRecebido('${it.id}')`)
-        : (it.confirmado ? `fnDesmarcarPago('${it.id}')` : `fnMarcarPago('${it.id}')`);
+        ? (it.confirmado ? `fnDesmarcarRecebido('${it.id}')` : `fnMarcarRecebido('${it.id}','${it.data}')`)
+        : (it.confirmado ? `fnDesmarcarPago('${it.id}')` : `fnMarcarPago('${it.id}','${it.data}')`);
       const toggleLbl = it.confirmado ? 'reabrir' : (it.tipo === 'receita' ? 'recebido' : 'pago');
       return `<div class="fluxo-row">
       <div class="fluxo-desc">
@@ -156,8 +156,8 @@ function renderFluxoCaixa(mes) {
   }).join('');
 }
 
-async function fnMarcarPago(id) {
-  const { error } = await db.from('despesas').update({ pago: true, data_pagamento: hj() }).eq('id', id);
+async function fnMarcarPago(id, dataVencimento) {
+  const { error } = await db.from('despesas').update({ pago: true, data_pagamento: dataVencimento || hj() }).eq('id', id);
   if (error) { alert('Erro: ' + error.message); return; }
   showSaving();
   const r = await db.from('despesas').select('*').order('data', { ascending: true });
@@ -174,8 +174,8 @@ async function fnDesmarcarPago(id) {
   renderFinanceiro();
 }
 
-async function fnMarcarRecebido(id) {
-  const { error } = await db.from('receitas').update({ recebido: true, data_recebimento: hj() }).eq('id', id);
+async function fnMarcarRecebido(id, dataVencimento) {
+  const { error } = await db.from('receitas').update({ recebido: true, data_recebimento: dataVencimento || hj() }).eq('id', id);
   if (error) { alert('Erro: ' + error.message); return; }
   showSaving();
   const r = await db.from('receitas').select('*').order('data', { ascending: true });

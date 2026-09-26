@@ -69,6 +69,16 @@ function renderMetasInteligentes() {
       </div>
     </div>
 
+    <div class="section">
+      <div class="section-title">Projeção anualizada (no ritmo atual)</div>
+      <div class="panel-sub" style="margin-top:-4px;">Se os últimos 30 dias se repetirem por 12 meses.</div>
+      <div class="card-grid-2" style="margin-bottom:4px;">
+        <div class="stat-card"><div class="stat-lbl">Receita anualizada</div><div class="stat-val" style="color:var(--positivo)">${fmtMoeda(dados.receitaBruta * 12)}</div></div>
+        <div class="stat-card"><div class="stat-lbl">Despesas anualizadas</div><div class="stat-val" style="color:var(--negativo)">${fmtMoeda(dados.despesasTotais * 12)}</div></div>
+        <div class="stat-card" style="grid-column:1/-1;"><div class="stat-lbl">Lucro líquido anualizado</div><div class="stat-val" style="color:${dados.lucroLiquido >= 0 ? 'var(--positivo)' : 'var(--negativo)'}">${fmtMoeda(dados.lucroLiquido * 12)}</div></div>
+      </div>
+    </div>
+
     <div class="section" id="mt-resultado"></div>
   `;
   mtRenderResultado();
