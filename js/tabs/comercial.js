@@ -99,12 +99,14 @@ function cmToggleIndicou() {
 async function salvarCliente() {
   const empresa = document.getElementById('cl-empresa').value.trim();
   if (!empresa) { alert('Informe o nome da empresa.'); return; }
+  const novoTicket = parseFloat(document.getElementById('cl-ticket').value) || 0;
+  const clienteAntes = cmClienteEditId ? State.clientesAtivos.find((c) => c.id === cmClienteEditId) : null;
   const payload = {
     empresa,
     data_fechamento: document.getElementById('cl-data').value,
     contato: document.getElementById('cl-contato').value.trim(),
     whatsapp: document.getElementById('cl-whatsapp').value.trim(),
-    ticket_mensal: parseFloat(document.getElementById('cl-ticket').value) || 0,
+    ticket_mensal: novoTicket,
     frequencia: document.getElementById('cl-frequencia').value,
     produto_id: document.getElementById('cl-produto').value || null,
     origem: document.getElementById('cl-origem').value || null,
@@ -115,11 +117,26 @@ async function salvarCliente() {
   if (cmClienteEditId) ({ error } = await db.from('clientes_ativos').update(payload).eq('id', cmClienteEditId));
   else ({ error } = await db.from('clientes_ativos').insert([payload]));
   if (error) { alert('Erro: ' + error.message); return; }
+
+  let avisoTicket = '';
+  if (cmClienteEditId && clienteAntes && novoTicket !== Number(clienteAntes.ticket_mensal || 0)) {
+    const { data: pendentes } = await db.from('receitas').select('id').eq('cliente_id', cmClienteEditId).eq('recebido', false);
+    if (pendentes && pendentes.length) {
+      await db.from('receitas').update({ valor: novoTicket }).eq('cliente_id', cmClienteEditId).eq('recebido', false);
+      avisoTicket = `\n\nTambém ajustei o valor de ${pendentes.length} receita${pendentes.length === 1 ? '' : 's'} futura${pendentes.length === 1 ? '' : 's'} ainda não recebida${pendentes.length === 1 ? '' : 's'} pra ${fmtMoeda(novoTicket)}.`;
+    }
+  }
+
   showSaving();
   fecharOv('ov-cliente');
-  const r = await db.from('clientes_ativos').select('*').order('data_fechamento', { ascending: false });
-  State.clientesAtivos = r.data || [];
+  const [rc, rr] = await Promise.all([
+    db.from('clientes_ativos').select('*').order('data_fechamento', { ascending: false }),
+    db.from('receitas').select('*').order('data', { ascending: true }),
+  ]);
+  State.clientesAtivos = rc.data || [];
+  State.receitas = rr.data || [];
   renderComercial();
+  if (avisoTicket) alert('Cliente atualizado!' + avisoTicket);
 }
 
 function abrirModalEncerrar(id) {
