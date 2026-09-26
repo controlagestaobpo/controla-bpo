@@ -86,7 +86,7 @@ function svgVelocimetro(pct) {
   const [xN, yN] = pt(anguloAgulha, L);
   const corPct = p >= 66 ? '#3DD68C' : p >= 33 ? '#F5A623' : '#FF6B81';
   return `
-    <svg viewBox="0 0 200 112" style="width:100%;max-width:220px;display:block;margin:0 auto;">
+    <svg viewBox="0 0 200 145" style="width:100%;max-width:220px;display:block;margin:0 auto;">
       <path d="M${x180},${y180} A${r},${r} 0 0,1 ${x120},${y120}" fill="none" stroke="#FF6B81" stroke-width="14" stroke-linecap="round"/>
       <path d="M${x120},${y120} A${r},${r} 0 0,1 ${x60},${y60}" fill="none" stroke="#F5A623" stroke-width="14" stroke-linecap="round"/>
       <path d="M${x60},${y60} A${r},${r} 0 0,1 ${x0},${y0}" fill="none" stroke="#3DD68C" stroke-width="14" stroke-linecap="round"/>
