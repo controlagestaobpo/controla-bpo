@@ -84,15 +84,17 @@ function renderDashboardFinanceiro() {
 
     <div class="section">
       <div class="section-title">Entradas e saídas por categoria</div>
-      <div class="chart-box panel">
-        <div class="panel-title">Saídas por categoria</div>
-        <div class="panel-sub">Despesas de ${nomeMesLongo(mes)}, do maior para o menor</div>
-        <div style="position:relative;height:260px;"><canvas id="db-chart-despesas"></canvas></div>
-      </div>
-      <div class="chart-box panel">
-        <div class="panel-title">Entradas por categoria</div>
-        <div class="panel-sub">Receitas de ${nomeMesLongo(mes)}, do maior para o menor</div>
-        <div style="position:relative;height:260px;"><canvas id="db-chart-receitas"></canvas></div>
+      <div class="chart-row">
+        <div class="chart-box panel">
+          <div class="panel-title">Saídas por categoria</div>
+          <div class="panel-sub">Despesas de ${nomeMesLongo(mes)}, do maior para o menor</div>
+          <div style="position:relative;height:260px;"><canvas id="db-chart-despesas"></canvas></div>
+        </div>
+        <div class="chart-box panel">
+          <div class="panel-title">Entradas por categoria</div>
+          <div class="panel-sub">Receitas de ${nomeMesLongo(mes)}, do maior para o menor</div>
+          <div style="position:relative;height:260px;"><canvas id="db-chart-receitas"></canvas></div>
+        </div>
       </div>
     </div>
 
