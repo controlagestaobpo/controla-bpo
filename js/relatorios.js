@@ -94,7 +94,7 @@ function gerarRelatorioFinanceiro() {
     .map(([pid, total]) => ({ nome: (State.produtos.find((p) => p.id === pid) || {}).nome || 'Produto removido', total }))
     .sort((a, b) => b.total - a.total);
 
-  const projecaoMes = projecaoFimDeMes(dreAtual.receitaTotal, mesAgora);
+  const projecaoMes = calcularProjecaoFechamento(mesAgora).receitaPrevista;
   const clientesAtivos = State.clientesAtivos.filter((c) => c.status === 'ativo');
   const mrr = clientesAtivos.filter((c) => c.frequencia === 'mensal').reduce((s, c) => s + Number(c.ticket_mensal || 0), 0);
   const ticketMedio = clientesAtivos.length ? clientesAtivos.reduce((s, c) => s + Number(c.ticket_mensal || 0), 0) / clientesAtivos.length : 0;

@@ -76,19 +76,6 @@ function metaEfetivaDoMes(mes) {
   return anteriores[0] || null;
 }
 
-// ===== Projeção de ritmo (pace) até o fim do mês =====
-function diasNoMes(ym) {
-  const [y, m] = ym.split('-').map(Number);
-  return new Date(y, m, 0).getDate();
-}
-function projecaoFimDeMes(valorAcumulado, mes) {
-  const total = diasNoMes(mes);
-  const hoje = new Date();
-  const ehMesAtual = mes === mesAtual();
-  const diaAtual = ehMesAtual ? hoje.getDate() : total;
-  return diaAtual > 0 ? Math.round(valorAcumulado / diaAtual * total) : 0;
-}
-
 // ===== DRE enxuto, com detalhamento por categoria =====
 // Regime de caixa: só entra no DRE o que já foi de fato pago/recebido,
 // contado no mês em que o dinheiro realmente entrou/saiu (não o vencimento).

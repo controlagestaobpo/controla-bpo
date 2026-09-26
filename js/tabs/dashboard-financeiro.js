@@ -34,12 +34,12 @@ function gerarInsightsFinanceiro(mes) {
   const insights = [];
 
   if (mes === mesAtual()) {
-    const projecao = projecaoFimDeMes(dre.receitaTotal, mes);
+    const projecao = calcularProjecaoFechamento(mes).receitaPrevista;
     const { meta } = calcularReceitaVsMeta(mes);
     if (meta > 0) {
       insights.push(projecao >= meta
-        ? `No ritmo atual, você deve fechar o mês em ${fmtMoeda(projecao)} — acima da meta de ${fmtMoeda(meta)}.`
-        : `No ritmo atual, você deve fechar o mês em ${fmtMoeda(projecao)} — abaixo da meta de ${fmtMoeda(meta)}. Faltam ${fmtMoeda(Math.max(meta - projecao, 0))}.`);
+        ? `Considerando o que já está lançado (recebido ou a receber), você deve fechar o mês em ${fmtMoeda(projecao)} — acima da meta de ${fmtMoeda(meta)}.`
+        : `Considerando o que já está lançado (recebido ou a receber), você deve fechar o mês em ${fmtMoeda(projecao)} — abaixo da meta de ${fmtMoeda(meta)}. Faltam ${fmtMoeda(Math.max(meta - projecao, 0))}.`);
     }
   }
 
@@ -114,12 +114,12 @@ function renderDashboardFinanceiro() {
   const mes = State.periodo;
   const dre = montarDRE(mes);
   const despesaTotalMes = dre.deducoes + dre.totalDespesasOperacionais;
-  const projecaoMes = projecaoFimDeMes(dre.receitaTotal, mes);
-  const projecaoLabel = mes === mesAtual() ? 'Projeção (fim do mês)' : (mes < mesAtual() ? 'Total do mês' : 'Projeção do mês');
   const metaMes = metaEfetivaDoMes(mes);
   const lucroVsMeta = calcularLucroVsMeta(mes);
   const pe = calcularPontoEquilibrio(mes);
   const proj = calcularProjecaoFechamento(mes);
+  const projecaoMes = proj.lucroPrevisto;
+  const projecaoLabel = mes === mesAtual() ? 'Saldo previsto (fim do mês)' : (mes < mesAtual() ? 'Total do mês' : 'Saldo previsto do mês');
 
   const el = document.getElementById('page-dashboard-financeiro');
   el.innerHTML = `
@@ -132,7 +132,7 @@ function renderDashboardFinanceiro() {
         <div class="stat-card"><div class="stat-lbl">Despesas</div><div class="stat-val" style="color:var(--negativo)">${fmtMoeda(despesaTotalMes)}</div></div>
         <div class="stat-card"><div class="stat-lbl">Lucro líquido</div><div class="stat-val" style="color:${dre.lucroLiquido >= 0 ? 'var(--positivo)' : 'var(--negativo)'}">${fmtMoeda(dre.lucroLiquido)}</div><div class="stat-sub">${metaMes ? 'meta: ' + fmtMoeda(metaMes.meta_lucro) : 'defina uma meta em Metas'}</div></div>
         <div class="stat-card"><div class="stat-lbl">Margem</div><div class="stat-val">${dre.margem}%</div></div>
-        <div class="stat-card"><div class="stat-lbl">${projecaoLabel}</div><div class="stat-val">${fmtMoeda(projecaoMes)}</div><div class="stat-sub">no ritmo atual</div></div>
+        <div class="stat-card"><div class="stat-lbl">${projecaoLabel}</div><div class="stat-val" style="color:${projecaoMes >= 0 ? 'var(--positivo)' : 'var(--negativo)'}">${fmtMoeda(projecaoMes)}</div><div class="stat-sub">recebimentos − pagamentos previstos</div></div>
       </div>
     </div>
 
