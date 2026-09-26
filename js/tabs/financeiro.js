@@ -135,8 +135,8 @@ function renderFluxoCaixa(mes) {
     const rows = linhas.map((it) => {
       const st = fnStatusConta(it.data, it.confirmado);
       const toggleFn = it.tipo === 'receita'
-        ? (it.confirmado ? `fnDesmarcarRecebido('${it.id}')` : `fnMarcarRecebido('${it.id}','${it.data}')`)
-        : (it.confirmado ? `fnDesmarcarPago('${it.id}')` : `fnMarcarPago('${it.id}','${it.data}')`);
+        ? (it.confirmado ? `fnDesmarcarRecebido('${it.id}')` : `abrirModalConfirmarData('receita','${it.id}','${it.data}')`)
+        : (it.confirmado ? `fnDesmarcarPago('${it.id}')` : `abrirModalConfirmarData('despesa','${it.id}','${it.data}')`);
       const toggleLbl = it.confirmado ? 'reabrir' : (it.tipo === 'receita' ? 'recebido' : 'pago');
       return `<div class="fluxo-row">
       <div class="fluxo-desc">
@@ -154,6 +154,26 @@ function renderFluxoCaixa(mes) {
     }).join('');
     return `<div class="day-group">${header}<div class="item-card">${rows}</div></div>`;
   }).join('');
+}
+
+let cdTipo = null;
+let cdId = null;
+
+function abrirModalConfirmarData(tipo, id, dataSugerida) {
+  cdTipo = tipo;
+  cdId = id;
+  document.getElementById('cd-tit').textContent = tipo === 'receita' ? 'Confirmar recebimento' : 'Confirmar pagamento';
+  document.getElementById('cd-lbl').textContent = tipo === 'receita' ? 'Data em que recebeu' : 'Data em que pagou';
+  document.getElementById('cd-data').value = dataSugerida || hj();
+  abrirOv('ov-confirmar-data');
+}
+
+function cdConfirmar() {
+  const data = document.getElementById('cd-data').value;
+  if (!data) { alert('Informe a data.'); return; }
+  fecharOv('ov-confirmar-data');
+  if (cdTipo === 'receita') fnMarcarRecebido(cdId, data);
+  else fnMarcarPago(cdId, data);
 }
 
 async function fnMarcarPago(id, dataVencimento) {
