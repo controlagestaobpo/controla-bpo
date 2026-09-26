@@ -19,12 +19,6 @@ function renderComercial() {
   const el = document.getElementById('page-comercial');
   el.innerHTML = `
     <div class="section">
-      <div class="section-title">Clientes ativos</div>
-      <div class="panel-sub" style="margin-top:-4px;">Todo cliente nasce de um prospect fechado — não existe cadastro avulso.</div>
-      <div class="simple-list" id="cm-clientes-list" style="margin-bottom:6px;"></div>
-    </div>
-
-    <div class="section">
       <div class="section-title">Prospects</div>
       <div style="margin-bottom:10px;"><button class="btn btn-primary btn-sm" onclick="abrirModalProspect()">+ Novo prospect</button></div>
     </div>
@@ -36,6 +30,12 @@ function renderComercial() {
     </div>
     <input type="text" id="cm-busca" class="search-inp" placeholder="Buscar empresa..." oninput="renderProspectsLista()">
     <div class="list" id="cm-prospects-list"></div>
+
+    <div class="section">
+      <div class="section-title">Clientes ativos</div>
+      <div class="panel-sub" style="margin-top:-4px;">Todo cliente nasce de um prospect fechado — não existe cadastro avulso.</div>
+      <div class="simple-list" id="cm-clientes-list" style="margin-bottom:6px;"></div>
+    </div>
 
     <div class="section">
       <div class="section-title">Motivos de cancelamento</div>
