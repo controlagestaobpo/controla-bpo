@@ -73,6 +73,18 @@ function fnRecalcularPontoEquilibrio() {
   document.getElementById('pe-clientes').textContent = pe.clientesNecessarios === null ? '-' : pe.clientesNecessarios;
 }
 
+// Projeção de fechamento: e se tudo que já está lançado (recebido ou não) acontecer?
+function calcularProjecaoFechamento(mes) {
+  const resumo = calcularResumoContas(mes);
+  const receitaPrevista = resumo.totalReceber + resumo.totalRecebido;
+  const despesaPrevista = resumo.totalPagar + resumo.totalPago;
+  return {
+    receitaPrevista, despesaPrevista,
+    lucroPrevisto: receitaPrevista - despesaPrevista,
+    margemPrevista: receitaPrevista > 0 ? Math.round((receitaPrevista - despesaPrevista) / receitaPrevista * 100) : 0,
+  };
+}
+
 function svgVelocimetro(pct) {
   if (pct === null) {
     return `<div class="empty-state" style="padding:20px 16px;">Defina uma meta de lucro líquido na aba Metas pra ver a velocidade até ela.</div>`;
@@ -107,6 +119,7 @@ function renderDashboardFinanceiro() {
   const metaMes = metaEfetivaDoMes(mes);
   const lucroVsMeta = calcularLucroVsMeta(mes);
   const pe = calcularPontoEquilibrio(mes);
+  const proj = calcularProjecaoFechamento(mes);
 
   const el = document.getElementById('page-dashboard-financeiro');
   el.innerHTML = `
@@ -120,6 +133,18 @@ function renderDashboardFinanceiro() {
         <div class="stat-card"><div class="stat-lbl">Lucro líquido</div><div class="stat-val" style="color:${dre.lucroLiquido >= 0 ? 'var(--positivo)' : 'var(--negativo)'}">${fmtMoeda(dre.lucroLiquido)}</div><div class="stat-sub">${metaMes ? 'meta: ' + fmtMoeda(metaMes.meta_lucro) : 'defina uma meta em Metas'}</div></div>
         <div class="stat-card"><div class="stat-lbl">Margem</div><div class="stat-val">${dre.margem}%</div></div>
         <div class="stat-card" style="grid-column:1/-1;"><div class="stat-lbl">${projecaoLabel}</div><div class="stat-val">${fmtMoeda(projecaoMes)}</div><div class="stat-sub">no ritmo atual de faturamento</div></div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">Projeção de fechamento do mês</div>
+      <div class="panel" style="border-left:4px solid var(--purple);">
+        <div class="panel-sub" style="margin-top:0;">Se todas as contas já lançadas com vencimento em ${nomeMesLongo(mes)} forem recebidas e pagas</div>
+        <div class="card-grid-2" style="margin-bottom:0;">
+          <div class="stat-card"><div class="stat-lbl">Receita prevista</div><div class="stat-val" style="color:var(--positivo);font-size:18px;">${fmtMoeda(proj.receitaPrevista)}</div></div>
+          <div class="stat-card"><div class="stat-lbl">Despesas previstas</div><div class="stat-val" style="color:var(--negativo);font-size:18px;">${fmtMoeda(proj.despesaPrevista)}</div></div>
+          <div class="stat-card" style="grid-column:1/-1;"><div class="stat-lbl">Lucro líquido previsto</div><div class="stat-val" style="color:${proj.lucroPrevisto >= 0 ? 'var(--positivo)' : 'var(--negativo)'};">${fmtMoeda(proj.lucroPrevisto)}</div><div class="stat-sub">margem prevista de ${proj.margemPrevista}%</div></div>
+        </div>
       </div>
     </div>
 
