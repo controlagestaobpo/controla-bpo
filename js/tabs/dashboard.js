@@ -1,7 +1,9 @@
 // ===== Funções e helpers compartilhados entre Dashboard Comercial e Dashboard Financeiro =====
 
-function fnBarChartOrdenado(canvas, itens, corBase) {
+function fnBarChartOrdenado(canvas, itens, corBase, printMode) {
   const ordenado = [...itens].sort((a, b) => b.total - a.total);
+  const corTexto = printMode ? '#5B6B82' : '#A9B8CF';
+  const corLabel = printMode ? '#001438' : '#FFFFFF';
   return new Chart(canvas, {
     type: 'bar',
     data: {
@@ -12,16 +14,22 @@ function fnBarChartOrdenado(canvas, itens, corBase) {
       indexAxis: 'y',
       responsive: true,
       maintainAspectRatio: false,
-      plugins: { legend: { display: false } },
+      layout: { padding: { right: 46 } },
+      plugins: {
+        legend: { display: false },
+        datalabels: { formatter: (v) => fmtMoeda(v), color: corLabel },
+      },
       scales: {
-        x: { beginAtZero: true, ticks: { font: { size: 10 }, color: '#A9B8CF' }, grid: { color: 'rgba(255,255,255,0.06)' } },
-        y: { ticks: { font: { size: 10 }, color: '#A9B8CF' } },
+        x: { display: false, beginAtZero: true, grid: { display: false } },
+        y: { ticks: { font: { size: 10 }, color: corTexto }, grid: { display: false } },
       },
     },
   });
 }
 
-function fnBarChartOrdem(canvas, itens, cores, sufixo) {
+function fnBarChartOrdem(canvas, itens, cores, sufixo, printMode) {
+  const corTexto = printMode ? '#5B6B82' : '#A9B8CF';
+  const corLabel = printMode ? '#001438' : '#FFFFFF';
   return new Chart(canvas, {
     type: 'bar',
     data: {
@@ -32,13 +40,15 @@ function fnBarChartOrdem(canvas, itens, cores, sufixo) {
       indexAxis: 'y',
       responsive: true,
       maintainAspectRatio: false,
+      layout: { padding: { right: 40 } },
       plugins: {
         legend: { display: false },
         tooltip: { callbacks: { label: (ctx) => ctx.parsed.x + (sufixo || '') } },
+        datalabels: { formatter: (v) => v + (sufixo || ''), color: corLabel },
       },
       scales: {
-        x: { beginAtZero: true, ticks: { font: { size: 10 }, color: '#A9B8CF', callback: (v) => v + (sufixo || '') }, grid: { color: 'rgba(255,255,255,0.06)' } },
-        y: { ticks: { font: { size: 10 }, color: '#A9B8CF' } },
+        x: { display: false, beginAtZero: true, grid: { display: false } },
+        y: { ticks: { font: { size: 10 }, color: corTexto }, grid: { display: false } },
       },
     },
   });

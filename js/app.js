@@ -2,6 +2,17 @@ if (window.Chart) {
   Chart.defaults.font.family = "'Montserrat', -apple-system, BlinkMacSystemFont, sans-serif";
   Chart.defaults.color = '#A9B8CF';
   Chart.defaults.borderColor = 'rgba(255,255,255,0.08)';
+  if (window.ChartDataLabels) {
+    Chart.register(ChartDataLabels);
+    Chart.defaults.set('plugins.datalabels', {
+      color: '#FFFFFF',
+      font: { weight: '700', size: 11 },
+      anchor: 'end',
+      align: 'end',
+      offset: 2,
+      clip: false,
+    });
+  }
 }
 
 const TABS = ['dashboard-comercial', 'dashboard-financeiro', 'comercial', 'financeiro', 'historico', 'metas', 'config'];

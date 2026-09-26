@@ -43,13 +43,43 @@ function gerarInsightComercial() {
   return `Seu melhor segmento é <strong>${top.nome}</strong>, com ${top.valor}% de conversão (${top.f} de ${top.v}). Vale concentrar a prospecção nesse nicho.`;
 }
 
+function calcularPipelineDoMes(mes) {
+  const iniciados = State.prospects.filter((p) => (p.data_visita || '').slice(0, 7) === mes);
+  const ganhos = State.clientesAtivos.filter((c) => (c.data_fechamento || '').slice(0, 7) === mes);
+  const perdidos = State.prospects.filter((p) => p.status === 'descartado' && (p.data_visita || '').slice(0, 7) === mes);
+  const pipeline = prospectsPipeline();
+  return {
+    iniciados: iniciados.length,
+    ganhos: ganhos.length,
+    valorGanho: ganhos.reduce((s, c) => s + Number(c.ticket_mensal || 0), 0),
+    perdidos: perdidos.length,
+    valorPerdido: perdidos.reduce((s, p) => s + Number(p.ticket || 0), 0),
+    noPipeline: pipeline.length,
+    valorPipeline: pipeline.reduce((s, p) => s + Number(p.ticket || 0), 0),
+  };
+}
+
+function clientesNecessariosParaMeta() {
+  const mes = mesAtual();
+  const metaMes = metaEfetivaDoMes(mes);
+  if (!metaMes) return null;
+  const clientesAtivos = State.clientesAtivos.filter((c) => c.status === 'ativo');
+  const ticketMedio = clientesAtivos.length ? clientesAtivos.reduce((s, c) => s + Number(c.ticket_mensal || 0), 0) / clientesAtivos.length : 0;
+  if (ticketMedio <= 0) return null;
+  return Math.ceil(metaMes.meta_receita / ticketMedio);
+}
+
 function renderDashboardComercial() {
+  if (!State.periodo) State.periodo = mesAtual();
+  const mesPipeline = State.periodo;
   const clientesAtivos = State.clientesAtivos.filter((c) => c.status === 'ativo');
   const pipeline = prospectsPipeline();
   const totalFechadosAllTime = State.clientesAtivos.length;
   const totalContatos = pipeline.length + totalFechadosAllTime;
   const taxaConversao = totalContatos > 0 ? Math.round(totalFechadosAllTime / totalContatos * 100) : 0;
   const valorFunil = pipeline.reduce((s, p) => s + (p.ticket || 0), 0);
+  const metaClientes = clientesNecessariosParaMeta();
+  const pipe = calcularPipelineDoMes(mesPipeline);
 
   const h = hj();
   const acoes = [];
@@ -69,10 +99,21 @@ function renderDashboardComercial() {
     <div class="section">
       <div class="section-title">Resumo comercial</div>
       <div class="card-grid-2" style="margin-bottom:14px;">
-        <div class="stat-card"><div class="stat-lbl">Clientes ativos</div><div class="stat-val" style="color:var(--positivo)">${clientesAtivos.length}</div><div class="stat-sub">meta: ${State.metas.sm_clientes}</div></div>
+        <div class="stat-card"><div class="stat-lbl">Clientes ativos</div><div class="stat-val" style="color:var(--positivo)">${clientesAtivos.length}</div><div class="stat-sub">${metaClientes === null ? 'defina uma meta em Metas' : 'meta: ' + metaClientes + ' (p/ bater a meta de lucro)'}</div></div>
         <div class="stat-card"><div class="stat-lbl">Prospects</div><div class="stat-val" style="color:var(--blue)">${pipeline.length}</div><div class="stat-sub">em funil</div></div>
         <div class="stat-card"><div class="stat-lbl">Taxa conversão</div><div class="stat-val">${taxaConversao}%</div></div>
         <div class="stat-card"><div class="stat-lbl">Valor em funil</div><div class="stat-val">${fmtMoeda(valorFunil)}</div></div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">Pipeline do mês</div>
+      ${htmlSeletorPeriodo()}
+      <div class="card-grid-2" style="margin-bottom:14px;">
+        <div class="stat-card"><div class="stat-lbl">Negócios iniciados</div><div class="stat-val" style="color:var(--blue)">${pipe.iniciados}</div></div>
+        <div class="stat-card"><div class="stat-lbl">No pipeline (agora)</div><div class="stat-val">${pipe.noPipeline}</div><div class="stat-sub">${fmtMoeda(pipe.valorPipeline)}</div></div>
+        <div class="stat-card"><div class="stat-lbl">Ganhos</div><div class="stat-val" style="color:var(--positivo)">${pipe.ganhos}</div><div class="stat-sub">${fmtMoeda(pipe.valorGanho)}</div></div>
+        <div class="stat-card"><div class="stat-lbl">Perdidos</div><div class="stat-val" style="color:var(--negativo)">${pipe.perdidos}</div><div class="stat-sub">${fmtMoeda(pipe.valorPerdido)}</div></div>
       </div>
     </div>
 
@@ -85,10 +126,18 @@ function renderDashboardComercial() {
     </div>` : ''}
 
     <div class="section">
-      <div class="section-title">Funil de conversão</div>
-      <div class="chart-box panel">
-        <div class="panel-sub">Todos os prospects já cadastrados</div>
-        <div style="position:relative;height:200px;"><canvas id="db-chart-funil"></canvas></div>
+      <div class="section-title">Funil e segmentos</div>
+      <div class="chart-row">
+        <div class="chart-box panel">
+          <div class="panel-title">Funil de conversão</div>
+          <div class="panel-sub">Todos os prospects já cadastrados</div>
+          <div style="position:relative;height:170px;"><canvas id="db-chart-funil"></canvas></div>
+        </div>
+        <div class="chart-box panel">
+          <div class="panel-title">Top segmentos</div>
+          <div class="panel-sub">Conversão por segmento (mín. 1 prospect)</div>
+          <div style="position:relative;height:170px;"><canvas id="db-chart-segmentos"></canvas></div>
+        </div>
       </div>
     </div>
 
@@ -109,21 +158,13 @@ function renderDashboardComercial() {
     </div>
 
     <div class="section">
-      <div class="section-title">Top segmentos</div>
-      <div class="chart-box panel">
-        <div class="panel-sub">Taxa de conversão por segmento (mín. 1 prospect)</div>
-        <div style="position:relative;height:200px;"><canvas id="db-chart-segmentos"></canvas></div>
-      </div>
-    </div>
-
-    <div class="section">
       <div class="section-title">Origem dos clientes</div>
       <div class="card-grid-2" style="margin-bottom:10px;">
         <div class="stat-card"><div class="stat-lbl">Total indicações</div><div class="stat-val">${indicacoes.length}</div></div>
         <div class="stat-card"><div class="stat-lbl">Taxa de indicações</div><div class="stat-val">${taxaIndicacoes}%</div><div class="stat-sub">dos clientes</div></div>
       </div>
       <div class="chart-box panel" id="cm-origem-wrap">
-        <div style="position:relative;height:200px;"><canvas id="cm-chart-origem"></canvas></div>
+        <div style="position:relative;height:170px;"><canvas id="cm-chart-origem"></canvas></div>
       </div>
     </div>
 
@@ -161,10 +202,17 @@ function renderGraficosDashboardComercial() {
   const origem = calcularOrigemClientes();
   const canvasOrigem = document.getElementById('cm-chart-origem');
   if (origem.length) {
+    const totalOrigem = origem.reduce((s, o) => s + o.valor, 0);
     dcCharts.origem = new Chart(canvasOrigem, {
       type: 'doughnut',
       data: { labels: origem.map((o) => o.nome), datasets: [{ data: origem.map((o) => o.valor), backgroundColor: CORES_CATEGORIA }] },
-      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { font: { size: 10 }, boxWidth: 10 } } } },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: {
+          legend: { position: 'bottom', labels: { font: { size: 10 }, boxWidth: 10 } },
+          datalabels: { color: '#001438', font: { weight: '700', size: 11 }, anchor: 'center', align: 'center', formatter: (v) => Math.round(v / totalOrigem * 100) + '%' },
+        },
+      },
     });
   } else {
     canvasOrigem.parentElement.innerHTML = '<div class="empty-state">Feche clientes pra ver a origem deles aqui.</div>';

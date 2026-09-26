@@ -70,8 +70,8 @@ function gerarRelatorioComercial() {
   `;
 
   requestAnimationFrame(() => {
-    rlCharts.push(fnBarChartOrdem(document.getElementById('rl-chart-funil'), funil, CORES_CATEGORIA));
-    if (segmentos.length) rlCharts.push(fnBarChartOrdem(document.getElementById('rl-chart-segmentos'), segmentos, '#9B7BF0', '%'));
+    rlCharts.push(fnBarChartOrdem(document.getElementById('rl-chart-funil'), funil, CORES_CATEGORIA, null, true));
+    if (segmentos.length) rlCharts.push(fnBarChartOrdem(document.getElementById('rl-chart-segmentos'), segmentos, '#9B7BF0', '%', true));
     rlImprimir();
   });
 }
@@ -139,7 +139,15 @@ function gerarRelatorioFinanceiro() {
           { label: 'Despesas', data: dreHistorico.map((d) => d.deducoes + d.totalDespesasOperacionais), backgroundColor: '#FF6B81', borderRadius: 3 },
         ],
       },
-      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: true, labels: { font: { size: 10 }, boxWidth: 10 } } }, scales: { x: { ticks: { font: { size: 10 } } }, y: { beginAtZero: true, ticks: { font: { size: 10 } } } } },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        layout: { padding: { top: 16 } },
+        plugins: {
+          legend: { display: true, labels: { font: { size: 10 }, boxWidth: 10 } },
+          datalabels: { display: false },
+        },
+        scales: { x: { ticks: { font: { size: 10 } }, grid: { display: false } }, y: { display: false, beginAtZero: true, grid: { display: false } } },
+      },
     }));
     rlImprimir();
   });
@@ -196,14 +204,19 @@ function gerarRelatorioIntegrado() {
   `;
 
   requestAnimationFrame(() => {
-    rlCharts.push(fnBarChartOrdem(document.getElementById('rl-chart-funil2'), funil, CORES_CATEGORIA));
+    rlCharts.push(fnBarChartOrdem(document.getElementById('rl-chart-funil2'), funil, CORES_CATEGORIA, null, true));
     rlCharts.push(new Chart(document.getElementById('rl-chart-cresc2'), {
       type: 'bar',
       data: { labels: crescimento.map((c) => nomeMesShort(c.mes)), datasets: [{ data: crescimento.map((c) => c.receita), backgroundColor: '#4DB8F2', borderRadius: 3 }] },
-      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { ticks: { font: { size: 10 } } }, y: { beginAtZero: true, ticks: { font: { size: 10 } } } } },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        layout: { padding: { top: 16 } },
+        plugins: { legend: { display: false }, datalabels: { formatter: (v) => v > 0 ? fmtMoeda(v) : '', color: '#001438', font: { size: 9, weight: '600' }, align: 'top', offset: 4 } },
+        scales: { x: { ticks: { font: { size: 10 } }, grid: { display: false } }, y: { display: false, beginAtZero: true, grid: { display: false } } },
+      },
     }));
-    if (despesasPorCategoria.length) rlCharts.push(fnBarChartOrdenado(document.getElementById('rl-chart-desp2'), despesasPorCategoria, CORES_CATEGORIA));
-    if (receitasPorCategoria.length) rlCharts.push(fnBarChartOrdenado(document.getElementById('rl-chart-rec2'), receitasPorCategoria, '#3DD68C'));
+    if (despesasPorCategoria.length) rlCharts.push(fnBarChartOrdenado(document.getElementById('rl-chart-desp2'), despesasPorCategoria, CORES_CATEGORIA, true));
+    if (receitasPorCategoria.length) rlCharts.push(fnBarChartOrdenado(document.getElementById('rl-chart-rec2'), receitasPorCategoria, '#3DD68C', true));
     rlImprimir();
   });
 }

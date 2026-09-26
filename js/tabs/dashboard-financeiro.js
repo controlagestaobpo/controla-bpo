@@ -2,16 +2,24 @@ let dfCharts = {};
 
 function calcularReceitaVsMeta(mes) {
   const dre = montarDRE(mes);
-  const metaSalva = State.metasFinanceiras.find((m) => m.mes === mes);
-  const meta = metaSalva ? metaSalva.meta_receita : State.metas.mm_fat;
+  const metaSalva = metaEfetivaDoMes(mes);
+  const meta = metaSalva ? metaSalva.meta_receita : 0;
   return { atual: dre.receitaTotal, meta };
+}
+
+function calcularLucroVsMeta(mes) {
+  const dre = montarDRE(mes);
+  const metaSalva = metaEfetivaDoMes(mes);
+  const meta = metaSalva ? metaSalva.meta_lucro : 0;
+  const pct = meta > 0 ? Math.max(0, Math.min(100, Math.round(dre.lucroLiquido / meta * 100))) : null;
+  return { atual: dre.lucroLiquido, meta, pct };
 }
 
 function calcularEvolucaoTicketMedio(nMeses) {
   const meses = [];
   for (let i = nMeses - 1; i >= 0; i--) meses.push(mesesAtras(i));
   return meses.map((m) => {
-    const receitasMes = State.receitas.filter((r) => r.mes_projecao === m && r.status === 'ativa' && r.cliente_id);
+    const receitasMes = State.receitas.filter((r) => r.status === 'ativa' && r.recebido && r.cliente_id && (r.data_recebimento || '').slice(0, 7) === m);
     if (!receitasMes.length) return { mes: m, ticket: 0 };
     const porCliente = {};
     receitasMes.forEach((r) => { porCliente[r.cliente_id] = (porCliente[r.cliente_id] || 0) + Number(r.valor || 0); });
@@ -47,6 +55,48 @@ function gerarInsightsFinanceiro(mes) {
   return insights;
 }
 
+function calcularPontoEquilibrio(mes, ticketOverride) {
+  const despesasMes = State.despesas.filter((d) => d.mes_projecao === mes);
+  const despesasTotais = despesasMes.reduce((s, d) => s + Number(d.valor || 0), 0);
+  const clientesAtivos = State.clientesAtivos.filter((c) => c.status === 'ativo');
+  const ticketMedioReal = clientesAtivos.length ? clientesAtivos.reduce((s, c) => s + Number(c.ticket_mensal || 0), 0) / clientesAtivos.length : 0;
+  const ticket = ticketOverride > 0 ? ticketOverride : ticketMedioReal;
+  const clientesNecessarios = ticket > 0 ? Math.ceil(despesasTotais / ticket) : null;
+  const dre = montarDRE(mes);
+  const faltam = Math.max(despesasTotais - dre.receitaTotal, 0);
+  return { despesasTotais, ticketMedioReal, ticket, clientesNecessarios, receitaAtual: dre.receitaTotal, faltam, atingido: dre.receitaTotal >= despesasTotais };
+}
+
+function fnRecalcularPontoEquilibrio() {
+  const override = parseFloat(document.getElementById('pe-ticket').value) || 0;
+  const pe = calcularPontoEquilibrio(State.periodo, override);
+  document.getElementById('pe-clientes').textContent = pe.clientesNecessarios === null ? '-' : pe.clientesNecessarios;
+}
+
+function svgVelocimetro(pct) {
+  if (pct === null) {
+    return `<div class="empty-state" style="padding:20px 16px;">Defina uma meta de lucro líquido na aba Metas pra ver a velocidade até ela.</div>`;
+  }
+  const p = Math.max(0, Math.min(100, pct));
+  const cx = 100, cy = 100, r = 78, L = 60;
+  const rad = (deg) => deg * Math.PI / 180;
+  const pt = (deg, radius) => [cx + radius * Math.cos(rad(deg)), cy - radius * Math.sin(rad(deg))];
+  const [x180, y180] = pt(180, r), [x120, y120] = pt(120, r), [x60, y60] = pt(60, r), [x0, y0] = pt(0, r);
+  const anguloAgulha = 180 - (p / 100) * 180;
+  const [xN, yN] = pt(anguloAgulha, L);
+  const corPct = p >= 66 ? '#3DD68C' : p >= 33 ? '#F5A623' : '#FF6B81';
+  return `
+    <svg viewBox="0 0 200 112" style="width:100%;max-width:220px;display:block;margin:0 auto;">
+      <path d="M${x180},${y180} A${r},${r} 0 0,1 ${x120},${y120}" fill="none" stroke="#FF6B81" stroke-width="14" stroke-linecap="round"/>
+      <path d="M${x120},${y120} A${r},${r} 0 0,1 ${x60},${y60}" fill="none" stroke="#F5A623" stroke-width="14" stroke-linecap="round"/>
+      <path d="M${x60},${y60} A${r},${r} 0 0,1 ${x0},${y0}" fill="none" stroke="#3DD68C" stroke-width="14" stroke-linecap="round"/>
+      <line x1="${cx}" y1="${cy}" x2="${xN}" y2="${yN}" stroke="#FFFFFF" stroke-width="4" stroke-linecap="round"/>
+      <circle cx="${cx}" cy="${cy}" r="6" fill="#FFFFFF"/>
+      <text x="${cx}" y="${cy + 26}" text-anchor="middle" font-size="22" font-weight="800" fill="${corPct}" font-family="Montserrat, sans-serif">${p}%</text>
+    </svg>
+  `;
+}
+
 function renderDashboardFinanceiro() {
   if (!State.periodo) State.periodo = mesAtual();
   const mes = State.periodo;
@@ -54,6 +104,9 @@ function renderDashboardFinanceiro() {
   const despesaTotalMes = dre.deducoes + dre.totalDespesasOperacionais;
   const projecaoMes = projecaoFimDeMes(dre.receitaTotal, mes);
   const projecaoLabel = mes === mesAtual() ? 'Projeção (fim do mês)' : (mes < mesAtual() ? 'Total do mês' : 'Projeção do mês');
+  const metaMes = metaEfetivaDoMes(mes);
+  const lucroVsMeta = calcularLucroVsMeta(mes);
+  const pe = calcularPontoEquilibrio(mes);
 
   const el = document.getElementById('page-dashboard-financeiro');
   el.innerHTML = `
@@ -62,11 +115,32 @@ function renderDashboardFinanceiro() {
     <div class="section">
       <div class="section-title">Resumo financeiro</div>
       <div class="card-grid-2" style="margin-bottom:14px;">
-        <div class="stat-card"><div class="stat-lbl">Receita</div><div class="stat-val" style="color:var(--positivo)">${fmtMoeda(dre.receitaTotal)}</div><div class="stat-sub">meta: ${fmtMoeda(State.metas.mm_fat)}</div></div>
+        <div class="stat-card"><div class="stat-lbl">Receita</div><div class="stat-val" style="color:var(--positivo)">${fmtMoeda(dre.receitaTotal)}</div><div class="stat-sub">${metaMes ? 'meta: ' + fmtMoeda(metaMes.meta_receita) : 'defina uma meta em Metas'}</div></div>
         <div class="stat-card"><div class="stat-lbl">Despesas</div><div class="stat-val" style="color:var(--negativo)">${fmtMoeda(despesaTotalMes)}</div></div>
-        <div class="stat-card"><div class="stat-lbl">Lucro líquido</div><div class="stat-val" style="color:${dre.lucroLiquido >= 0 ? 'var(--positivo)' : 'var(--negativo)'}">${fmtMoeda(dre.lucroLiquido)}</div></div>
+        <div class="stat-card"><div class="stat-lbl">Lucro líquido</div><div class="stat-val" style="color:${dre.lucroLiquido >= 0 ? 'var(--positivo)' : 'var(--negativo)'}">${fmtMoeda(dre.lucroLiquido)}</div><div class="stat-sub">${metaMes ? 'meta: ' + fmtMoeda(metaMes.meta_lucro) : 'defina uma meta em Metas'}</div></div>
         <div class="stat-card"><div class="stat-lbl">Margem</div><div class="stat-val">${dre.margem}%</div></div>
         <div class="stat-card" style="grid-column:1/-1;"><div class="stat-lbl">${projecaoLabel}</div><div class="stat-val">${fmtMoeda(projecaoMes)}</div><div class="stat-sub">no ritmo atual de faturamento</div></div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">Velocidade até a meta e ponto de equilíbrio</div>
+      <div class="chart-row">
+        <div class="chart-box panel" style="text-align:center;">
+          <div class="panel-title">Velocidade até a meta de lucro</div>
+          <div class="panel-sub">${metaMes ? fmtMoeda(dre.lucroLiquido) + ' de ' + fmtMoeda(metaMes.meta_lucro) : 'Meta de lucro líquido do mês'}</div>
+          ${svgVelocimetro(lucroVsMeta.pct)}
+        </div>
+        <div class="chart-box panel">
+          <div class="panel-title">Ponto de equilíbrio</div>
+          <div class="panel-sub">Quanto você precisa faturar pra cobrir as despesas do mês</div>
+          <div style="font-size:20px;font-weight:800;color:${pe.atingido ? 'var(--positivo)' : 'var(--branco)'};margin:8px 0 2px;">${fmtMoeda(pe.despesasTotais)}</div>
+          <div style="font-size:11px;color:${pe.atingido ? 'var(--positivo)' : 'var(--negativo)'};font-weight:600;margin-bottom:10px;">${pe.atingido ? '✓ Ponto de equilíbrio atingido' : `Faltam ${fmtMoeda(pe.faltam)} pra cobrir os custos`}</div>
+          <div class="fg" style="margin-bottom:0;">
+            <div class="fr" style="margin-bottom:0;"><label>Ticket por atendimento</label><input type="number" id="pe-ticket" min="0" value="${Math.round(pe.ticketMedioReal)}" oninput="fnRecalcularPontoEquilibrio()"></div>
+            <div class="fr" style="margin-bottom:0;"><label>Atendimentos p/ equilíbrio</label><div class="stat-val" id="pe-clientes" style="font-size:20px;">${pe.clientesNecessarios === null ? '-' : pe.clientesNecessarios}</div></div>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -88,28 +162,28 @@ function renderDashboardFinanceiro() {
         <div class="chart-box panel">
           <div class="panel-title">Saídas por categoria</div>
           <div class="panel-sub">Despesas de ${nomeMesLongo(mes)}, do maior para o menor</div>
-          <div style="position:relative;height:260px;"><canvas id="db-chart-despesas"></canvas></div>
+          <div style="position:relative;height:190px;"><canvas id="db-chart-despesas"></canvas></div>
         </div>
         <div class="chart-box panel">
           <div class="panel-title">Entradas por categoria</div>
           <div class="panel-sub">Receitas de ${nomeMesLongo(mes)}, do maior para o menor</div>
-          <div style="position:relative;height:260px;"><canvas id="db-chart-receitas"></canvas></div>
+          <div style="position:relative;height:190px;"><canvas id="db-chart-receitas"></canvas></div>
         </div>
       </div>
     </div>
 
     <div class="section">
-      <div class="section-title">Receita vs. meta do mês</div>
-      <div class="chart-box panel">
-        <div style="position:relative;height:160px;"><canvas id="fn-chart-meta"></canvas></div>
-      </div>
-    </div>
-
-    <div class="section">
-      <div class="section-title">Evolução do ticket médio</div>
-      <div class="chart-box panel">
-        <div class="panel-sub">Últimos 12 meses</div>
-        <div style="position:relative;height:200px;"><canvas id="fn-chart-ticket"></canvas></div>
+      <div class="section-title">Meta e ticket médio</div>
+      <div class="chart-row">
+        <div class="chart-box panel">
+          <div class="panel-title">Receita vs. meta do mês</div>
+          <div style="position:relative;height:150px;"><canvas id="fn-chart-meta"></canvas></div>
+        </div>
+        <div class="chart-box panel">
+          <div class="panel-title">Evolução do ticket médio</div>
+          <div class="panel-sub">Últimos 12 meses</div>
+          <div style="position:relative;height:150px;"><canvas id="fn-chart-ticket"></canvas></div>
+        </div>
       </div>
     </div>
 
@@ -117,7 +191,7 @@ function renderDashboardFinanceiro() {
       <div class="section-title">Crescimento</div>
       <div class="chart-box panel">
         <div class="panel-sub">Receita bruta dos últimos 6 meses</div>
-        <div style="position:relative;height:220px;"><canvas id="db-chart-crescimento"></canvas></div>
+        <div style="position:relative;height:170px;"><canvas id="db-chart-crescimento"></canvas></div>
       </div>
     </div>
   `;
@@ -180,7 +254,12 @@ function renderGraficosDashboardFinanceiro(mes, dre) {
     dfCharts.meta = new Chart(canvasMeta, {
       type: 'bar',
       data: { labels: ['Atual', 'Meta'], datasets: [{ data: [atual, meta], backgroundColor: [atual >= meta && meta > 0 ? '#3DD68C' : '#4DB8F2', '#A9B8CF'], borderRadius: 4 }] },
-      options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { beginAtZero: true, ticks: { font: { size: 10 } } }, y: { ticks: { font: { size: 11 } } } } },
+      options: {
+        indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+        layout: { padding: { right: 50 } },
+        plugins: { legend: { display: false }, datalabels: { formatter: (v) => fmtMoeda(v) } },
+        scales: { x: { display: false, beginAtZero: true, grid: { display: false } }, y: { ticks: { font: { size: 11 } }, grid: { display: false } } },
+      },
     });
   } else {
     canvasMeta.parentElement.innerHTML = '<div class="empty-state">Defina uma meta em Configurações ou na aba Metas pra ver a comparação.</div>';
@@ -195,7 +274,15 @@ function renderGraficosDashboardFinanceiro(mes, dre) {
         labels: evolucao.map((e) => nomeMesShort(e.mes)),
         datasets: [{ data: evolucao.map((e) => Math.round(e.ticket)), borderColor: '#9B7BF0', backgroundColor: 'rgba(155,123,240,0.15)', fill: true, tension: 0.3, pointRadius: 3 }],
       },
-      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { ticks: { font: { size: 10 } } }, y: { beginAtZero: true, ticks: { font: { size: 10 } } } } },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        layout: { padding: { top: 20 } },
+        plugins: {
+          legend: { display: false },
+          datalabels: { formatter: (v) => v > 0 ? fmtMoeda(v) : '', color: '#A9B8CF', font: { size: 9, weight: '600' }, align: 'top', offset: 4 },
+        },
+        scales: { x: { ticks: { font: { size: 10 } }, grid: { display: false } }, y: { display: false, beginAtZero: true, grid: { display: false } } },
+      },
     });
   } else {
     canvasTicket.parentElement.innerHTML = '<div class="empty-state">Ainda não há receita vinculada a clientes nos últimos 12 meses.</div>';
@@ -213,10 +300,14 @@ function renderGraficosDashboardFinanceiro(mes, dre) {
       options: {
         responsive: true,
         maintainAspectRatio: false,
-        plugins: { legend: { display: false } },
+        layout: { padding: { top: 20 } },
+        plugins: {
+          legend: { display: false },
+          datalabels: { formatter: (v) => v > 0 ? fmtMoeda(v) : '', color: '#A9B8CF', font: { size: 9, weight: '600' }, align: 'top', offset: 4 },
+        },
         scales: {
           x: { ticks: { font: { size: 10 }, color: '#A9B8CF' }, grid: { display: false } },
-          y: { beginAtZero: true, ticks: { font: { size: 10 }, color: '#A9B8CF' }, grid: { color: 'rgba(255,255,255,0.06)' } },
+          y: { display: false, beginAtZero: true, grid: { display: false } },
         },
       },
     });

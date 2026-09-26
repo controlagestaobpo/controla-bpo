@@ -30,7 +30,7 @@ function mtDadosBase() {
 }
 
 function renderMetasInteligentes() {
-  if (!mtMes) mtMes = proximoMes();
+  if (!mtMes) mtMes = mesAtual();
   const salva = State.metasFinanceiras.find((m) => m.mes === mtMes);
   const dados = mtDadosBase();
   if (mtLucroDesejado === 0 && !salva) mtLucroDesejado = Math.max(Math.round(dados.lucroLiquido), 0);

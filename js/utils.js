@@ -65,6 +65,17 @@ function htmlSeletorPeriodo() {
   </div>`;
 }
 
+// ===== Meta efetiva do mês =====
+// A meta de tudo no app parte de "quanto lucro líquido eu quero" (aba Metas).
+// Se o mês não tem meta salva, usa a meta salva mais recente como referência (carry-forward).
+function metaEfetivaDoMes(mes) {
+  if (!State.metasFinanceiras || !State.metasFinanceiras.length) return null;
+  const exata = State.metasFinanceiras.find((m) => m.mes === mes);
+  if (exata) return exata;
+  const anteriores = State.metasFinanceiras.filter((m) => m.mes <= mes).sort((a, b) => b.mes.localeCompare(a.mes));
+  return anteriores[0] || null;
+}
+
 // ===== Projeção de ritmo (pace) até o fim do mês =====
 function diasNoMes(ym) {
   const [y, m] = ym.split('-').map(Number);
@@ -79,11 +90,13 @@ function projecaoFimDeMes(valorAcumulado, mes) {
 }
 
 // ===== DRE enxuto, com detalhamento por categoria =====
+// Regime de caixa: só entra no DRE o que já foi de fato pago/recebido,
+// contado no mês em que o dinheiro realmente entrou/saiu (não o vencimento).
 function receitasDoMes(mes) {
-  return State.receitas.filter((r) => r.mes_projecao === mes && r.status === 'ativa');
+  return State.receitas.filter((r) => r.status === 'ativa' && r.recebido && (r.data_recebimento || '').slice(0, 7) === mes);
 }
 function despesasDoMes(mes) {
-  return State.despesas.filter((d) => d.mes_projecao === mes);
+  return State.despesas.filter((d) => d.pago && (d.data_pagamento || '').slice(0, 7) === mes);
 }
 function dataDesde(dias) {
   const d = new Date();
@@ -92,11 +105,11 @@ function dataDesde(dias) {
 }
 function receitasUltimosDias(dias) {
   const desde = dataDesde(dias);
-  return State.receitas.filter((r) => r.status === 'ativa' && r.data >= desde);
+  return State.receitas.filter((r) => r.status === 'ativa' && r.recebido && r.data_recebimento >= desde);
 }
 function despesasUltimosDias(dias) {
   const desde = dataDesde(dias);
-  return State.despesas.filter((d) => d.data >= desde);
+  return State.despesas.filter((d) => d.pago && d.data_pagamento >= desde);
 }
 
 function montarDRE(mes) {

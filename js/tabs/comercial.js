@@ -356,22 +356,27 @@ async function salvarProspect() {
       }]).select().single();
       const novoClienteId = rCliente.data && rCliente.data.id;
 
-      // Alimenta o Financeiro automaticamente: lança a receita do mês do fechamento.
+      // Alimenta o Financeiro automaticamente: já gera as receitas dos próximos meses do contrato.
       if (novoClienteId && ticketMensal > 0) {
         const produtoId = document.getElementById('pr-fc-produto').value || null;
         const produto = produtoId ? State.produtos.find((p) => p.id === produtoId) : null;
-        await db.from('receitas').insert([{
+        const datas = frequencia === 'outra' ? [dataFechamento] : fnGerarDatasRecorrencia(dataFechamento, frequencia);
+        const grupoId = crypto.randomUUID ? crypto.randomUUID() : (Date.now() + '-' + Math.random());
+        await db.from('receitas').insert(datas.map((d) => ({
           cliente_id: novoClienteId,
           produto_id: produtoId,
           valor: ticketMensal,
-          data: dataFechamento,
-          mes_projecao: dataFechamento.slice(0, 7),
+          data: d,
+          mes_projecao: d.slice(0, 7),
           categoria: 'Receita de Serviços',
           subcategoria: produto ? produto.nome : null,
-          e_recorrente: frequencia === 'mensal',
+          e_recorrente: frequencia !== 'outra',
+          recorrencia_frequencia: frequencia !== 'outra' ? frequencia : null,
+          grupo_recorrencia: frequencia !== 'outra' ? grupoId : null,
           origem: 'cliente_crm',
           descricao: `${empresa} — fechamento via Comercial`,
-        }]);
+          recebido: false,
+        })));
       }
 
       const [rc, rr] = await Promise.all([

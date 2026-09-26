@@ -4,13 +4,14 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Controla Gestão</title>
-<link rel="icon" type="image/svg+xml" href="assets/controla-avatar.svg">
+<link rel="icon" type="image/svg+xml" href="assets/controla-avatar-claro.svg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/styles.css">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-datalabels/2.2.0/chartjs-plugin-datalabels.min.js"></script>
 </head>
 <body>
 
@@ -216,8 +217,8 @@
     <div class="md-handle"></div>
     <h3 id="rc-tit">Nova receita</h3>
     <div class="fg">
-      <div class="fr"><label>Valor (R$)</label><input type="number" id="rc-valor" min="0" step="0.01"></div>
-      <div class="fr"><label>Data</label><input type="date" id="rc-data"></div>
+      <div class="fr"><label>Valor (R$)</label><input type="number" id="rc-valor" min="0" step="0.01" oninput="fnSyncRecebidoCheckbox()"></div>
+      <div class="fr"><label>Vencimento</label><input type="date" id="rc-data" onchange="fnSyncRecebidoCheckbox()"></div>
     </div>
     <div class="fg">
       <div class="fr"><label>Categoria</label><select id="rc-categoria" onchange="fnAtualizarSubcategoriasReceita()"></select></div>
@@ -225,7 +226,19 @@
     </div>
     <div class="fr"><label>Produto / Serviço (opcional)</label><select id="rc-produto"></select></div>
     <div class="fr"><label>Descrição</label><input type="text" id="rc-descricao" placeholder="Ex: consultoria extra, reembolso..."></div>
-    <div class="fr"><label style="display:flex;align-items:center;gap:8px;text-transform:none;letter-spacing:0;"><input type="checkbox" id="rc-recorrente" style="width:auto;"> É recorrente?</label></div>
+    <div class="fr" id="row-rc-recorrente"><label style="display:flex;align-items:center;gap:8px;text-transform:none;letter-spacing:0;"><input type="checkbox" id="rc-recorrente" onchange="fnToggleRecorrenciaReceita()" style="width:auto;"> É recorrente (se repete)?</label></div>
+    <div class="fg" id="row-rc-frequencia" style="display:none;">
+      <div class="fr"><label>Frequência</label>
+        <select id="rc-frequencia" onchange="fnToggleRecorrenciaReceita()">
+          <option value="mensal">Mensal</option>
+          <option value="quinzenal">Quinzenal</option>
+          <option value="semanal">Semanal</option>
+          <option value="personalizado">Personalizado</option>
+        </select>
+      </div>
+      <div class="fr" id="row-rc-intervalo" style="display:none;"><label>A cada quantos dias?</label><input type="number" id="rc-intervalo-dias" min="1" value="30"></div>
+    </div>
+    <div class="fr"><label style="display:flex;align-items:center;gap:8px;text-transform:none;letter-spacing:0;"><input type="checkbox" id="rc-recebido" style="width:auto;"> Já recebi esse valor</label></div>
     <div class="mda">
       <button class="btn" onclick="fecharOv('ov-receita')">Cancelar</button>
       <button class="btn btn-primary" onclick="salvarReceita()">Salvar</button>
@@ -239,16 +252,30 @@
     <div class="md-handle"></div>
     <h3 id="ds-tit">Nova despesa</h3>
     <div class="fg">
-      <div class="fr"><label>Valor (R$)</label><input type="number" id="ds-valor" min="0" step="0.01"></div>
-      <div class="fr"><label>Data</label><input type="date" id="ds-data"></div>
+      <div class="fr"><label>Valor <span id="ds-valor-lbl">(R$)</span></label><input type="number" id="ds-valor" min="0" step="0.01" oninput="fnSyncPagoCheckbox()"></div>
+      <div class="fr"><label>Vencimento <span id="ds-data-lbl"></span></label><input type="date" id="ds-data" onchange="fnSyncPagoCheckbox()"></div>
     </div>
     <div class="fg">
       <div class="fr"><label>Categoria</label><select id="ds-categoria" onchange="fnAtualizarSubcategorias()"></select></div>
       <div class="fr" id="row-subcategoria"><label>Subcategoria</label><select id="ds-subcategoria"></select></div>
     </div>
     <div class="fr"><label>Descrição</label><input type="text" id="ds-descricao"></div>
-    <div class="fr"><label style="display:flex;align-items:center;gap:8px;text-transform:none;letter-spacing:0;"><input type="checkbox" id="ds-recorrente" onchange="fnToggleRecorrenteAte()" style="width:auto;"> É recorrente?</label></div>
-    <div class="fr" id="row-recorrente-ate" style="display:none;"><label>Até quando?</label><input type="date" id="ds-recorrente-ate"></div>
+    <div class="fr" id="row-parcelar"><label style="display:flex;align-items:center;gap:8px;text-transform:none;letter-spacing:0;"><input type="checkbox" id="ds-parcelar" onchange="fnToggleParcelar()" style="width:auto;"> Compra parcelada?</label></div>
+    <div class="fr" id="row-qtd-parcelas" style="display:none;"><label>Quantidade de parcelas</label><input type="number" id="ds-qtd-parcelas" min="2" value="2"></div>
+    <div class="fr" id="row-recorrente-row"><label style="display:flex;align-items:center;gap:8px;text-transform:none;letter-spacing:0;"><input type="checkbox" id="ds-recorrente" onchange="fnToggleRecorrenteAte()" style="width:auto;"> É recorrente (fixa, se repete)?</label></div>
+    <div class="fg" id="row-ds-frequencia" style="display:none;">
+      <div class="fr"><label>Frequência</label>
+        <select id="ds-frequencia" onchange="fnToggleRecorrenteAte()">
+          <option value="mensal">Mensal</option>
+          <option value="quinzenal">Quinzenal</option>
+          <option value="semanal">Semanal</option>
+          <option value="personalizado">Personalizado</option>
+        </select>
+      </div>
+      <div class="fr" id="row-ds-intervalo" style="display:none;"><label>A cada quantos dias?</label><input type="number" id="ds-intervalo-dias" min="1" value="30"></div>
+    </div>
+    <div class="fr" id="row-recorrente-ate" style="display:none;"><label>Até quando? (opcional)</label><input type="date" id="ds-recorrente-ate"></div>
+    <div class="fr" id="row-pago"><label style="display:flex;align-items:center;gap:8px;text-transform:none;letter-spacing:0;"><input type="checkbox" id="ds-pago" style="width:auto;"> <span id="ds-pago-lbl">Já paguei essa despesa</span></label></div>
     <div class="mda">
       <button class="btn" onclick="fecharOv('ov-despesa')">Cancelar</button>
       <button class="btn btn-primary" onclick="salvarDespesa()">Salvar</button>
