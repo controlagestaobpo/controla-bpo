@@ -6,7 +6,7 @@ let cmEditId = null; // prospect sendo editado
 let cmClienteEditId = null; // cliente ativo sendo editado
 let cmEncerrarId = null; // cliente ativo a encerrar
 
-const STATUS_COR = { visita: '#2563EB', conversa: '#D97706', proposta: '#7C3AED', fechado: '#059669', descartado: '#DC2626' };
+const STATUS_COR = { visita: '#4DB8F2', conversa: '#F5A623', proposta: '#9B7BF0', fechado: '#3DD68C', descartado: '#FF6B81' };
 const STATUS_LBL = { visita: 'Visita', conversa: 'Conversa', proposta: 'Proposta enviada', fechado: 'Fechado', descartado: 'Descartado' };
 const STATUS_CLS = { visita: 'badge-blue', conversa: 'badge-amber', proposta: 'badge-purple', fechado: 'badge-green', descartado: 'badge-red' };
 const ORIGEM_LBL = { indicacao: 'Indicação', prospeccao: 'Prospecção', inbound: 'Inbound', outro: 'Outro' };
@@ -50,7 +50,7 @@ function renderComercial() {
     <div class="section">
       <div class="section-title">Resumo rápido</div>
       <div class="card-grid-2" style="margin-bottom:14px;">
-        <div class="stat-card"><div class="stat-lbl">Clientes</div><div class="stat-val" style="color:var(--green2)">${clientesAtivos.length}</div><div class="stat-sub">ativos</div></div>
+        <div class="stat-card"><div class="stat-lbl">Clientes</div><div class="stat-val" style="color:var(--positivo)">${clientesAtivos.length}</div><div class="stat-sub">ativos</div></div>
         <div class="stat-card"><div class="stat-lbl">Prospects</div><div class="stat-val" style="color:var(--blue)">${pipeline.length}</div><div class="stat-sub">em funil</div></div>
         <div class="stat-card"><div class="stat-lbl">Conversão</div><div class="stat-val">${taxaConversao}%</div><div class="stat-sub">taxa geral</div></div>
         <div class="stat-card"><div class="stat-lbl">Ticket médio</div><div class="stat-val">${fmtMoeda(ticketMedio)}</div><div class="stat-sub">por cliente/mês</div></div>
@@ -294,10 +294,10 @@ function renderProspectsLista() {
       }
       const fechou = p.status === 'fechado';
       return `<div class="item-card"><div class="ic-inner">
-        <div class="ic-accent" style="background:${STATUS_COR[p.status] || '#9CA3AF'};width:${fechou ? '6px' : '4px'};"></div>
+        <div class="ic-accent" style="background:${STATUS_COR[p.status] || '#A9B8CF'};width:${fechou ? '6px' : '4px'};"></div>
         <div class="ic-body">
           <div class="ic-top">
-            <div class="ic-nome">${fechou ? '<span style="color:var(--green2);">✓</span> ' : ''}${p.empresa}</div>
+            <div class="ic-nome">${fechou ? '<span style="color:var(--positivo);">✓</span> ' : ''}${p.empresa}</div>
             <div class="ic-acts">
               <button class="btn btn-xs" onclick="abrirModalProspect('${p.id}')">editar</button>
               <button class="btn btn-xs btn-danger" onclick="excluirProspect('${p.id}')">×</button>

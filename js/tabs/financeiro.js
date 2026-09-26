@@ -91,13 +91,13 @@ function renderFluxoCaixa(mes) {
   el.innerHTML = dias.map((d) => {
     const linhas = porDia[d];
     const totalDia = linhas.reduce((s, it) => s + (it.tipo === 'receita' ? it.valor : -it.valor), 0);
-    const header = `<div class="day-hdr"><div class="day-tit">${fmtD(d)}</div><div class="day-cnt">${linhas.length}</div><div class="day-hdr-total" style="color:${totalDia >= 0 ? 'var(--green2)' : 'var(--red)'}">${totalDia >= 0 ? '+' : '−'}${fmtMoeda2(Math.abs(totalDia))}</div></div>`;
+    const header = `<div class="day-hdr"><div class="day-tit">${fmtD(d)}</div><div class="day-cnt">${linhas.length}</div><div class="day-hdr-total" style="color:${totalDia >= 0 ? 'var(--positivo)' : 'var(--negativo)'}">${totalDia >= 0 ? '+' : '−'}${fmtMoeda2(Math.abs(totalDia))}</div></div>`;
     const rows = linhas.map((it) => `<div class="fluxo-row">
       <div class="fluxo-desc">
         <div class="fluxo-desc-cat">${it.titulo}</div>
         ${it.sub ? `<div class="fluxo-desc-sub">${it.sub}</div>` : ''}
       </div>
-      <div class="fluxo-valor" style="color:${it.tipo === 'receita' ? 'var(--green2)' : 'var(--red)'}">${it.tipo === 'receita' ? '+' : '−'}${fmtMoeda2(it.valor)}</div>
+      <div class="fluxo-valor" style="color:${it.tipo === 'receita' ? 'var(--positivo)' : 'var(--negativo)'}">${it.tipo === 'receita' ? '+' : '−'}${fmtMoeda2(it.valor)}</div>
       <div class="fluxo-acts">
         <button class="btn btn-xs" onclick="${it.tipo === 'receita' ? 'abrirModalReceita' : 'abrirModalDespesa'}('${it.id}')">editar</button>
         <button class="btn btn-xs btn-danger" onclick="${it.tipo === 'receita' ? 'excluirReceita' : 'excluirDespesa'}('${it.id}')">×</button>
@@ -121,16 +121,16 @@ function renderFinanceiro() {
       <div class="section-title">Resumo financeiro</div>
       <div class="panel-sub" style="margin-top:-4px;">O DRE completo e os gráficos por categoria estão no Dashboard.</div>
       <div class="card-grid-2" style="margin-bottom:14px;">
-        <div class="stat-card"><div class="stat-lbl">Receita</div><div class="stat-val" style="color:var(--green2)">${fmtMoeda(dre.receitaTotal)}</div></div>
-        <div class="stat-card"><div class="stat-lbl">Despesas</div><div class="stat-val" style="color:var(--red)">${fmtMoeda(dre.deducoes + dre.totalDespesasOperacionais)}</div></div>
-        <div class="stat-card"><div class="stat-lbl">Lucro líquido</div><div class="stat-val" style="color:${dre.lucroLiquido >= 0 ? 'var(--green2)' : 'var(--red)'}">${fmtMoeda(dre.lucroLiquido)}</div></div>
+        <div class="stat-card"><div class="stat-lbl">Receita</div><div class="stat-val" style="color:var(--positivo)">${fmtMoeda(dre.receitaTotal)}</div></div>
+        <div class="stat-card"><div class="stat-lbl">Despesas</div><div class="stat-val" style="color:var(--negativo)">${fmtMoeda(dre.deducoes + dre.totalDespesasOperacionais)}</div></div>
+        <div class="stat-card"><div class="stat-lbl">Lucro líquido</div><div class="stat-val" style="color:${dre.lucroLiquido >= 0 ? 'var(--positivo)' : 'var(--negativo)'}">${fmtMoeda(dre.lucroLiquido)}</div></div>
         <div class="stat-card"><div class="stat-lbl">Margem</div><div class="stat-val">${dre.margem}%</div></div>
       </div>
     </div>
 
     ${pendentes.length ? `
     <div class="section">
-      <div class="panel" style="border-left:4px solid var(--amber);background:#FFFBEB;">
+      <div class="panel" style="border-left:4px solid var(--amber);background:rgba(217,119,6,0.12);">
         <div class="panel-title">${pendentes.length} cliente${pendentes.length === 1 ? '' : 's'} recorrente${pendentes.length === 1 ? '' : 's'} sem receita lançada em ${nomeMesLongo(mes)}</div>
         <div class="panel-sub">${pendentes.map((c) => c.empresa).join(', ')}</div>
         <button class="btn btn-primary btn-sm" onclick="fnGerarRecorrencias()">Gerar receitas do mês</button>
@@ -164,7 +164,7 @@ function renderFinanceiro() {
       <div class="panel-sub" style="margin-top:-4px;">Retiradas de lucro e pró-labore entram como despesa, categoria "Pessoal".</div>
       <div style="display:flex;gap:8px;margin-bottom:10px;">
         <button class="btn btn-primary btn-sm" style="flex:1;" onclick="abrirModalReceita()">+ Receita</button>
-        <button class="btn btn-sm" style="flex:1;border-color:#FECACA;color:var(--red);" onclick="abrirModalDespesa()">+ Despesa</button>
+        <button class="btn btn-sm" style="flex:1;border-color:rgba(255,107,129,0.4);color:var(--negativo);" onclick="abrirModalDespesa()">+ Despesa</button>
       </div>
       <div class="list" id="fn-fluxo-list" style="padding:0;"></div>
     </div>
@@ -182,7 +182,7 @@ function renderGraficosFinanceiro2(mes) {
   if (meta > 0 || atual > 0) {
     fnCharts2.meta = new Chart(canvasMeta, {
       type: 'bar',
-      data: { labels: ['Atual', 'Meta'], datasets: [{ data: [atual, meta], backgroundColor: [atual >= meta && meta > 0 ? '#00C896' : '#1A3A6B', '#CBD5E0'], borderRadius: 4 }] },
+      data: { labels: ['Atual', 'Meta'], datasets: [{ data: [atual, meta], backgroundColor: [atual >= meta && meta > 0 ? '#3DD68C' : '#4DB8F2', '#A9B8CF'], borderRadius: 4 }] },
       options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { beginAtZero: true, ticks: { font: { size: 10 } } }, y: { ticks: { font: { size: 11 } } } } },
     });
   } else {
@@ -196,7 +196,7 @@ function renderGraficosFinanceiro2(mes) {
       type: 'line',
       data: {
         labels: evolucao.map((e) => nomeMesShort(e.mes)),
-        datasets: [{ data: evolucao.map((e) => Math.round(e.ticket)), borderColor: '#7C3AED', backgroundColor: 'rgba(124,58,237,0.1)', fill: true, tension: 0.3, pointRadius: 3 }],
+        datasets: [{ data: evolucao.map((e) => Math.round(e.ticket)), borderColor: '#9B7BF0', backgroundColor: 'rgba(155,123,240,0.15)', fill: true, tension: 0.3, pointRadius: 3 }],
       },
       options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { ticks: { font: { size: 10 } } }, y: { beginAtZero: true, ticks: { font: { size: 10 } } } } },
     });

@@ -42,7 +42,7 @@ function showSaving() {
 function abrirOv(id) { document.getElementById(id).classList.add('open'); }
 function fecharOv(id) { document.getElementById(id).classList.remove('open'); }
 
-const CORES_CATEGORIA = ['#1A3A6B', '#00C896', '#D97706', '#7C3AED', '#2563EB', '#DC2626', '#EA580C', '#00A86B', '#8A97A8', '#0F1B3C'];
+const CORES_CATEGORIA = ['#4DB8F2', '#3DD68C', '#F5A623', '#9B7BF0', '#FF6B81', '#34D3D3', '#EA580C', '#A9B8CF', '#6C8EF5', '#E8749A'];
 
 // ===== Navegador de período (mês/ano) — Dashboard e Financeiro =====
 function somarMes(ym, delta) {

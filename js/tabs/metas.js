@@ -57,8 +57,8 @@ function renderMetasInteligentes() {
     <div class="section">
       <div class="section-title">Dados atuais (últimos 30 dias)</div>
       <div class="card-grid-2" style="margin-bottom:4px;">
-        <div class="stat-card"><div class="stat-lbl">Receita bruta</div><div class="stat-val" style="color:var(--green2)">${fmtMoeda(dados.receitaBruta)}</div></div>
-        <div class="stat-card"><div class="stat-lbl">Despesas totais</div><div class="stat-val" style="color:var(--red)">${fmtMoeda(dados.despesasTotais)}</div></div>
+        <div class="stat-card"><div class="stat-lbl">Receita bruta</div><div class="stat-val" style="color:var(--positivo)">${fmtMoeda(dados.receitaBruta)}</div></div>
+        <div class="stat-card"><div class="stat-lbl">Despesas totais</div><div class="stat-val" style="color:var(--negativo)">${fmtMoeda(dados.despesasTotais)}</div></div>
         <div class="stat-card"><div class="stat-lbl">Lucro líquido</div><div class="stat-val">${fmtMoeda(dados.lucroLiquido)}</div></div>
         <div class="stat-card"><div class="stat-lbl">Margem</div><div class="stat-val">${dados.margem}%</div></div>
         <div class="stat-card"><div class="stat-lbl">Clientes ativos</div><div class="stat-val">${dados.clientesAtivos}</div></div>
@@ -97,9 +97,9 @@ function mtRenderResultado() {
 
   // ---- Status ----
   let status, statusCor, statusBg;
-  if (d.lucroLiquido >= meta + tolerancia) { status = `✓ Você já está acima da meta — ${fmtMoeda(d.lucroLiquido - meta)} a mais`; statusCor = 'var(--green2)'; statusBg = '#D1FAE5'; }
-  else if (Math.abs(d.lucroLiquido - meta) < tolerancia) { status = '✓ Você está no alvo'; statusCor = 'var(--green2)'; statusBg = '#D1FAE5'; }
-  else { status = `❌ Você precisa de ${fmtMoeda(gap)} a mais de lucro`; statusCor = 'var(--red)'; statusBg = '#FEE2E2'; }
+  if (d.lucroLiquido >= meta + tolerancia) { status = `✓ Você já está acima da meta — ${fmtMoeda(d.lucroLiquido - meta)} a mais`; statusCor = 'var(--positivo)'; statusBg = 'rgba(61,214,140,0.12)'; }
+  else if (Math.abs(d.lucroLiquido - meta) < tolerancia) { status = '✓ Você está no alvo'; statusCor = 'var(--positivo)'; statusBg = 'rgba(61,214,140,0.12)'; }
+  else { status = `❌ Você precisa de ${fmtMoeda(gap)} a mais de lucro`; statusCor = 'var(--negativo)'; statusBg = 'rgba(255,107,129,0.12)'; }
 
   // ---- Cenário 1: sem mudar nada ----
   const c1Bate = d.lucroLiquido >= meta;
@@ -181,27 +181,27 @@ function mtRenderResultado() {
     <div class="panel">
       <div class="panel-title">1 · Sem mudar nada</div>
       <div class="panel-sub">${d.clientesAtivos} clientes × ${fmtMoeda(d.ticketMedio)} − ${fmtMoeda(d.despesasTotais)} despesas</div>
-      <div style="font-size:20px;font-weight:800;color:${c1Bate ? 'var(--green2)' : 'var(--red)'};">${fmtMoeda(d.lucroLiquido)}</div>
-      <div style="font-size:11px;color:${c1Bate ? 'var(--green2)' : 'var(--red)'};font-weight:600;">${c1Bate ? '✓ Meta atingida' : '❌ Meta não atingida'}</div>
+      <div style="font-size:20px;font-weight:800;color:${c1Bate ? 'var(--positivo)' : 'var(--negativo)'};">${fmtMoeda(d.lucroLiquido)}</div>
+      <div style="font-size:11px;color:${c1Bate ? 'var(--positivo)' : 'var(--negativo)'};font-weight:600;">${c1Bate ? '✓ Meta atingida' : '❌ Meta não atingida'}</div>
     </div>
 
     <div class="panel">
       <div class="panel-title">2 · Aumentar clientes</div>
-      ${c2 ? c2.map((t) => `<div style="display:flex;justify-content:space-between;padding:4px 0;font-size:12px;"><span>${t.clientes} clientes × ${fmtMoeda(d.ticketMedio)}</span><strong style="color:${t.liquido >= meta ? 'var(--green2)' : 'var(--text)'}">${fmtMoeda(t.liquido)}</strong></div>`).join('')
+      ${c2 ? c2.map((t) => `<div style="display:flex;justify-content:space-between;padding:4px 0;font-size:12px;"><span>${t.clientes} clientes × ${fmtMoeda(d.ticketMedio)}</span><strong style="color:${t.liquido >= meta ? 'var(--positivo)' : 'var(--text)'}">${fmtMoeda(t.liquido)}</strong></div>`).join('')
       : '<div class="empty-state">Cadastre clientes com ticket definido pra calcular este cenário.</div>'}
       ${c2 ? `<div class="panel-sub" style="margin-top:6px;">Recomendação: feche mais ${Math.max(c2[0].clientes - d.clientesAtivos, 0)} cliente${Math.max(c2[0].clientes - d.clientesAtivos, 0) === 1 ? '' : 's'} novo${Math.max(c2[0].clientes - d.clientesAtivos, 0) === 1 ? '' : 's'}.</div>` : ''}
     </div>
 
     <div class="panel">
       <div class="panel-title">3 · Aumentar ticket médio</div>
-      ${c3 ? c3.map((t) => `<div style="display:flex;justify-content:space-between;padding:4px 0;font-size:12px;"><span>${d.clientesAtivos} clientes × ${fmtMoeda(t.ticket)}</span><strong style="color:${t.liquido >= meta ? 'var(--green2)' : 'var(--text)'}">${fmtMoeda(t.liquido)}</strong></div>`).join('')
+      ${c3 ? c3.map((t) => `<div style="display:flex;justify-content:space-between;padding:4px 0;font-size:12px;"><span>${d.clientesAtivos} clientes × ${fmtMoeda(t.ticket)}</span><strong style="color:${t.liquido >= meta ? 'var(--positivo)' : 'var(--text)'}">${fmtMoeda(t.liquido)}</strong></div>`).join('')
       : '<div class="empty-state">Cadastre ao menos 1 cliente ativo pra calcular este cenário.</div>'}
       ${c3 ? `<div class="panel-sub" style="margin-top:6px;">Recomendação: aumente o ticket em ${fmtMoeda(Math.max(c3[0].ticket - d.ticketMedio, 0))} por cliente.</div>` : ''}
     </div>
 
     <div class="panel">
       <div class="panel-title">4 · Reduzir despesas</div>
-      ${c4 ? c4.map((t) => `<div style="display:flex;justify-content:space-between;padding:4px 0;font-size:12px;"><span>Reduzir ${fmtMoeda(t.reducao)} (despesa vai a ${fmtMoeda(t.novaDespesa)})</span><strong style="color:var(--green2)">${fmtMoeda(t.liquido)}</strong></div>`).join('')
+      ${c4 ? c4.map((t) => `<div style="display:flex;justify-content:space-between;padding:4px 0;font-size:12px;"><span>Reduzir ${fmtMoeda(t.reducao)} (despesa vai a ${fmtMoeda(t.novaDespesa)})</span><strong style="color:var(--positivo)">${fmtMoeda(t.liquido)}</strong></div>`).join('')
       : '<div class="empty-state">Reduzir despesas sozinho não é suficiente pra bater essa meta — combine com os outros cenários.</div>'}
       ${c4 ? `<div class="panel-sub" style="margin-top:6px;">Recomendação: renegocie Apps/Softwares, tarifas bancárias ou outras despesas administrativas.</div>` : ''}
     </div>
@@ -210,7 +210,7 @@ function mtRenderResultado() {
     <div class="section-title" style="margin-top:16px;">Combinações inteligentes</div>
     ${combos.map((c) => `<div class="panel" style="border-left:4px solid var(--purple);">
       <div style="font-size:12px;color:var(--text2);">${c.texto}</div>
-      <div style="font-size:16px;font-weight:800;color:${c.liquido >= meta ? 'var(--green2)' : 'var(--text)'};margin-top:4px;">${fmtMoeda(c.liquido)}</div>
+      <div style="font-size:16px;font-weight:800;color:${c.liquido >= meta ? 'var(--positivo)' : 'var(--text)'};margin-top:4px;">${fmtMoeda(c.liquido)}</div>
     </div>`).join('')}` : ''}
 
     <div class="section-title" style="margin-top:16px;">Insights</div>

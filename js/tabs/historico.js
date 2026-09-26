@@ -18,8 +18,8 @@ function renderHistorico() {
       <div class="section-title">Análise de churn</div>
       <div class="card-grid-2" style="margin-bottom:14px;">
         <div class="stat-card"><div class="stat-lbl">Total de clientes</div><div class="stat-val">${totalAllTime}</div><div class="stat-sub">all-time</div></div>
-        <div class="stat-card"><div class="stat-lbl">Ativos</div><div class="stat-val" style="color:var(--green2)">${ativos.length}</div></div>
-        <div class="stat-card"><div class="stat-lbl">Cancelados</div><div class="stat-val" style="color:var(--red)">${encerrados.length}</div></div>
+        <div class="stat-card"><div class="stat-lbl">Ativos</div><div class="stat-val" style="color:var(--positivo)">${ativos.length}</div></div>
+        <div class="stat-card"><div class="stat-lbl">Cancelados</div><div class="stat-val" style="color:var(--negativo)">${encerrados.length}</div></div>
         <div class="stat-card"><div class="stat-lbl">Churn rate</div><div class="stat-val">${churnRate}%</div></div>
       </div>
       <div class="panel" style="border-left:4px solid var(--amber);">
@@ -40,7 +40,7 @@ function renderHistorico() {
   }
   const ordenados = [...encerrados].sort((a, b) => (b.data_encerramento || '').localeCompare(a.data_encerramento || ''));
   listEl.innerHTML = ordenados.map((c) => `<div class="item-card"><div class="ic-inner">
-    <div class="ic-accent" style="background:var(--red);"></div>
+    <div class="ic-accent" style="background:var(--negativo);"></div>
     <div class="ic-body">
       <div class="ic-top"><div class="ic-nome">${c.empresa}</div><span class="badge badge-red">${fmtD(c.data_encerramento)}</span></div>
       <div class="ic-badges">

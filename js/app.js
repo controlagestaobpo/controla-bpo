@@ -1,6 +1,7 @@
 if (window.Chart) {
-  Chart.defaults.font.family = "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
-  Chart.defaults.color = '#8A97A8';
+  Chart.defaults.font.family = "'Montserrat', -apple-system, BlinkMacSystemFont, sans-serif";
+  Chart.defaults.color = '#A9B8CF';
+  Chart.defaults.borderColor = 'rgba(255,255,255,0.08)';
 }
 
 const TABS = ['dashboard', 'comercial', 'financeiro', 'historico', 'metas', 'config'];

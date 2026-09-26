@@ -7,21 +7,21 @@ function rlLimparCharts() {
 
 function rlCabecalho(titulo) {
   return `
-    <div style="text-align:center;margin-bottom:20px;padding-bottom:14px;border-bottom:2px solid #1A3A6B;">
-      <div style="font-size:11px;color:#00A86B;letter-spacing:2px;text-transform:uppercase;font-weight:700;">${State.perfil.nome_empresa || 'Controla Gestão BPO'}</div>
-      <div style="font-size:22px;font-weight:800;color:#1A3A6B;margin-top:4px;">${titulo}</div>
-      <div style="font-size:11px;color:#8A97A8;margin-top:4px;">Gerado em ${new Date().toLocaleDateString('pt-BR')} às ${new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</div>
+    <div style="text-align:center;margin-bottom:20px;padding-bottom:14px;border-bottom:2px solid #001438;">
+      <div style="font-size:11px;color:#4DB8F2;letter-spacing:2px;text-transform:uppercase;font-weight:700;">${State.perfil.nome_empresa || 'Controla Gestão BPO'}</div>
+      <div style="font-size:22px;font-weight:800;color:#001438;margin-top:4px;">${titulo}</div>
+      <div style="font-size:11px;color:#5B6B82;margin-top:4px;">Gerado em ${new Date().toLocaleDateString('pt-BR')} às ${new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</div>
     </div>`;
 }
 
 function rlSecao(titulo) {
-  return `<div style="font-size:13px;font-weight:800;color:#1A3A6B;text-transform:uppercase;letter-spacing:.5px;margin:22px 0 10px;padding-bottom:4px;border-bottom:1px solid #E2E8F0;">${titulo}</div>`;
+  return `<div style="font-size:13px;font-weight:800;color:#001438;text-transform:uppercase;letter-spacing:.5px;margin:22px 0 10px;padding-bottom:4px;border-bottom:1px solid #E2E8F0;">${titulo}</div>`;
 }
 
 function rlTabela(headers, rows) {
-  if (!rows.length) return '<div style="color:#8A97A8;font-size:12px;margin-bottom:8px;">Sem dados.</div>';
+  if (!rows.length) return '<div style="color:#5B6B82;font-size:12px;margin-bottom:8px;">Sem dados.</div>';
   return `<table style="width:100%;border-collapse:collapse;font-size:11px;margin-bottom:8px;">
-    <thead><tr>${headers.map((h) => `<th style="text-align:left;padding:6px 8px;border-bottom:1.5px solid #1A3A6B;color:#1A3A6B;font-size:9px;text-transform:uppercase;letter-spacing:.4px;">${h}</th>`).join('')}</tr></thead>
+    <thead><tr>${headers.map((h) => `<th style="text-align:left;padding:6px 8px;border-bottom:1.5px solid #001438;color:#001438;font-size:9px;text-transform:uppercase;letter-spacing:.4px;">${h}</th>`).join('')}</tr></thead>
     <tbody>${rows.map((r) => `<tr>${r.map((c) => `<td style="padding:6px 8px;border-bottom:1px solid #E2E8F0;">${c}</td>`).join('')}</tr>`).join('')}</tbody>
   </table>`;
 }
@@ -66,12 +66,12 @@ function gerarRelatorioComercial() {
 
     ${rlSecao('Indicações')}
     ${rlTabela(['Origem', 'Quantidade'], Object.entries(porOrigem).map(([o, n]) => [o, n]))}
-    <div style="font-size:11px;color:#8A97A8;">Taxa de indicação: ${taxaIndicacoes}% dos clientes.</div>
+    <div style="font-size:11px;color:#5B6B82;">Taxa de indicação: ${taxaIndicacoes}% dos clientes.</div>
   `;
 
   requestAnimationFrame(() => {
     rlCharts.push(fnBarChartOrdem(document.getElementById('rl-chart-funil'), funil, CORES_CATEGORIA));
-    if (segmentos.length) rlCharts.push(fnBarChartOrdem(document.getElementById('rl-chart-segmentos'), segmentos, '#7C3AED', '%'));
+    if (segmentos.length) rlCharts.push(fnBarChartOrdem(document.getElementById('rl-chart-segmentos'), segmentos, '#9B7BF0', '%'));
     rlImprimir();
   });
 }
@@ -135,8 +135,8 @@ function gerarRelatorioFinanceiro() {
       data: {
         labels: historico.map((m) => nomeMesShort(m)),
         datasets: [
-          { label: 'Receita', data: dreHistorico.map((d) => d.receitaTotal), backgroundColor: '#00C896', borderRadius: 3 },
-          { label: 'Despesas', data: dreHistorico.map((d) => d.deducoes + d.totalDespesasOperacionais), backgroundColor: '#DC2626', borderRadius: 3 },
+          { label: 'Receita', data: dreHistorico.map((d) => d.receitaTotal), backgroundColor: '#3DD68C', borderRadius: 3 },
+          { label: 'Despesas', data: dreHistorico.map((d) => d.deducoes + d.totalDespesasOperacionais), backgroundColor: '#FF6B81', borderRadius: 3 },
         ],
       },
       options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: true, labels: { font: { size: 10 }, boxWidth: 10 } } }, scales: { x: { ticks: { font: { size: 10 } } }, y: { beginAtZero: true, ticks: { font: { size: 10 } } } } },
@@ -186,10 +186,10 @@ function gerarRelatorioIntegrado() {
     ${rlGrafico('rl-chart-cresc2')}
 
     ${rlSecao('Saídas por categoria')}
-    ${despesasPorCategoria.length ? rlGrafico('rl-chart-desp2') : '<div style="color:#8A97A8;font-size:12px;">Sem despesas neste mês.</div>'}
+    ${despesasPorCategoria.length ? rlGrafico('rl-chart-desp2') : '<div style="color:#5B6B82;font-size:12px;">Sem despesas neste mês.</div>'}
 
     ${rlSecao('Entradas por categoria')}
-    ${receitasPorCategoria.length ? rlGrafico('rl-chart-rec2') : '<div style="color:#8A97A8;font-size:12px;">Sem receitas neste mês.</div>'}
+    ${receitasPorCategoria.length ? rlGrafico('rl-chart-rec2') : '<div style="color:#5B6B82;font-size:12px;">Sem receitas neste mês.</div>'}
 
     ${rlSecao('Insights')}
     ${insights.map((i) => `<div style="font-size:12px;color:#4A5568;padding:3px 0;">• ${i}</div>`).join('')}
@@ -199,11 +199,11 @@ function gerarRelatorioIntegrado() {
     rlCharts.push(fnBarChartOrdem(document.getElementById('rl-chart-funil2'), funil, CORES_CATEGORIA));
     rlCharts.push(new Chart(document.getElementById('rl-chart-cresc2'), {
       type: 'bar',
-      data: { labels: crescimento.map((c) => nomeMesShort(c.mes)), datasets: [{ data: crescimento.map((c) => c.receita), backgroundColor: '#1A3A6B', borderRadius: 3 }] },
+      data: { labels: crescimento.map((c) => nomeMesShort(c.mes)), datasets: [{ data: crescimento.map((c) => c.receita), backgroundColor: '#4DB8F2', borderRadius: 3 }] },
       options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { ticks: { font: { size: 10 } } }, y: { beginAtZero: true, ticks: { font: { size: 10 } } } } },
     }));
     if (despesasPorCategoria.length) rlCharts.push(fnBarChartOrdenado(document.getElementById('rl-chart-desp2'), despesasPorCategoria, CORES_CATEGORIA));
-    if (receitasPorCategoria.length) rlCharts.push(fnBarChartOrdenado(document.getElementById('rl-chart-rec2'), receitasPorCategoria, '#00C896'));
+    if (receitasPorCategoria.length) rlCharts.push(fnBarChartOrdenado(document.getElementById('rl-chart-rec2'), receitasPorCategoria, '#3DD68C'));
     rlImprimir();
   });
 }

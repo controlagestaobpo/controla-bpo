@@ -29,7 +29,7 @@ function renderDashboard() {
     <div class="section">
       <div class="section-title">Resumo comercial</div>
       <div class="card-grid-2" style="margin-bottom:14px;">
-        <div class="stat-card"><div class="stat-lbl">Clientes ativos</div><div class="stat-val" style="color:var(--green2)">${clientesAtivos.length}</div><div class="stat-sub">meta: ${State.metas.sm_clientes}</div></div>
+        <div class="stat-card"><div class="stat-lbl">Clientes ativos</div><div class="stat-val" style="color:var(--positivo)">${clientesAtivos.length}</div><div class="stat-sub">meta: ${State.metas.sm_clientes}</div></div>
         <div class="stat-card"><div class="stat-lbl">Prospects</div><div class="stat-val" style="color:var(--blue)">${pipeline.length}</div><div class="stat-sub">em funil</div></div>
         <div class="stat-card"><div class="stat-lbl">Taxa conversão</div><div class="stat-val">${taxaConversao}%</div></div>
         <div class="stat-card"><div class="stat-lbl">Valor em funil</div><div class="stat-val">${fmtMoeda(valorFunil)}</div></div>
@@ -41,9 +41,9 @@ function renderDashboard() {
     <div class="section">
       <div class="section-title">Resumo financeiro</div>
       <div class="card-grid-2" style="margin-bottom:14px;">
-        <div class="stat-card"><div class="stat-lbl">Receita</div><div class="stat-val" style="color:var(--green2)">${fmtMoeda(dre.receitaTotal)}</div><div class="stat-sub">meta: ${fmtMoeda(State.metas.mm_fat)}</div></div>
-        <div class="stat-card"><div class="stat-lbl">Despesas</div><div class="stat-val" style="color:var(--red)">${fmtMoeda(despesaTotalMes)}</div></div>
-        <div class="stat-card"><div class="stat-lbl">Lucro líquido</div><div class="stat-val" style="color:${dre.lucroLiquido >= 0 ? 'var(--green2)' : 'var(--red)'}">${fmtMoeda(dre.lucroLiquido)}</div></div>
+        <div class="stat-card"><div class="stat-lbl">Receita</div><div class="stat-val" style="color:var(--positivo)">${fmtMoeda(dre.receitaTotal)}</div><div class="stat-sub">meta: ${fmtMoeda(State.metas.mm_fat)}</div></div>
+        <div class="stat-card"><div class="stat-lbl">Despesas</div><div class="stat-val" style="color:var(--negativo)">${fmtMoeda(despesaTotalMes)}</div></div>
+        <div class="stat-card"><div class="stat-lbl">Lucro líquido</div><div class="stat-val" style="color:${dre.lucroLiquido >= 0 ? 'var(--positivo)' : 'var(--negativo)'}">${fmtMoeda(dre.lucroLiquido)}</div></div>
         <div class="stat-card"><div class="stat-lbl">Margem</div><div class="stat-val">${dre.margem}%</div></div>
         <div class="stat-card" style="grid-column:1/-1;"><div class="stat-lbl">${projecaoLabel}</div><div class="stat-val">${fmtMoeda(projecaoMes)}</div><div class="stat-sub">no ritmo atual de faturamento</div></div>
       </div>
@@ -51,8 +51,8 @@ function renderDashboard() {
 
     ${acoes.length ? `
     <div class="section">
-      <div class="section-title" style="color:var(--red);">Ações imediatas</div>
-      <div class="panel" style="border-left:4px solid var(--red);">
+      <div class="section-title" style="color:var(--negativo);">Ações imediatas</div>
+      <div class="panel" style="border-left:4px solid var(--negativo);">
         ${acoes.map((a) => `<div style="display:flex;justify-content:space-between;gap:8px;padding:5px 0;font-size:12px;"><span>${a.texto}</span><span class="badge badge-red">${a.tag}</span></div>`).join('')}
       </div>
     </div>` : ''}
@@ -128,7 +128,7 @@ function renderDreTabelaDashboard(dre) {
     ${GRUPO_DRE_ORDEM.map(linhaGrupoDespesa).join('')}
     <tr style="border-top:1.5px solid var(--border);"><td>Resultado operacional</td><td style="text-align:right;">${fmtMoeda2(dre.resultadoOperacional)}</td></tr>
     ${linhaNaoOperacional}
-    <tr style="border-top:1.5px solid var(--border);"><td><strong>Lucro líquido</strong></td><td style="text-align:right;"><strong style="color:${dre.lucroLiquido >= 0 ? 'var(--green2)' : 'var(--red)'}">${fmtMoeda2(dre.lucroLiquido)}</strong></td></tr>
+    <tr style="border-top:1.5px solid var(--border);"><td><strong>Lucro líquido</strong></td><td style="text-align:right;"><strong style="color:${dre.lucroLiquido >= 0 ? 'var(--positivo)' : 'var(--negativo)'}">${fmtMoeda2(dre.lucroLiquido)}</strong></td></tr>
     <tr><td style="color:var(--text3);font-size:11px;">margem de ${dre.margem}%</td><td></td></tr>
   </table></div>`;
 }
@@ -147,8 +147,8 @@ function fnBarChartOrdenado(canvas, itens, corBase) {
       maintainAspectRatio: false,
       plugins: { legend: { display: false } },
       scales: {
-        x: { beginAtZero: true, ticks: { font: { size: 10 }, color: '#9CA3AF' }, grid: { color: 'rgba(0,0,0,0.04)' } },
-        y: { ticks: { font: { size: 10 }, color: '#374151' } },
+        x: { beginAtZero: true, ticks: { font: { size: 10 }, color: '#A9B8CF' }, grid: { color: 'rgba(255,255,255,0.06)' } },
+        y: { ticks: { font: { size: 10 }, color: '#A9B8CF' } },
       },
     },
   });
@@ -160,10 +160,10 @@ function calcularFunil() {
   const nP = todos.filter((p) => p.status === 'proposta').length;
   const nF = todos.filter((p) => p.status === 'fechado').length;
   return [
-    { nome: 'Visitas totais', valor: todos.length, cor: '#1A3A6B' },
-    { nome: 'Chegaram em conversa', valor: nC + nP + nF, cor: '#D97706' },
-    { nome: 'Propostas enviadas', valor: nP + nF, cor: '#7C3AED' },
-    { nome: 'Clientes fechados', valor: nF, cor: '#059669' },
+    { nome: 'Visitas totais', valor: todos.length, cor: '#4DB8F2' },
+    { nome: 'Chegaram em conversa', valor: nC + nP + nF, cor: '#F5A623' },
+    { nome: 'Propostas enviadas', valor: nP + nF, cor: '#9B7BF0' },
+    { nome: 'Clientes fechados', valor: nF, cor: '#3DD68C' },
   ];
 }
 
@@ -192,7 +192,7 @@ function fnBarChartOrdem(canvas, itens, cores, sufixo) {
     type: 'bar',
     data: {
       labels: itens.map((c) => c.nome),
-      datasets: [{ data: itens.map((c) => c.valor), backgroundColor: itens.map((c) => c.cor) || cores, borderRadius: 4 }],
+      datasets: [{ data: itens.map((c) => c.valor), backgroundColor: itens.every((c) => c.cor) ? itens.map((c) => c.cor) : cores, borderRadius: 4 }],
     },
     options: {
       indexAxis: 'y',
@@ -203,8 +203,8 @@ function fnBarChartOrdem(canvas, itens, cores, sufixo) {
         tooltip: { callbacks: { label: (ctx) => ctx.parsed.x + (sufixo || '') } },
       },
       scales: {
-        x: { beginAtZero: true, ticks: { font: { size: 10 }, color: '#9CA3AF', callback: (v) => v + (sufixo || '') }, grid: { color: 'rgba(0,0,0,0.04)' } },
-        y: { ticks: { font: { size: 10 }, color: '#374151' } },
+        x: { beginAtZero: true, ticks: { font: { size: 10 }, color: '#A9B8CF', callback: (v) => v + (sufixo || '') }, grid: { color: 'rgba(255,255,255,0.06)' } },
+        y: { ticks: { font: { size: 10 }, color: '#A9B8CF' } },
       },
     },
   });
@@ -225,7 +225,7 @@ function renderGraficosDashboard(mes, dre) {
   const todasReceitas = [...dre.receitaOperacionalDetalhe, ...dre.receitaNaoOperacionalDetalhe];
   const canvasReceitas = document.getElementById('db-chart-receitas');
   if (todasReceitas.length) {
-    dbCharts.receitas = fnBarChartOrdenado(canvasReceitas, todasReceitas, '#00C896');
+    dbCharts.receitas = fnBarChartOrdenado(canvasReceitas, todasReceitas, '#3DD68C');
   } else {
     canvasReceitas.parentElement.innerHTML = '<div class="empty-state">Nenhuma receita lançada em ' + nomeMesLongo(mes) + '.</div>';
   }
@@ -241,7 +241,7 @@ function renderGraficosDashboard(mes, dre) {
   const segmentos = calcularTopSegmentos();
   const canvasSegmentos = document.getElementById('db-chart-segmentos');
   if (segmentos.length) {
-    dbCharts.segmentos = fnBarChartOrdem(canvasSegmentos, segmentos, '#7C3AED', '%');
+    dbCharts.segmentos = fnBarChartOrdem(canvasSegmentos, segmentos, '#9B7BF0', '%');
   } else {
     canvasSegmentos.parentElement.innerHTML = '<div class="empty-state">Cadastre prospects com segmento pra ver este gráfico.</div>';
   }
@@ -253,15 +253,15 @@ function renderGraficosDashboard(mes, dre) {
       type: 'bar',
       data: {
         labels: crescimento.map((c) => nomeMesShort(c.mes)),
-        datasets: [{ data: crescimento.map((c) => c.receita), backgroundColor: '#1A3A6B', borderRadius: 4 }],
+        datasets: [{ data: crescimento.map((c) => c.receita), backgroundColor: '#4DB8F2', borderRadius: 4 }],
       },
       options: {
         responsive: true,
         maintainAspectRatio: false,
         plugins: { legend: { display: false } },
         scales: {
-          x: { ticks: { font: { size: 10 }, color: '#9CA3AF' }, grid: { display: false } },
-          y: { beginAtZero: true, ticks: { font: { size: 10 }, color: '#9CA3AF' }, grid: { color: 'rgba(0,0,0,0.04)' } },
+          x: { ticks: { font: { size: 10 }, color: '#A9B8CF' }, grid: { display: false } },
+          y: { beginAtZero: true, ticks: { font: { size: 10 }, color: '#A9B8CF' }, grid: { color: 'rgba(255,255,255,0.06)' } },
         },
       },
     });

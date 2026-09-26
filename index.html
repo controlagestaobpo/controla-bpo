@@ -3,7 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Controla Gestão BPO</title>
+<title>Controla Gestão</title>
+<link rel="icon" type="image/svg+xml" href="assets/controla-avatar.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/styles.css">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
@@ -12,8 +16,7 @@
 
 <div id="login-screen">
   <div class="login-box">
-    <div class="login-brand">Controla Gestão BPO</div>
-    <div class="login-title"><span>Gestão</span></div>
+    <img class="login-logo" src="assets/controla-horizontal-branca.svg" alt="Controla Gestão">
     <div class="inp-row"><label>E-mail</label><input type="email" id="l-email" placeholder="seu@email.com" autocomplete="email"></div>
     <div class="inp-row"><label>Senha</label><input type="password" id="l-senha" placeholder="••••••••" autocomplete="current-password"></div>
     <button class="btn-login" onclick="login()">Entrar</button>
@@ -25,10 +28,7 @@
 <div id="app">
   <div class="nav-accent"></div>
   <div class="nav">
-    <div>
-      <div class="nav-brand">Controla Gestão BPO</div>
-      <div class="nav-title"><span>Gestão</span></div>
-    </div>
+    <img class="nav-logo" src="assets/controla-horizontal-branca.svg" alt="Controla Gestão">
     <div class="nav-right">
       <span class="saving-badge" id="saving">salvando...</span>
       <button class="btn btn-sm" onclick="logout()">Sair</button>
