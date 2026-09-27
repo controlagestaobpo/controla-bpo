@@ -1,5 +1,6 @@
 let fnReceitaEditId = null;
 let fnDespesaEditId = null;
+let fnFiltroTipo = 'todos'; // 'todos' | 'receita' | 'despesa'
 
 function dataPadraoPeriodo() {
   return State.periodo === mesAtual() ? hj() : State.periodo + '-01';
@@ -118,10 +119,24 @@ function fluxoDoPeriodo(mes) {
   return [...receitas, ...despesas].sort((a, b) => (b.data || '').localeCompare(a.data || ''));
 }
 
+function fnSetFiltroTipo(tipo) {
+  fnFiltroTipo = tipo;
+  renderFiltroTipoFinanceiro();
+  renderFluxoCaixa(State.periodo);
+}
+
+function renderFiltroTipoFinanceiro() {
+  const el = document.getElementById('fn-filtro-tipo');
+  if (!el) return;
+  const opts = [['todos', 'Todos'], ['receita', 'Receitas'], ['despesa', 'Despesas']];
+  el.innerHTML = opts.map(([v, l]) => `<span class="pill ${fnFiltroTipo === v ? 'on' : ''}" onclick="fnSetFiltroTipo('${v}')">${l}</span>`).join('');
+}
+
 function renderFluxoCaixa(mes) {
   const el = document.getElementById('fn-fluxo-list');
   if (!el) return;
-  const itens = fluxoDoPeriodo(mes);
+  let itens = fluxoDoPeriodo(mes);
+  if (fnFiltroTipo !== 'todos') itens = itens.filter((it) => it.tipo === fnFiltroTipo);
   if (!itens.length) { el.innerHTML = `<div class="empty-state">Nenhum lançamento com vencimento em ${nomeMesLongo(mes)}.</div>`; return; }
 
   const porDia = {};
@@ -248,9 +263,11 @@ function renderFinanceiro() {
         <button class="btn btn-primary btn-sm" style="flex:1;" onclick="abrirModalReceita()">+ Receita</button>
         <button class="btn btn-sm" style="flex:1;border-color:rgba(255,107,129,0.4);color:var(--negativo);" onclick="abrirModalDespesa()">+ Despesa</button>
       </div>
+      <div class="frow" id="fn-filtro-tipo" style="margin-bottom:10px;"></div>
       <div class="list" id="fn-fluxo-list" style="padding:0;"></div>
     </div>
   `;
+  renderFiltroTipoFinanceiro();
   renderFluxoCaixa(mes);
 }
 
