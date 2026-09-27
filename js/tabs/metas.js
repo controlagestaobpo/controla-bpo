@@ -30,27 +30,17 @@ function mtDadosBase() {
 }
 
 function renderMetasInteligentes() {
-  if (!mtMes) mtMes = mesAtual();
+  mtMes = mesAtual();
   const salva = State.metasFinanceiras.find((m) => m.mes === mtMes);
   const dados = mtDadosBase();
-  if (mtLucroDesejado === 0 && !salva) mtLucroDesejado = Math.max(Math.round(dados.lucroLiquido), 0);
-  else if (salva && mtLucroDesejado === 0) mtLucroDesejado = salva.meta_lucro;
-
-  const opcoesMes = [mesAtual(), mesesAdiante(1), mesesAdiante(2), mesesAdiante(3)];
+  mtLucroDesejado = salva ? salva.meta_lucro : Math.max(Math.round(dados.lucroLiquido), 0);
 
   const el = document.getElementById('page-metas');
   el.innerHTML = `
     <div class="section">
-      <div class="section-title">Quanto você quer de lucro líquido?</div>
-      <div class="panel">
-        <div class="fg">
-          <div class="fr"><label>Mês</label>
-            <select id="mt-mes-sel" onchange="mtMudarMes(this.value)">
-              ${opcoesMes.map((m) => `<option value="${m}" ${m === mtMes ? 'selected' : ''}>${nomeMesLongo(m)}</option>`).join('')}
-            </select>
-          </div>
-          <div class="fr"><label>Lucro líquido desejado (R$)</label><input type="number" id="mt-valor" value="${mtLucroDesejado}" min="0" oninput="mtMudarValor(this.value)"></div>
-        </div>
+      <div class="panel" style="border-left:4px solid var(--azul);">
+        <div class="panel-title">Meta de lucro líquido de ${nomeMesLongo(mtMes)}: ${fmtMoeda(mtLucroDesejado)}</div>
+        <div class="panel-sub">Pra mudar, vá em Configurações → Metas → Editar meta de lucro líquido.</div>
       </div>
     </div>
 
@@ -83,18 +73,6 @@ function renderMetasInteligentes() {
   `;
   mtRenderResultado();
   mtRenderHistorico();
-}
-
-function mtMudarMes(v) {
-  mtMes = v;
-  const salva = State.metasFinanceiras.find((m) => m.mes === mtMes);
-  mtLucroDesejado = salva ? salva.meta_lucro : Math.max(Math.round(mtDadosBase().lucroLiquido), 0);
-  renderMetasInteligentes();
-}
-
-function mtMudarValor(v) {
-  mtLucroDesejado = parseFloat(v) || 0;
-  mtRenderResultado();
 }
 
 function mtRenderResultado() {

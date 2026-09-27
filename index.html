@@ -418,6 +418,20 @@
   </div>
 </div>
 
+<!-- MODAL META DE LUCRO LÍQUIDO -->
+<div class="ov" id="ov-meta-lucro">
+  <div class="md">
+    <div class="md-handle"></div>
+    <h3>Meta de lucro líquido</h3>
+    <div class="fr"><label>Mês</label><select id="ml-mes" onchange="cfPreencherValorMetaLucro()"></select></div>
+    <div class="fr"><label>Lucro líquido desejado (R$)</label><input type="number" id="ml-valor" min="0"></div>
+    <div class="mda">
+      <button class="btn" onclick="fecharOv('ov-meta-lucro')">Cancelar</button>
+      <button class="btn btn-primary" onclick="salvarMetaLucro()">Salvar</button>
+    </div>
+  </div>
+</div>
+
 <div id="print-container"></div>
 
 <script src="js/supabase-client.js"></script>

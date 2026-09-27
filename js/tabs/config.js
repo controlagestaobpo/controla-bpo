@@ -58,6 +58,10 @@ function renderConfig() {
         <div id="cf-metas-resumo" style="margin-bottom:10px;"></div>
         <button class="btn btn-sm" onclick="abrirModalMetas()">⚙ Editar metas</button>
       </div>
+      <div class="panel" style="margin-top:10px;">
+        <div id="cf-meta-lucro-resumo" style="margin-bottom:10px;"></div>
+        <button class="btn btn-sm" onclick="abrirModalMetaLucro()">⚙ Editar meta de lucro líquido</button>
+      </div>
     </div>
 
     <div class="section">
@@ -73,6 +77,7 @@ function renderConfig() {
   renderCategoriasLista();
   renderSegmentosLista();
   renderMetasResumo();
+  renderMetaLucroResumo();
   renderEquipeLista();
 }
 
@@ -370,4 +375,38 @@ async function salvarMetas() {
   showSaving();
   fecharOv('ov-metas');
   renderMetasResumo();
+}
+
+// ===================== META DE LUCRO LÍQUIDO (mensal) =====================
+function renderMetaLucroResumo() {
+  const el = document.getElementById('cf-meta-lucro-resumo');
+  if (!el) return;
+  const mes = mesAtual();
+  const salva = State.metasFinanceiras.find((m) => m.mes === mes);
+  el.innerHTML = salva
+    ? `<div class="simple-row-sub">Meta de lucro líquido de <strong>${nomeMesLongo(mes)}</strong>: ${fmtMoeda(salva.meta_lucro)}</div>`
+    : `<div class="simple-row-sub">Nenhuma meta de lucro líquido definida para ${nomeMesLongo(mes)} ainda.</div>`;
+}
+
+function abrirModalMetaLucro() {
+  const opcoesMes = [mesAtual(), mesesAdiante(1), mesesAdiante(2), mesesAdiante(3)];
+  const sel = document.getElementById('ml-mes');
+  sel.innerHTML = opcoesMes.map((m) => `<option value="${m}">${nomeMesLongo(m)}</option>`).join('');
+  sel.value = mesAtual();
+  cfPreencherValorMetaLucro();
+  abrirOv('ov-meta-lucro');
+}
+
+function cfPreencherValorMetaLucro() {
+  const mes = document.getElementById('ml-mes').value;
+  const salva = State.metasFinanceiras.find((m) => m.mes === mes);
+  document.getElementById('ml-valor').value = salva ? salva.meta_lucro : Math.max(Math.round(mtDadosBase().lucroLiquido), 0);
+}
+
+async function salvarMetaLucro() {
+  mtMes = document.getElementById('ml-mes').value;
+  mtLucroDesejado = parseFloat(document.getElementById('ml-valor').value) || 0;
+  await mtSalvarMeta();
+  fecharOv('ov-meta-lucro');
+  renderConfig();
 }
