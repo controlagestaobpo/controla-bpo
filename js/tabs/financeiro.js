@@ -115,7 +115,7 @@ function fluxoDoPeriodo(mes) {
     confirmado: d.pago,
     parcela: d.parcela_total > 1 ? `${d.parcela_atual}/${d.parcela_total}` : null,
   }));
-  return [...receitas, ...despesas].sort((a, b) => (a.data || '').localeCompare(b.data || ''));
+  return [...receitas, ...despesas].sort((a, b) => (b.data || '').localeCompare(a.data || ''));
 }
 
 function renderFluxoCaixa(mes) {
@@ -126,7 +126,7 @@ function renderFluxoCaixa(mes) {
 
   const porDia = {};
   itens.forEach((it) => { if (!porDia[it.data]) porDia[it.data] = []; porDia[it.data].push(it); });
-  const dias = Object.keys(porDia).sort((a, b) => a.localeCompare(b));
+  const dias = Object.keys(porDia).sort((a, b) => b.localeCompare(a));
 
   el.innerHTML = dias.map((d) => {
     const linhas = porDia[d];
@@ -137,8 +137,9 @@ function renderFluxoCaixa(mes) {
       const toggleFn = it.tipo === 'receita'
         ? (it.confirmado ? `fnDesmarcarRecebido('${it.id}')` : `abrirModalConfirmarData('receita','${it.id}','${it.data}')`)
         : (it.confirmado ? `fnDesmarcarPago('${it.id}')` : `abrirModalConfirmarData('despesa','${it.id}','${it.data}')`);
-      const toggleLbl = it.confirmado ? 'reabrir' : (it.tipo === 'receita' ? 'recebido' : 'pago');
+      const toggleTit = it.confirmado ? 'Clique para reabrir' : (it.tipo === 'receita' ? 'Marcar como recebido' : 'Marcar como pago');
       return `<div class="fluxo-row">
+      <div class="fluxo-check ${it.confirmado ? 'on' : ''}" onclick="${toggleFn}" title="${toggleTit}">${it.confirmado ? '✅' : ''}</div>
       <div class="fluxo-desc">
         <div class="fluxo-desc-cat">${it.titulo}${it.parcela ? ` <span class="badge badge-gray">${it.parcela}</span>` : ''}</div>
         ${it.sub ? `<div class="fluxo-desc-sub">${it.sub}</div>` : ''}
@@ -146,7 +147,6 @@ function renderFluxoCaixa(mes) {
       </div>
       <div class="fluxo-valor" style="color:${it.tipo === 'receita' ? 'var(--positivo)' : 'var(--negativo)'}">${it.tipo === 'receita' ? '+' : '−'}${fmtMoeda2(it.valor)}</div>
       <div class="fluxo-acts">
-        <button class="btn btn-xs btn-primary" onclick="${toggleFn}">${toggleLbl}</button>
         <button class="btn btn-xs" onclick="${it.tipo === 'receita' ? 'abrirModalReceita' : 'abrirModalDespesa'}('${it.id}')">editar</button>
         <button class="btn btn-xs btn-danger" onclick="${it.tipo === 'receita' ? 'excluirReceita' : 'excluirDespesa'}('${it.id}')">×</button>
       </div>

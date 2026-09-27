@@ -9,7 +9,7 @@ function calcularFunilConversao() {
   const total = todos.length;
   const etapas = [
     { nome: 'Visita', valor: total },
-    { nome: 'Conversa', valor: nC + nP + nF },
+    { nome: 'Conversa/Reunião', valor: nC + nP + nF },
     { nome: 'Proposta', valor: nP + nF },
     { nome: 'Fechado', valor: nF },
   ];

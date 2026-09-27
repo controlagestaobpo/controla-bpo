@@ -8,6 +8,7 @@ const State = {
   categoriasReceita: [],
   segmentos: [],
   metasFinanceiras: [],
+  membrosEmpresa: [],
   metas: { sm_clientes: 20, sm_fat: 20000, sm_prazo: '', mm_clientes: 5, mm_fat: 5000 },
   perfil: { nome_empresa: '' },
   periodo: null, // 'YYYY-MM' selecionado no navegador de período (Dashboard/Financeiro)
@@ -65,7 +66,7 @@ const CATEGORIAS_DESPESA_PADRAO = [
     'Limpeza Escritório', 'Manutenção Equipamentos', 'Toner/Tinta Impressora', 'Papel/Material de Escritório', 'Higiene e Limpeza',
   ] },
   { nome_principal: 'Alimentação', grupo_dre: 'administrativas', subcategorias: [
-    'Almoço/Janta', 'Café/Café da Manhã', 'Refeição Reuniões', 'Lanches/Café Escritório',
+    'Café/Almoço/Janta', 'Refeição Reuniões', 'Lanches/Café Escritório',
   ] },
   { nome_principal: 'Vestuário', grupo_dre: 'administrativas', subcategorias: [
     'Uniforme', 'Vestuário Corporativo',
@@ -120,7 +121,7 @@ const CATEGORIAS_DESPESA_PADRAO = [
 
   // ===== TRIBUTÁRIAS (dedução) =====
   { nome_principal: 'Impostos Federais', grupo_dre: 'deducao', subcategorias: [
-    'IRPJ', 'CSLL', 'PIS/PASEP', 'COFINS', 'INSS Empresa', 'ISS Estimado',
+    'DAS (Simples Nacional)', 'IRPJ', 'CSLL', 'PIS/PASEP', 'COFINS', 'INSS Empresa', 'ISS Estimado',
   ] },
   { nome_principal: 'Impostos Estaduais', grupo_dre: 'deducao', subcategorias: [
     'ICMS', 'ITBI', 'Outras Taxas Estaduais',
@@ -151,15 +152,15 @@ const CATEGORIAS_DESPESA_PADRAO = [
 
 const SEGMENTOS_PADRAO = [
   'Clínica odontológica', 'Clínica médica', 'Clínica estética', 'Comércio varejista',
-  'Advocacia', 'Nutrição / Esporte', 'Construção / Reforma', 'Academia / Fitness',
-  'Ar condicionado / Refrigeração', 'Beleza / Salão', 'Automotivo / Oficina',
+  'Loja de Roupas', 'Advocacia', 'Nutrição / Esporte', 'Construção / Reforma', 'Academia / Fitness',
+  'Empresa de Serviços', 'Beleza / Salão', 'Automotivo / Oficina',
   'Contabilidade', 'Agência de marketing', 'Coaching / Mentoria',
   'Escola / Curso livre', 'Alimentação / Restaurante',
 ];
 
 const MOTIVOS_PERDA = [
   'Já tem solução', 'Sem verba no momento', 'Não consegui contato',
-  'Não viu necessidade', 'Momento ruim para a empresa',
+  'Não viu necessidade', 'Momento ruim para a empresa', 'Marcou reunião e não apareceu',
 ];
 
 const MOTIVOS_CANCELAMENTO = [
@@ -185,7 +186,7 @@ async function semearPadroes() {
 async function carregarTudo() {
   const [
     prospects, clientesAtivos, receitas, despesas, produtos,
-    categoriasDespesa, categoriasReceita, segmentos, metasFinanceiras, metasRow, configRow,
+    categoriasDespesa, categoriasReceita, segmentos, metasFinanceiras, membrosEmpresa, metasRow, configRow,
   ] = await Promise.all([
     db.from('prospects').select('*').order('data_visita', { ascending: false }),
     db.from('clientes_ativos').select('*').order('data_fechamento', { ascending: false }),
@@ -196,6 +197,7 @@ async function carregarTudo() {
     db.from('categorias_receita').select('*').order('nome_principal'),
     db.from('segmentos').select('*').order('nome'),
     db.from('metas_financeiras').select('*'),
+    db.from('membros_empresa').select('*').order('created_at'),
     db.from('metas').select('*').order('updated_at', { ascending: false }).limit(1),
     db.from('configuracoes').select('*').eq('chave', 'perfil').limit(1),
   ]);
@@ -209,6 +211,7 @@ async function carregarTudo() {
   State.categoriasReceita = categoriasReceita.data || [];
   State.segmentos = segmentos.data || [];
   State.metasFinanceiras = metasFinanceiras.data || [];
+  State.membrosEmpresa = membrosEmpresa.data || [];
 
   if (metasRow.data && metasRow.data.length > 0) {
     const m = metasRow.data[0];

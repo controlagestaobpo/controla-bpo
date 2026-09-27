@@ -104,7 +104,7 @@
       <div class="fr"><label>Status</label>
         <select id="pr-status" onchange="cmStatusChange()">
           <option value="visita">Visita</option>
-          <option value="conversa">Conversa</option>
+          <option value="conversa">Conversa/Reunião</option>
           <option value="proposta">Proposta enviada</option>
           <option value="fechado">Fechado</option>
           <option value="descartado">Descartado</option>
@@ -343,7 +343,7 @@
 <div class="ov" id="ov-categoria">
   <div class="md">
     <div class="md-handle"></div>
-    <h3>Nova categoria de despesa</h3>
+    <h3 id="ct-tit">Nova categoria de despesa</h3>
     <div class="fr"><label>Nome da categoria</label><input type="text" id="ct-nome" placeholder="Ex: Manutenção"></div>
     <div class="fr"><label>Grupo no DRE</label>
       <select id="ct-grupo">
@@ -366,7 +366,7 @@
 <div class="ov" id="ov-categoria-receita">
   <div class="md">
     <div class="md-handle"></div>
-    <h3>Nova categoria de receita</h3>
+    <h3 id="cr-tit">Nova categoria de receita</h3>
     <div class="fr"><label>Nome da categoria</label><input type="text" id="cr-nome" placeholder="Ex: Assinaturas"></div>
     <div class="fr"><label>Grupo no DRE</label>
       <select id="cr-grupo">
@@ -386,7 +386,7 @@
 <div class="ov" id="ov-segmento">
   <div class="md">
     <div class="md-handle"></div>
-    <h3>Novo segmento</h3>
+    <h3 id="sg-tit">Novo segmento</h3>
     <div class="fr"><label>Nome do segmento</label><input type="text" id="sg-nome" placeholder="Ex: Pet shop"></div>
     <div class="mda">
       <button class="btn" onclick="fecharOv('ov-segmento')">Cancelar</button>

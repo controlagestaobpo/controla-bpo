@@ -7,7 +7,7 @@ let cmClienteEditId = null; // cliente ativo sendo editado
 let cmEncerrarId = null; // cliente ativo a encerrar
 
 const STATUS_COR = { visita: '#4DB8F2', conversa: '#F5A623', proposta: '#9B7BF0', fechado: '#3DD68C', descartado: '#FF6B81' };
-const STATUS_LBL = { visita: 'Visita', conversa: 'Conversa', proposta: 'Proposta enviada', fechado: 'Fechado', descartado: 'Descartado' };
+const STATUS_LBL = { visita: 'Visita', conversa: 'Conversa/Reunião', proposta: 'Proposta enviada', fechado: 'Fechado', descartado: 'Descartado' };
 const STATUS_CLS = { visita: 'badge-blue', conversa: 'badge-amber', proposta: 'badge-purple', fechado: 'badge-green', descartado: 'badge-red' };
 const ORIGEM_LBL = { indicacao: 'Indicação', prospeccao: 'Prospecção', inbound: 'Inbound', outro: 'Outro' };
 
@@ -184,7 +184,7 @@ function renderCanceladosLista() {
 // ===================== PROSPECTS =====================
 function renderFiltrosProspect() {
   const fs = document.getElementById('cm-fs');
-  const statusOpts = [['todos', 'Todos'], ['visita', 'Visita'], ['conversa', 'Conversa'], ['proposta', 'Proposta'], ['fechado', 'Fechado'], ['descartado', 'Descartado']];
+  const statusOpts = [['todos', 'Todos'], ['visita', 'Visita'], ['conversa', 'Conversa/Reunião'], ['proposta', 'Proposta'], ['fechado', 'Fechado'], ['descartado', 'Descartado']];
   fs.innerHTML = statusOpts.map(([v, l]) => `<span class="pill ${cmFiltroStatus === v ? 'on' : ''}" onclick="cmSetStatus('${v}')">${l}</span>`).join('');
 
   const fd = document.getElementById('cm-fd');
