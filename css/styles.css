@@ -20,8 +20,12 @@
 html,body{background:var(--marinho);color:var(--branco);font-family:'Montserrat',-apple-system,BlinkMacSystemFont,sans-serif;font-size:14px;line-height:1.6;min-height:100vh;}
 
 /* ===== LOGIN ===== */
-#login-screen{background:var(--marinho);display:flex;align-items:center;justify-content:center;min-height:100vh;padding:24px;}
+#login-screen,#forgot-screen,#reset-screen{background:var(--marinho);align-items:center;justify-content:center;min-height:100vh;padding:24px;}
+#login-screen{display:flex;}
+#forgot-screen,#reset-screen{display:none;}
+#forgot-screen.show,#reset-screen.show{display:flex;}
 .login-box{background:var(--marinho2);border:1px solid var(--border);border-radius:16px;padding:40px 28px 32px;width:100%;max-width:380px;box-shadow:var(--shadow2);}
+.login-box h3{font-size:16px;font-weight:800;color:var(--branco);margin-bottom:18px;text-align:center;}
 .login-logo{display:block;width:100%;max-width:220px;height:auto;margin:0 auto 32px;}
 .inp-row{margin-bottom:14px;}
 .inp-row label{display:block;font-size:11px;color:var(--cinza-claro);margin-bottom:4px;text-transform:uppercase;letter-spacing:.8px;font-weight:600;}
@@ -29,7 +33,10 @@ html,body{background:var(--marinho);color:var(--branco);font-family:'Montserrat'
 .inp-row input:focus{border-color:var(--azul);}
 .btn-login{width:100%;background:var(--azul);border:none;border-radius:8px;padding:14px;color:var(--marinho);font-size:15px;font-weight:700;cursor:pointer;margin-top:4px;}
 .login-err{font-size:12px;color:var(--negativo);text-align:center;margin-top:10px;display:none;}
+.login-ok{font-size:12px;color:var(--positivo);text-align:center;margin-top:10px;display:none;}
 .login-load{font-size:12px;color:var(--cinza-claro);text-align:center;margin-top:10px;display:none;}
+.login-forgot{font-size:12px;color:var(--azul);text-align:center;margin-top:16px;cursor:pointer;font-weight:600;}
+.login-forgot:hover{text-decoration:underline;}
 
 /* ===== APP SHELL (menu lateral + conteúdo) ===== */
 #app{display:none;min-height:100vh;background:transparent;}

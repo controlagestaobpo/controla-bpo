@@ -23,6 +23,32 @@
     <button class="btn-login" onclick="login()">Entrar</button>
     <div class="login-err" id="l-err">E-mail ou senha incorretos.</div>
     <div class="login-load" id="l-load">Entrando...</div>
+    <div class="login-forgot" onclick="mostrarEsqueciSenha()">Esqueci minha senha</div>
+  </div>
+</div>
+
+<div id="forgot-screen">
+  <div class="login-box">
+    <img class="login-logo" src="assets/controla-horizontal-branca.svg" alt="Controla Gestão">
+    <h3>Recuperar senha</h3>
+    <div class="inp-row"><label>E-mail</label><input type="email" id="fp-email" placeholder="seu@email.com" autocomplete="email"></div>
+    <button class="btn-login" onclick="enviarRecuperacaoSenha()">Enviar link de recuperação</button>
+    <div class="login-err" id="fp-err"></div>
+    <div class="login-ok" id="fp-ok"></div>
+    <div class="login-load" id="fp-load">Enviando...</div>
+    <div class="login-forgot" onclick="voltarLogin()">Voltar pro login</div>
+  </div>
+</div>
+
+<div id="reset-screen">
+  <div class="login-box">
+    <img class="login-logo" src="assets/controla-horizontal-branca.svg" alt="Controla Gestão">
+    <h3>Defina sua nova senha</h3>
+    <div class="inp-row"><label>Nova senha</label><input type="password" id="rp-senha" placeholder="••••••••" autocomplete="new-password"></div>
+    <div class="inp-row"><label>Confirmar nova senha</label><input type="password" id="rp-senha2" placeholder="••••••••" autocomplete="new-password"></div>
+    <button class="btn-login" onclick="salvarNovaSenha()">Salvar nova senha</button>
+    <div class="login-err" id="rp-err"></div>
+    <div class="login-load" id="rp-load">Salvando...</div>
   </div>
 </div>
 
