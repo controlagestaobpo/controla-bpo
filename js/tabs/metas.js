@@ -55,7 +55,7 @@ function renderMetasInteligentes() {
         <div class="stat-card"><div class="stat-lbl">Ticket médio</div><div class="stat-val">${fmtMoeda(dados.ticketMedio)}</div></div>
         <div class="stat-card"><div class="stat-lbl">Ticket máx. / mín.</div><div class="stat-val" style="font-size:16px;">${fmtMoeda(dados.ticketMax)} / ${fmtMoeda(dados.ticketMin)}</div></div>
         <div class="stat-card"><div class="stat-lbl">Crescimento (3 meses)</div><div class="stat-val">${dados.crescimento3m === null ? '-' : (dados.crescimento3m >= 0 ? '+' : '') + dados.crescimento3m + '%'}</div></div>
-        <div class="stat-card" style="grid-column:1/-1;"><div class="stat-lbl">Receita recorrente projetada</div><div class="stat-val">${fmtMoeda(dados.receitaRecorrenteMes)}/mês</div></div>
+        <div class="stat-card"><div class="stat-lbl">Receita recorrente projetada</div><div class="stat-val">${fmtMoeda(dados.receitaRecorrenteMes)}/mês</div></div>
       </div>
     </div>
 
@@ -65,7 +65,7 @@ function renderMetasInteligentes() {
       <div class="card-grid-2" style="margin-bottom:4px;">
         <div class="stat-card"><div class="stat-lbl">Receita anualizada</div><div class="stat-val" style="color:var(--positivo)">${fmtMoeda(dados.receitaBruta * 12)}</div></div>
         <div class="stat-card"><div class="stat-lbl">Despesas anualizadas</div><div class="stat-val" style="color:var(--negativo)">${fmtMoeda(dados.despesasTotais * 12)}</div></div>
-        <div class="stat-card" style="grid-column:1/-1;"><div class="stat-lbl">Lucro líquido anualizado</div><div class="stat-val" style="color:${dados.lucroLiquido >= 0 ? 'var(--positivo)' : 'var(--negativo)'}">${fmtMoeda(dados.lucroLiquido * 12)}</div></div>
+        <div class="stat-card"><div class="stat-lbl">Lucro líquido anualizado</div><div class="stat-val" style="color:${dados.lucroLiquido >= 0 ? 'var(--positivo)' : 'var(--negativo)'}">${fmtMoeda(dados.lucroLiquido * 12)}</div></div>
       </div>
     </div>
 
