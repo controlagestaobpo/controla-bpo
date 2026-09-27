@@ -124,6 +124,9 @@ html,body{background:var(--marinho);color:var(--branco);font-family:'Montserrat'
 .fr label{display:block;font-size:11px;color:var(--cinza-claro);margin-bottom:4px;text-transform:uppercase;letter-spacing:.7px;font-weight:700;}
 .fr input,.fr select,.fr textarea{width:100%;background:rgba(255,255,255,0.05);border:1.5px solid var(--border-forte);border-radius:8px;padding:11px 13px;color:var(--branco);font-size:15px;font-family:inherit;outline:none;-webkit-appearance:none;}
 .fr input:focus,.fr select:focus,.fr textarea:focus{border-color:var(--azul);}
+.fr input[type="checkbox"]{width:26px;height:26px;padding:0;flex-shrink:0;cursor:pointer;position:relative;border-radius:6px;}
+.fr input[type="checkbox"]:checked{border-color:var(--positivo);background:rgba(61,214,140,0.15);}
+.fr input[type="checkbox"]:checked::after{content:"✅";position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:15px;line-height:1;}
 .fr select option{background:var(--marinho2);color:var(--branco);}
 .fr textarea{resize:vertical;min-height:70px;}
 .fg{display:grid;grid-template-columns:1fr 1fr;gap:10px;}

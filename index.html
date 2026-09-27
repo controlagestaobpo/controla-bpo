@@ -252,7 +252,7 @@
     </div>
     <div class="fr"><label>Produto / Serviço (opcional)</label><select id="rc-produto"></select></div>
     <div class="fr"><label>Descrição</label><input type="text" id="rc-descricao" placeholder="Ex: consultoria extra, reembolso..."></div>
-    <div class="fr" id="row-rc-recorrente"><label style="display:flex;align-items:center;gap:8px;text-transform:none;letter-spacing:0;"><input type="checkbox" id="rc-recorrente" onchange="fnToggleRecorrenciaReceita()" style="width:auto;"> É recorrente (se repete)?</label></div>
+    <div class="fr" id="row-rc-recorrente"><label style="display:flex;align-items:center;gap:8px;text-transform:none;letter-spacing:0;"><input type="checkbox" id="rc-recorrente" onchange="fnToggleRecorrenciaReceita()"> É recorrente (se repete)?</label></div>
     <div class="fg" id="row-rc-frequencia" style="display:none;">
       <div class="fr"><label>Frequência</label>
         <select id="rc-frequencia" onchange="fnToggleRecorrenciaReceita()">
@@ -264,7 +264,7 @@
       </div>
       <div class="fr" id="row-rc-intervalo" style="display:none;"><label>A cada quantos dias?</label><input type="number" id="rc-intervalo-dias" min="1" value="30"></div>
     </div>
-    <div class="fr"><label style="display:flex;align-items:center;gap:8px;text-transform:none;letter-spacing:0;"><input type="checkbox" id="rc-recebido" style="width:auto;"> Já recebi esse valor</label></div>
+    <div class="fr"><label style="display:flex;align-items:center;gap:8px;text-transform:none;letter-spacing:0;"><input type="checkbox" id="rc-recebido"> Já recebi esse valor</label></div>
     <div class="mda">
       <button class="btn" onclick="fecharOv('ov-receita')">Cancelar</button>
       <button class="btn btn-primary" onclick="salvarReceita()">Salvar</button>
@@ -286,9 +286,9 @@
       <div class="fr" id="row-subcategoria"><label>Subcategoria</label><select id="ds-subcategoria"></select></div>
     </div>
     <div class="fr"><label>Descrição</label><input type="text" id="ds-descricao"></div>
-    <div class="fr" id="row-parcelar"><label style="display:flex;align-items:center;gap:8px;text-transform:none;letter-spacing:0;"><input type="checkbox" id="ds-parcelar" onchange="fnToggleParcelar()" style="width:auto;"> Compra parcelada?</label></div>
+    <div class="fr" id="row-parcelar"><label style="display:flex;align-items:center;gap:8px;text-transform:none;letter-spacing:0;"><input type="checkbox" id="ds-parcelar" onchange="fnToggleParcelar()"> Compra parcelada?</label></div>
     <div class="fr" id="row-qtd-parcelas" style="display:none;"><label>Quantidade de parcelas</label><input type="number" id="ds-qtd-parcelas" min="2" value="2"></div>
-    <div class="fr" id="row-recorrente-row"><label style="display:flex;align-items:center;gap:8px;text-transform:none;letter-spacing:0;"><input type="checkbox" id="ds-recorrente" onchange="fnToggleRecorrenteAte()" style="width:auto;"> É recorrente (fixa, se repete)?</label></div>
+    <div class="fr" id="row-recorrente-row"><label style="display:flex;align-items:center;gap:8px;text-transform:none;letter-spacing:0;"><input type="checkbox" id="ds-recorrente" onchange="fnToggleRecorrenteAte()"> É recorrente (fixa, se repete)?</label></div>
     <div class="fg" id="row-ds-frequencia" style="display:none;">
       <div class="fr"><label>Frequência</label>
         <select id="ds-frequencia" onchange="fnToggleRecorrenteAte()">
@@ -301,7 +301,7 @@
       <div class="fr" id="row-ds-intervalo" style="display:none;"><label>A cada quantos dias?</label><input type="number" id="ds-intervalo-dias" min="1" value="30"></div>
     </div>
     <div class="fr" id="row-recorrente-ate" style="display:none;"><label>Até quando? (opcional)</label><input type="date" id="ds-recorrente-ate"></div>
-    <div class="fr" id="row-pago"><label style="display:flex;align-items:center;gap:8px;text-transform:none;letter-spacing:0;"><input type="checkbox" id="ds-pago" style="width:auto;"> <span id="ds-pago-lbl">Já paguei essa despesa</span></label></div>
+    <div class="fr" id="row-pago"><label style="display:flex;align-items:center;gap:8px;text-transform:none;letter-spacing:0;"><input type="checkbox" id="ds-pago"> <span id="ds-pago-lbl">Já paguei essa despesa</span></label></div>
     <div class="mda">
       <button class="btn" onclick="fecharOv('ov-despesa')">Cancelar</button>
       <button class="btn btn-primary" onclick="salvarDespesa()">Salvar</button>
@@ -331,7 +331,7 @@
     <div class="fr"><label>Nome</label><input type="text" id="pd-nome"></div>
     <div class="fr"><label>Descrição</label><input type="text" id="pd-descricao"></div>
     <div class="fr"><label>Valor padrão mensal (R$)</label><input type="number" id="pd-valor" min="0"></div>
-    <div class="fr"><label style="display:flex;align-items:center;gap:8px;text-transform:none;letter-spacing:0;"><input type="checkbox" id="pd-ativo" style="width:auto;"> Ativo</label></div>
+    <div class="fr"><label style="display:flex;align-items:center;gap:8px;text-transform:none;letter-spacing:0;"><input type="checkbox" id="pd-ativo"> Ativo</label></div>
     <div class="mda">
       <button class="btn" onclick="fecharOv('ov-produto')">Cancelar</button>
       <button class="btn btn-primary" onclick="salvarProduto()">Salvar</button>
