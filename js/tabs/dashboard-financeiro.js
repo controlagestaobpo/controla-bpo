@@ -201,7 +201,7 @@ function renderDashboardFinanceiro() {
       <div class="section-title">Meta e ticket médio</div>
       <div class="chart-row">
         <div class="chart-box panel">
-          <div class="panel-title">Receita vs. meta do mês</div>
+          <div class="panel-title">Lucro líquido vs. meta do mês</div>
           <div style="position:relative;height:150px;"><canvas id="fn-chart-meta"></canvas></div>
         </div>
         <div class="chart-box panel">
@@ -273,7 +273,7 @@ function renderGraficosDashboardFinanceiro(mes, dre) {
     canvasReceitas.parentElement.innerHTML = '<div class="empty-state">Nenhuma receita lançada em ' + nomeMesLongo(mes) + '.</div>';
   }
 
-  const { atual, meta } = calcularReceitaVsMeta(mes);
+  const { atual, meta } = calcularLucroVsMeta(mes);
   const canvasMeta = document.getElementById('fn-chart-meta');
   if (meta > 0 || atual > 0) {
     dfCharts.meta = new Chart(canvasMeta, {
