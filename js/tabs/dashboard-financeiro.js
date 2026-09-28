@@ -198,15 +198,15 @@ function renderDashboardFinanceiro() {
     </div>
 
     <div class="section">
-      <div class="section-title">Meta e ticket médio</div>
+      <div class="section-title">Meta e receita por cliente</div>
       <div class="chart-row">
         <div class="chart-box panel">
           <div class="panel-title">Lucro líquido vs. meta do mês</div>
           <div style="position:relative;height:150px;"><canvas id="fn-chart-meta"></canvas></div>
         </div>
         <div class="chart-box panel">
-          <div class="panel-title">Evolução do ticket médio</div>
-          <div class="panel-sub">Últimos 12 meses</div>
+          <div class="panel-title">Receita média por cliente</div>
+          <div class="panel-sub">Valor recebido ÷ clientes que pagaram no mês · últimos 12 meses</div>
           <div style="position:relative;height:150px;"><canvas id="fn-chart-ticket"></canvas></div>
         </div>
       </div>
