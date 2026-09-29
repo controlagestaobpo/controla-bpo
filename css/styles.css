@@ -130,6 +130,7 @@ html,body{background:var(--marinho);color:var(--branco);font-family:'Montserrat'
 .fr select option{background:var(--marinho2);color:var(--branco);}
 .fr textarea{resize:vertical;min-height:70px;}
 .fg{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.pe-resultado{background:rgba(255,255,255,0.05);border:1.5px solid var(--border-forte);border-radius:8px;padding:11px 13px;color:var(--branco);font-size:15px;line-height:normal;}
 .mda{display:flex;gap:8px;margin-top:14px;}
 .mda .btn{flex:1;padding:13px;font-size:13px;text-align:center;}
 .sec-div{font-size:10px;color:var(--azul);text-transform:uppercase;letter-spacing:1px;margin:14px 0 8px;padding-bottom:4px;border-bottom:1px solid var(--border);font-weight:700;}

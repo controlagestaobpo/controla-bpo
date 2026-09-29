@@ -55,16 +55,60 @@ function gerarInsightsFinanceiro(mes) {
   return insights;
 }
 
+// Ponto de equilíbrio = custos fixos médios ÷ margem de contribuição.
+// Custos fixos: média mensal das despesas lançadas (por competência) nos 12 meses
+// a partir do mês escolhido — assim um mês com despesa atípica (IPVA, 13º, compra
+// de equipamento) não distorce a meta. Impostos (grupo "dedução") são tratados como
+// variáveis: entram como % da receita, calculado sobre os últimos 12 meses realizados.
+const PE_MESES_JANELA = 12;
+
 function calcularPontoEquilibrio(mes, ticketOverride) {
-  const despesasMes = State.despesas.filter((d) => d.mes_projecao === mes);
-  const despesasTotais = despesasMes.reduce((s, d) => s + Number(d.valor || 0), 0);
+  const janela = [];
+  for (let i = 0; i < PE_MESES_JANELA; i++) janela.push(somarMes(mes, i));
+  const ehDeducao = (d) => {
+    const cat = State.categoriasDespesa.find((c) => c.nome_principal === d.categoria);
+    return !!cat && cat.grupo_dre === 'deducao';
+  };
+
+  // % de impostos sobre a receita, pelo realizado dos últimos 12 meses
+  let receitaHist = 0, deducoesHist = 0;
+  for (let i = 1; i <= PE_MESES_JANELA; i++) {
+    const dreHist = montarDRE(somarMes(mes, -i));
+    receitaHist += dreHist.receitaTotal;
+    deducoesHist += dreHist.deducoes;
+  }
+  const pctVariavel = receitaHist > 0 ? Math.min(deducoesHist / receitaHist, 0.9) : 0;
+  // Sem histórico de receita não dá pra saber o % de imposto: entra como custo fixo.
+  const contaComoFixa = (d) => pctVariavel === 0 || !ehDeducao(d);
+
+  const fixasPorMes = {};
+  State.despesas.forEach((d) => {
+    if (!janela.includes(d.mes_projecao) || !contaComoFixa(d)) return;
+    fixasPorMes[d.mes_projecao] = (fixasPorMes[d.mes_projecao] || 0) + Number(d.valor || 0);
+  });
+  // Só conta meses que já têm alguma despesa lançada, pra meses ainda vazios
+  // (recorrências que ainda não foram geradas) não puxarem a média pra baixo.
+  const mesesComDespesa = Object.keys(fixasPorMes);
+  const custosFixosMedios = mesesComDespesa.length
+    ? mesesComDespesa.reduce((s, m) => s + fixasPorMes[m], 0) / mesesComDespesa.length
+    : 0;
+  const custosFixosMes = fixasPorMes[mes] || 0;
+
+  const margemContribuicao = 1 - pctVariavel;
+  const pontoEquilibrio = custosFixosMedios / margemContribuicao;
+
   const clientesAtivos = State.clientesAtivos.filter((c) => c.status === 'ativo');
   const ticketMedioReal = clientesAtivos.length ? clientesAtivos.reduce((s, c) => s + Number(c.ticket_mensal || 0), 0) / clientesAtivos.length : 0;
   const ticket = ticketOverride > 0 ? ticketOverride : ticketMedioReal;
-  const clientesNecessarios = ticket > 0 ? Math.ceil(despesasTotais / ticket) : null;
+  const clientesNecessarios = ticket > 0 ? Math.ceil(pontoEquilibrio / ticket) : null;
   const dre = montarDRE(mes);
-  const faltam = Math.max(despesasTotais - dre.receitaTotal, 0);
-  return { despesasTotais, ticketMedioReal, ticket, clientesNecessarios, receitaAtual: dre.receitaTotal, faltam, atingido: dre.receitaTotal >= despesasTotais };
+  const faltam = Math.max(pontoEquilibrio - dre.receitaTotal, 0);
+  return {
+    pontoEquilibrio, custosFixosMedios, custosFixosMes, pctVariavel,
+    mesesConsiderados: mesesComDespesa.length, mesFinalJanela: janela[janela.length - 1],
+    ticketMedioReal, ticket, clientesNecessarios, receitaAtual: dre.receitaTotal, faltam,
+    atingido: pontoEquilibrio > 0 && dre.receitaTotal >= pontoEquilibrio,
+  };
 }
 
 function fnRecalcularPontoEquilibrio() {
@@ -158,12 +202,19 @@ function renderDashboardFinanceiro() {
         </div>
         <div class="chart-box panel">
           <div class="panel-title">Ponto de equilíbrio</div>
-          <div class="panel-sub">Quanto você precisa faturar pra cobrir as despesas do mês</div>
-          <div style="font-size:20px;font-weight:800;color:${pe.atingido ? 'var(--positivo)' : 'var(--branco)'};margin:8px 0 2px;">${fmtMoeda(pe.despesasTotais)}</div>
-          <div style="font-size:11px;color:${pe.atingido ? 'var(--positivo)' : 'var(--negativo)'};font-weight:600;margin-bottom:10px;">${pe.atingido ? '✓ Ponto de equilíbrio atingido' : `Faltam ${fmtMoeda(pe.faltam)} pra cobrir os custos`}</div>
+          <div class="panel-sub">Quanto você precisa faturar por mês pra cobrir os custos, considerando a média dos próximos meses</div>
+          <div style="font-size:20px;font-weight:800;color:${pe.atingido ? 'var(--positivo)' : 'var(--branco)'};margin:8px 0 2px;">${fmtMoeda(pe.pontoEquilibrio)}<span style="font-size:12px;font-weight:600;color:var(--cinza-claro);">/mês</span></div>
+          <div style="font-size:11px;color:${pe.atingido ? 'var(--positivo)' : 'var(--negativo)'};font-weight:600;margin-bottom:6px;">${pe.pontoEquilibrio <= 0 ? '' : pe.atingido ? '✓ Ponto de equilíbrio atingido neste mês' : `Faltam ${fmtMoeda(pe.faltam)} neste mês pra cobrir os custos`}</div>
+          <div class="stat-sub" style="margin-bottom:12px;line-height:1.6;">
+            ${pe.mesesConsiderados
+              ? `Custos fixos: média de ${fmtMoeda(pe.custosFixosMedios)}/mês (${pe.mesesConsiderados} ${pe.mesesConsiderados === 1 ? 'mês lançado' : 'meses lançados'} entre ${nomeMesShort(mes)} e ${nomeMesShort(pe.mesFinalJanela)})`
+              : 'Nenhuma despesa lançada de ' + nomeMesShort(mes) + ' em diante'}
+            ${pe.pctVariavel > 0 ? `<br>Impostos: ${Math.round(pe.pctVariavel * 100)}% da receita (média dos últimos 12 meses)` : ''}
+            ${pe.custosFixosMedios > 0 && pe.custosFixosMes > pe.custosFixosMedios * 1.1 ? `<br><span style="color:var(--amber);">Este mês os custos estão acima da média: ${fmtMoeda(pe.custosFixosMes)}</span>` : ''}
+          </div>
           <div class="fg" style="margin-bottom:0;">
             <div class="fr" style="margin-bottom:0;"><label>Ticket por atendimento</label><input type="number" id="pe-ticket" min="0" value="${Math.round(pe.ticketMedioReal)}" oninput="fnRecalcularPontoEquilibrio()"></div>
-            <div class="fr" style="margin-bottom:0;"><label>Atendimentos p/ equilíbrio</label><div class="stat-val" id="pe-clientes" style="font-size:20px;">${pe.clientesNecessarios === null ? '-' : pe.clientesNecessarios}</div></div>
+            <div class="fr" style="margin-bottom:0;"><label>Atendimentos p/ equilíbrio</label><div class="pe-resultado" id="pe-clientes">${pe.clientesNecessarios === null ? '-' : pe.clientesNecessarios}</div></div>
           </div>
         </div>
       </div>
