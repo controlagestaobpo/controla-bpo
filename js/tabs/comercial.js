@@ -5,6 +5,7 @@ let cmDataEspecifica = '';
 let cmEditId = null; // prospect sendo editado
 let cmClienteEditId = null; // cliente ativo sendo editado
 let cmEncerrarId = null; // cliente ativo a encerrar
+let cmModoAtendimento = false; // modal aberto pra registrar um novo atendimento num prospect existente
 
 const STATUS_COR = { visita: '#4DB8F2', conversa: '#F5A623', proposta: '#9B7BF0', fechado: '#3DD68C', descartado: '#FF6B81' };
 const STATUS_LBL = { visita: 'Visita', conversa: 'Conversa/Reunião', proposta: 'Proposta enviada', fechado: 'Fechado', descartado: 'Descartado' };
@@ -13,6 +14,21 @@ const ORIGEM_LBL = { indicacao: 'Indicação', prospeccao: 'Prospecção', inbou
 
 function prospectsPipeline() {
   return State.prospects.filter((p) => p.status !== 'fechado' && p.status !== 'descartado');
+}
+
+// Histórico de atendimentos do prospect, do mais recente pro mais antigo.
+// Cada prospect é UMA empresa (contagens de prospects não mudam); os atendimentos
+// são só os contatos feitos com ela ao longo do tempo.
+function atendimentosDoProspect(prospectId) {
+  return State.prospectAtendimentos
+    .filter((a) => a.prospect_id === prospectId)
+    .sort((a, b) => (b.data || '').localeCompare(a.data || '') || (b.created_at || '').localeCompare(a.created_at || ''));
+}
+
+// Data do último contato — usada pra ordenar a lista e pros filtros "Hoje/Semana/Mês".
+function ultimoContato(p) {
+  const ultimo = atendimentosDoProspect(p.id)[0];
+  return ultimo && ultimo.data > (p.data_visita || '') ? ultimo.data : p.data_visita;
 }
 
 function renderComercial() {
@@ -201,11 +217,11 @@ function cmLimparData() { cmDataEspecifica = ''; cmFiltroPeriodo = 'todos'; rend
 function cmAplicarFiltros(lista) {
   let l = [...lista];
   if (cmFiltroStatus !== 'todos') l = l.filter((p) => p.status === cmFiltroStatus);
-  if (cmFiltroPeriodo === 'esp' && cmDataEspecifica) l = l.filter((p) => p.data_visita === cmDataEspecifica);
-  else if (cmFiltroPeriodo === 'hoje') l = l.filter((p) => p.data_visita === hj());
-  else if (cmFiltroPeriodo === 'ontem') l = l.filter((p) => p.data_visita === ont());
-  else if (cmFiltroPeriodo === 'semana') l = l.filter((p) => p.data_visita >= iSem());
-  else if (cmFiltroPeriodo === 'mes') l = l.filter((p) => p.data_visita >= iMes());
+  if (cmFiltroPeriodo === 'esp' && cmDataEspecifica) l = l.filter((p) => ultimoContato(p) === cmDataEspecifica);
+  else if (cmFiltroPeriodo === 'hoje') l = l.filter((p) => ultimoContato(p) === hj());
+  else if (cmFiltroPeriodo === 'ontem') l = l.filter((p) => ultimoContato(p) === ont());
+  else if (cmFiltroPeriodo === 'semana') l = l.filter((p) => ultimoContato(p) >= iSem());
+  else if (cmFiltroPeriodo === 'mes') l = l.filter((p) => ultimoContato(p) >= iMes());
   const busca = document.getElementById('cm-busca');
   if (busca && busca.value.trim()) {
     const q = busca.value.trim().toLowerCase();
@@ -218,11 +234,11 @@ function renderProspectsLista() {
   const el = document.getElementById('cm-prospects-list');
   if (!el) return;
   let l = cmAplicarFiltros(State.prospects);
-  l.sort((a, b) => (b.data_visita || '').localeCompare(a.data_visita || ''));
+  l.sort((a, b) => (ultimoContato(b) || '').localeCompare(ultimoContato(a) || ''));
   if (!l.length) { el.innerHTML = '<div class="empty-state">Nenhum prospect aqui.<br>Toque em + Novo prospect para registrar.</div>'; return; }
 
   const grupos = {};
-  l.forEach((p) => { const d = p.data_visita || 'sem-data'; if (!grupos[d]) grupos[d] = []; grupos[d].push(p); });
+  l.forEach((p) => { const d = ultimoContato(p) || 'sem-data'; if (!grupos[d]) grupos[d] = []; grupos[d].push(p); });
   const datas = Object.keys(grupos).sort((a, b) => b.localeCompare(a));
 
   el.innerHTML = datas.map((d) => {
@@ -242,6 +258,7 @@ function renderProspectsLista() {
           <div class="ic-top">
             <div class="ic-nome">${fechou ? '<span style="color:var(--positivo);">✓</span> ' : ''}${p.empresa}</div>
             <div class="ic-acts">
+              <button class="btn btn-xs btn-primary" onclick="abrirModalProspect('${p.id}', true)">+ atendimento</button>
               <button class="btn btn-xs" onclick="abrirModalProspect('${p.id}')">editar</button>
               <button class="btn btn-xs btn-danger" onclick="excluirProspect('${p.id}')">×</button>
             </div>
@@ -255,6 +272,7 @@ function renderProspectsLista() {
           ${(p.contato || p.whatsapp) ? `<div class="ic-ct">${[p.contato, p.whatsapp].filter(Boolean).join(' · ')}</div>` : ''}
           ${p.obs ? `<div class="ic-obs">${p.obs}</div>` : ''}
           ${p.proximo ? `<div class="ic-next">&rarr; ${p.proximo}</div>` : ''}
+          ${htmlHistoricoAtendimentos(p)}
         </div>
       </div></div>`;
     }).join('');
@@ -262,9 +280,36 @@ function renderProspectsLista() {
   }).join('');
 }
 
-function abrirModalProspect(id) {
+function htmlHistoricoAtendimentos(p) {
+  const hist = atendimentosDoProspect(p.id);
+  if (!hist.length) return '';
+  return `<details class="ic-hist">
+    <summary>${hist.length} ${hist.length === 1 ? 'atendimento' : 'atendimentos'} · primeiro contato ${fmtD(p.data_visita)}</summary>
+    ${hist.map((a) => `<div class="ic-hist-item">
+      <div class="ic-hist-top"><span>${fmtD(a.data)}</span><span class="badge ${STATUS_CLS[a.status] || 'badge-blue'}">${STATUS_LBL[a.status] || a.status}</span>
+        <button class="btn btn-xs btn-danger" style="margin-left:auto;" onclick="excluirAtendimentoProspect('${a.id}')">×</button></div>
+      ${a.obs ? `<div class="ic-obs" style="margin-top:3px;">${a.obs}</div>` : ''}
+      ${a.proximo ? `<div class="ic-ct">&rarr; ${a.proximo}</div>` : ''}
+    </div>`).join('')}
+  </details>`;
+}
+
+async function excluirAtendimentoProspect(id) {
+  if (!confirm('Excluir este atendimento do histórico?')) return;
+  const { error } = await db.from('prospect_atendimentos').delete().eq('id', id);
+  if (error) { alert('Erro: ' + error.message); return; }
+  showSaving();
+  State.prospectAtendimentos = State.prospectAtendimentos.filter((a) => a.id !== id);
+  renderProspectsLista();
+}
+
+// modoAtendimento = true: registra um NOVO atendimento num prospect que já existe
+// (não cria outro prospect e não sobrescreve o histórico).
+function abrirModalProspect(id, modoAtendimento) {
   cmEditId = id || null;
-  document.getElementById('pr-tit').textContent = id ? 'Editar prospect' : 'Novo prospect';
+  cmModoAtendimento = !!(id && modoAtendimento);
+  document.getElementById('pr-tit').textContent = cmModoAtendimento ? 'Novo atendimento' : (id ? 'Editar prospect' : 'Novo prospect');
+  document.getElementById('pr-data-lbl').textContent = cmModoAtendimento ? 'Data do atendimento' : (id ? 'Data do 1º contato' : 'Data do atendimento');
   document.getElementById('pr-perda-req').classList.remove('show');
   const selNicho = document.getElementById('pr-nicho');
   selNicho.innerHTML = '<option value="">Selecione</option>' + State.segmentos.map((s) => `<option>${s.nome}</option>`).join('') + '<option>Outro</option>';
@@ -288,6 +333,13 @@ function abrirModalProspect(id) {
     document.getElementById('pr-fc-frequencia').value = 'mensal';
     document.getElementById('pr-fc-origem').value = 'prospeccao';
     document.getElementById('pr-fc-indicou').value = '';
+    if (cmModoAtendimento) {
+      // Mantém os dados da empresa; o que é do atendimento começa em branco.
+      document.getElementById('pr-data').value = hj();
+      document.getElementById('pr-obs').value = '';
+      document.getElementById('pr-proximo').value = '';
+      document.getElementById('pr-deadline').value = '';
+    }
   } else {
     ['pr-empresa', 'pr-contato', 'pr-whatsapp', 'pr-obs', 'pr-proximo', 'pr-deadline', 'pr-motivo', 'pr-fc-indicou'].forEach((i) => document.getElementById(i).value = '');
     document.getElementById('pr-data').value = hj();
@@ -328,9 +380,12 @@ async function salvarProspect() {
   }
   const contato = document.getElementById('pr-contato').value.trim();
   const whatsapp = document.getElementById('pr-whatsapp').value.trim();
+  const dataInformada = document.getElementById('pr-data').value || hj();
+  const prospectAtual = cmEditId ? State.prospects.find((x) => x.id === cmEditId) : null;
   const payload = {
     empresa,
-    data_visita: document.getElementById('pr-data').value,
+    // No modo atendimento a data digitada é a do novo contato; a do 1º contato não muda.
+    data_visita: cmModoAtendimento ? prospectAtual.data_visita : dataInformada,
     nicho: document.getElementById('pr-nicho').value,
     status,
     contato,
@@ -351,12 +406,20 @@ async function salvarProspect() {
   }
   if (error) { alert('Erro: ' + error.message); return; }
 
+  // Novo prospect ou novo atendimento: entra uma linha no histórico.
+  if (prospectId && (!cmEditId || cmModoAtendimento)) {
+    const rHist = await db.from('prospect_atendimentos').insert([{
+      prospect_id: prospectId, data: dataInformada, status, obs: payload.obs || null, proximo: payload.proximo || null,
+    }]);
+    if (rHist.error) alert('O prospect foi salvo, mas o atendimento não entrou no histórico: ' + rHist.error.message);
+  }
+
   if (status === 'fechado' && prospectId) {
     const jaTemCliente = State.clientesAtivos.some((c) => c.prospect_id === prospectId);
     if (!jaTemCliente) {
       const origem = document.getElementById('pr-fc-origem').value;
       const frequencia = document.getElementById('pr-fc-frequencia').value;
-      const dataFechamento = payload.data_visita || hj();
+      const dataFechamento = dataInformada;
       const ticketMensal = parseFloat(document.getElementById('pr-fc-ticket').value) || payload.ticket;
 
       const rCliente = await db.from('clientes_ativos').insert([{
@@ -407,8 +470,13 @@ async function salvarProspect() {
 
   showSaving();
   fecharOv('ov-prospect');
-  const r = await db.from('prospects').select('*').order('data_visita', { ascending: false });
+  const [r, rh] = await Promise.all([
+    db.from('prospects').select('*').order('data_visita', { ascending: false }),
+    db.from('prospect_atendimentos').select('*').order('data', { ascending: false }),
+  ]);
   State.prospects = r.data || [];
+  State.prospectAtendimentos = rh.data || [];
+  cmModoAtendimento = false;
   renderComercial();
 }
 
@@ -417,5 +485,6 @@ async function excluirProspect(id) {
   await db.from('prospects').delete().eq('id', id);
   showSaving();
   State.prospects = State.prospects.filter((p) => p.id !== id);
+  State.prospectAtendimentos = State.prospectAtendimentos.filter((a) => a.prospect_id !== id);
   renderComercial();
 }

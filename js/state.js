@@ -1,5 +1,6 @@
 const State = {
   prospects: [],
+  prospectAtendimentos: [], // histórico: cada contato/ação com um prospect
   clientesAtivos: [],
   receitas: [],
   despesas: [],
@@ -185,10 +186,11 @@ async function semearPadroes() {
 
 async function carregarTudo() {
   const [
-    prospects, clientesAtivos, receitas, despesas, produtos,
+    prospects, prospectAtendimentos, clientesAtivos, receitas, despesas, produtos,
     categoriasDespesa, categoriasReceita, segmentos, metasFinanceiras, membrosEmpresa, metasRow, configRow,
   ] = await Promise.all([
     db.from('prospects').select('*').order('data_visita', { ascending: false }),
+    db.from('prospect_atendimentos').select('*').order('data', { ascending: false }).order('created_at', { ascending: false }),
     db.from('clientes_ativos').select('*').order('data_fechamento', { ascending: false }),
     db.from('receitas').select('*').order('data', { ascending: false }),
     db.from('despesas').select('*').order('data', { ascending: false }),
@@ -203,6 +205,7 @@ async function carregarTudo() {
   ]);
 
   State.prospects = prospects.data || [];
+  State.prospectAtendimentos = prospectAtendimentos.data || [];
   State.clientesAtivos = clientesAtivos.data || [];
   State.receitas = receitas.data || [];
   State.despesas = despesas.data || [];

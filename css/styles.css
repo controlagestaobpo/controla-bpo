@@ -166,6 +166,10 @@ html,body{background:var(--marinho);color:var(--branco);font-family:'Montserrat'
 .ic-badges{display:flex;gap:4px;flex-wrap:wrap;margin-top:4px;}
 .ic-ct{font-size:10px;color:var(--cinza-claro);margin-top:4px;}
 .ic-obs{margin-top:5px;font-size:12px;color:var(--cinza-claro);line-height:1.5;}
+.ic-hist{margin-top:7px;font-size:11px;color:var(--cinza-claro);}
+.ic-hist summary{cursor:pointer;font-weight:600;color:var(--azul);}
+.ic-hist-item{margin-top:6px;padding:6px 9px;border-left:2px solid var(--border-forte);}
+.ic-hist-top{display:flex;align-items:center;gap:6px;}
 .ic-next{margin-top:5px;padding:5px 9px;background:rgba(61,214,140,0.12);border-left:3px solid var(--positivo);font-size:11px;color:var(--positivo);font-weight:500;}
 
 /* ===== META CARDS (Configurações / Dashboard) ===== */
