@@ -237,3 +237,15 @@ table.tbl tr:hover td{background:rgba(77,184,242,0.06);}
   #print-container,#print-container *{visibility:visible;}
   #print-container{position:absolute;left:0;top:0;width:100%;padding:0;}
 }
+
+/* ===== Cards clicáveis e Visão anual ===== */
+.stat-card-link{cursor:pointer;transition:border-color .15s,transform .15s;}
+.stat-card-link:hover{border-color:var(--azul);transform:translateY(-1px);}
+.av-filtros{flex-wrap:wrap;}
+.av-modos{display:flex;gap:6px;}
+.av-modos .pill{margin:0;}
+.av-input{background:rgba(255,255,255,0.05);border:1.5px solid var(--border-forte);border-radius:8px;padding:6px 10px;color:var(--branco);font-size:13px;font-family:inherit;color-scheme:dark;}
+.av-tbl th{text-align:left;font-size:10px;color:var(--cinza-claro);text-transform:uppercase;letter-spacing:.5px;padding:6px 8px;white-space:nowrap;}
+.av-tbl td{white-space:nowrap;}
+.av-linha{cursor:pointer;}
+.av-linha:hover td{background:rgba(77,184,242,0.08);}

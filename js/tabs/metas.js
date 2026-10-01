@@ -1,20 +1,71 @@
 let mtMes = null;
 let mtLucroDesejado = 0;
+let mtModo = 'mes'; // 'mes' | 'periodo'
+let mtDe = null;
+let mtAte = null;
+
+// Intervalo analisado: o mês escolhido inteiro, ou um período personalizado por data.
+function mtIntervalo() {
+  if (!mtMes) mtMes = mesAtual();
+  if (mtModo === 'periodo' && mtDe && mtAte && mtDe <= mtAte) return { de: mtDe, ate: mtAte };
+  return { de: mtMes + '-01', ate: ultimoDiaDoMes(mtMes) };
+}
+
+function mtSetModo(modo) {
+  mtModo = modo;
+  if (modo === 'periodo' && !mtDe) { mtDe = mtMes + '-01'; mtAte = hj() < ultimoDiaDoMes(mtMes) ? hj() : ultimoDiaDoMes(mtMes); }
+  renderMetasInteligentes();
+}
+function mtMudarMes(delta) { mtMes = delta === 0 ? mesAtual() : somarMes(mtMes, delta); renderMetasInteligentes(); }
+function mtSetDatas() {
+  const de = document.getElementById('mt-de').value, ate = document.getElementById('mt-ate').value;
+  if (de && ate && de <= ate) { mtDe = de; mtAte = ate; renderMetasInteligentes(); }
+}
+
+function htmlSeletorMetas() {
+  const { de, ate } = mtIntervalo();
+  return `<div class="periodo-nav av-filtros">
+    <div class="av-modos">
+      <span class="pill ${mtModo === 'mes' ? 'on' : ''}" onclick="mtSetModo('mes')">Mês</span>
+      <span class="pill ${mtModo === 'periodo' ? 'on' : ''}" onclick="mtSetModo('periodo')">Personalizado</span>
+    </div>
+    ${mtModo === 'mes' ? `
+      <button class="periodo-btn" onclick="mtMudarMes(-1)">‹</button>
+      <div class="periodo-label">${nomeMesLongo(mtMes)}</div>
+      <button class="periodo-btn" onclick="mtMudarMes(1)">›</button>
+      ${mtMes !== mesAtual() ? `<button class="btn btn-xs" onclick="mtMudarMes(0)">Hoje</button>` : ''}` : `
+      <input type="date" class="av-input" id="mt-de" value="${de}" onchange="mtSetDatas()">
+      <span style="color:var(--cinza-claro);font-size:12px;">até</span>
+      <input type="date" class="av-input" id="mt-ate" value="${ate}" onchange="mtSetDatas()">`}
+  </div>`;
+}
 
 function mtDadosBase() {
-  const dre30 = montarDREUltimosDias(30);
-  const clientesAtivos = State.clientesAtivos.filter((c) => c.status === 'ativo');
+  const { de, ate } = mtIntervalo();
+  const dias = Math.round((new Date(ate + 'T12:00:00') - new Date(de + 'T12:00:00')) / 86400000) + 1;
+  // Os cenários comparam valores mensais: num período personalizado, os totais viram média por mês.
+  const nMeses = mtModo === 'periodo' ? Math.max(dias / 30.44, 1 / 30.44) : 1;
+  const dreTotal = montarDREIntervalo(de, ate);
+  const dre30 = {
+    receitaTotal: dreTotal.receitaTotal / nMeses,
+    deducoes: dreTotal.deducoes / nMeses,
+    totalDespesasOperacionais: dreTotal.totalDespesasOperacionais / nMeses,
+    lucroLiquido: dreTotal.lucroLiquido / nMeses,
+    margem: dreTotal.margem,
+  };
+  const mesRef = ate.slice(0, 7);
+  const clientesAtivos = clientesAtivosEm(ate);
   const tickets = clientesAtivos.map((c) => Number(c.ticket_mensal || 0));
   const ticketMedio = tickets.length ? tickets.reduce((s, v) => s + v, 0) / tickets.length : 0;
   const ticketMax = tickets.length ? Math.max(...tickets) : 0;
   const ticketMin = tickets.length ? Math.min(...tickets) : 0;
 
-  const receitaAgora = montarDRE(mesAtual()).receitaTotal;
-  const receita3MesesAtras = montarDRE(mesesAtras(3)).receitaTotal;
+  const receitaAgora = montarDRE(mesRef).receitaTotal;
+  const receita3MesesAtras = montarDRE(somarMes(mesRef, -3)).receitaTotal;
   const crescimento3m = receita3MesesAtras > 0 ? Math.round((receitaAgora - receita3MesesAtras) / receita3MesesAtras * 100) : null;
 
   const receitaRecorrenteMes = State.receitas
-    .filter((r) => r.mes_projecao === mesAtual() && r.status === 'ativa' && r.e_recorrente)
+    .filter((r) => r.mes_projecao === mesRef && r.status === 'ativa' && r.e_recorrente)
     .reduce((s, r) => s + Number(r.valor || 0), 0);
 
   return {
@@ -26,30 +77,38 @@ function mtDadosBase() {
     ticketMedio, ticketMax, ticketMin,
     crescimento3m,
     receitaRecorrenteMes,
+    totais: {
+      receita: dreTotal.receitaTotal,
+      despesas: dreTotal.deducoes + dreTotal.totalDespesasOperacionais,
+      lucro: dreTotal.lucroLiquido,
+    },
+    de, ate, dias, nMeses, mesRef,
   };
 }
 
 function renderMetasInteligentes() {
-  mtMes = mesAtual();
-  const salva = State.metasFinanceiras.find((m) => m.mes === mtMes);
+  if (!mtMes) mtMes = mesAtual();
   const dados = mtDadosBase();
-  mtLucroDesejado = salva ? salva.meta_lucro : Math.max(Math.round(dados.lucroLiquido), 0);
+  const metaRef = mtModo === 'mes' ? State.metasFinanceiras.find((m) => m.mes === mtMes) || metaEfetivaDoMes(mtMes) : metaEfetivaDoMes(dados.mesRef);
+  mtLucroDesejado = metaRef ? Number(metaRef.meta_lucro) : Math.max(Math.round(dados.lucroLiquido), 0);
+  const tituloPeriodo = mtModo === 'mes' ? nomeMesLongo(mtMes) : `${fmtD(dados.de)} a ${fmtD(dados.ate)}`;
 
   const el = document.getElementById('page-metas');
   el.innerHTML = `
+    ${htmlSeletorMetas()}
     <div class="section">
       <div class="panel" style="border-left:4px solid var(--azul);">
-        <div class="panel-title">Meta de lucro líquido de ${nomeMesLongo(mtMes)}: ${fmtMoeda(mtLucroDesejado)}</div>
-        <div class="panel-sub">Pra mudar, vá em Configurações → Metas → Editar meta de lucro líquido.</div>
+        <div class="panel-title">Meta de lucro líquido${mtModo === 'mes' ? ' de ' + nomeMesLongo(mtMes) : ' (por mês)'}: ${fmtMoeda(mtLucroDesejado)}</div>
+        <div class="panel-sub">Pra mudar, vá em Configurações → Metas → Editar meta de lucro líquido.${mtModo === 'periodo' ? ' No período personalizado, os cenários comparam a média mensal do período com a meta do mês.' : ''}</div>
       </div>
     </div>
 
     <div class="section">
-      <div class="section-title">Dados atuais (últimos 30 dias)</div>
+      <div class="section-title">Dados de ${tituloPeriodo}</div>
       <div class="card-grid-2" style="margin-bottom:4px;">
-        <div class="stat-card"><div class="stat-lbl">Receita bruta</div><div class="stat-val" style="color:var(--positivo)">${fmtMoeda(dados.receitaBruta)}</div></div>
-        <div class="stat-card"><div class="stat-lbl">Despesas totais</div><div class="stat-val" style="color:var(--negativo)">${fmtMoeda(dados.despesasTotais)}</div></div>
-        <div class="stat-card"><div class="stat-lbl">Lucro líquido</div><div class="stat-val">${fmtMoeda(dados.lucroLiquido)}</div></div>
+        <div class="stat-card"><div class="stat-lbl">Receita bruta</div><div class="stat-val" style="color:var(--positivo)">${fmtMoeda(dados.totais.receita)}</div>${mtModo === 'periodo' ? `<div class="stat-sub">${fmtMoeda(dados.receitaBruta)}/mês</div>` : ''}</div>
+        <div class="stat-card"><div class="stat-lbl">Despesas totais</div><div class="stat-val" style="color:var(--negativo)">${fmtMoeda(dados.totais.despesas)}</div>${mtModo === 'periodo' ? `<div class="stat-sub">${fmtMoeda(dados.despesasTotais)}/mês</div>` : ''}</div>
+        <div class="stat-card"><div class="stat-lbl">Lucro líquido</div><div class="stat-val">${fmtMoeda(dados.totais.lucro)}</div>${mtModo === 'periodo' ? `<div class="stat-sub">${fmtMoeda(dados.lucroLiquido)}/mês</div>` : ''}</div>
         <div class="stat-card"><div class="stat-lbl">Margem</div><div class="stat-val">${dados.margem}%</div></div>
         <div class="stat-card"><div class="stat-lbl">Clientes ativos</div><div class="stat-val">${dados.clientesAtivos}</div></div>
         <div class="stat-card"><div class="stat-lbl">Ticket médio</div><div class="stat-val">${fmtMoeda(dados.ticketMedio)}</div></div>
@@ -61,7 +120,7 @@ function renderMetasInteligentes() {
 
     <div class="section">
       <div class="section-title">Projeção anualizada (no ritmo atual)</div>
-      <div class="panel-sub" style="margin-top:-4px;">Se os últimos 30 dias se repetirem por 12 meses.</div>
+      <div class="panel-sub" style="margin-top:-4px;">Se ${mtModo === 'mes' ? 'esse mês se repetir' : 'a média mensal desse período se repetir'} por 12 meses.</div>
       <div class="card-grid-2" style="margin-bottom:4px;">
         <div class="stat-card"><div class="stat-lbl">Receita anualizada</div><div class="stat-val" style="color:var(--positivo)">${fmtMoeda(dados.receitaBruta * 12)}</div></div>
         <div class="stat-card"><div class="stat-lbl">Despesas anualizadas</div><div class="stat-val" style="color:var(--negativo)">${fmtMoeda(dados.despesasTotais * 12)}</div></div>
@@ -206,9 +265,9 @@ function mtRenderResultado() {
       ${insights.map((i) => `<div style="font-size:12px;color:var(--text2);line-height:1.7;padding:3px 0;">• ${i}</div>`).join('')}
     </div>
 
-    <div style="margin-top:14px;">
+    ${mtModo === 'mes' ? `<div style="margin-top:14px;">
       <button class="btn btn-primary" style="width:100%;padding:13px;" onclick="mtSalvarMeta()">✓ Salvar meta de ${nomeMesLongo(mtMes)}</button>
-    </div>
+    </div>` : ''}
   `;
 }
 

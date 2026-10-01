@@ -44,16 +44,16 @@ function gerarInsightComercial() {
 }
 
 function calcularPipelineDoMes(mes) {
-  const iniciados = prospectsAtendidos().filter((p) => (p.data_visita || '').slice(0, 7) === mes);
-  const ganhos = State.clientesAtivos.filter((c) => (c.data_fechamento || '').slice(0, 7) === mes);
-  const perdidos = State.prospects.filter((p) => p.status === 'descartado' && (p.data_visita || '').slice(0, 7) === mes);
+  // Perdidos contam no mês em que o negócio foi dado como perdido (não no mês do 1º contato).
+  const m = metricasDoMes(mes);
   const pipeline = prospectsPipeline();
   return {
-    iniciados: iniciados.length,
-    ganhos: ganhos.length,
-    valorGanho: ganhos.reduce((s, c) => s + Number(c.ticket_mensal || 0), 0),
-    perdidos: perdidos.length,
-    valorPerdido: perdidos.reduce((s, p) => s + Number(p.ticket || 0), 0),
+    iniciados: m.iniciados,
+    atendimentos: m.atendimentos,
+    ganhos: m.ganhos,
+    valorGanho: m.valorGanho,
+    perdidos: m.perdidos,
+    valorPerdido: m.valorPerdido,
     noPipeline: pipeline.length,
     valorPipeline: pipeline.reduce((s, p) => s + Number(p.ticket || 0), 0),
   };
@@ -96,24 +96,24 @@ function renderDashboardComercial() {
 
   const el = document.getElementById('page-dashboard-comercial');
   el.innerHTML = `
+    ${htmlSeletorPeriodo()}
     <div class="section">
-      <div class="section-title">Resumo comercial</div>
+      <div class="section-title">Situação atual</div>
       <div class="card-grid-2" style="margin-bottom:14px;">
-        <div class="stat-card"><div class="stat-lbl">Clientes ativos</div><div class="stat-val" style="color:var(--positivo)">${clientesAtivos.length}</div><div class="stat-sub">${metaClientes === null ? 'defina uma meta em Metas' : 'meta: ' + metaClientes + ' (p/ bater a meta de lucro)'}</div></div>
-        <div class="stat-card"><div class="stat-lbl">Prospects</div><div class="stat-val" style="color:var(--blue)">${pipeline.length}</div><div class="stat-sub">em funil${indicacoesAContatar().length ? ` · ${indicacoesAContatar().length} a contatar` : ''}</div></div>
-        <div class="stat-card"><div class="stat-lbl">Taxa conversão</div><div class="stat-val">${taxaConversao}%</div></div>
-        <div class="stat-card"><div class="stat-lbl">Valor em funil</div><div class="stat-val">${fmtMoeda(valorFunil)}</div></div>
+        <div class="stat-card stat-card-link" onclick="irPara('comercial',{ancora:'cm-sec-clientes'})"><div class="stat-lbl">Clientes ativos</div><div class="stat-val" style="color:var(--positivo)">${clientesAtivos.length}</div><div class="stat-sub">${metaClientes === null ? 'defina uma meta em Metas' : 'meta: ' + metaClientes + ' (p/ bater a meta de lucro)'}</div></div>
+        <div class="stat-card stat-card-link" onclick="irPara('comercial')"><div class="stat-lbl">Prospects</div><div class="stat-val" style="color:var(--blue)">${pipeline.length}</div><div class="stat-sub">em funil${indicacoesAContatar().length ? ` · ${indicacoesAContatar().length} a contatar` : ''}</div></div>
+        <div class="stat-card stat-card-link" onclick="irPara('anual')"><div class="stat-lbl">Taxa conversão</div><div class="stat-val">${taxaConversao}%</div><div class="stat-sub">desde o início</div></div>
+        <div class="stat-card stat-card-link" onclick="irPara('comercial')"><div class="stat-lbl">Valor em funil</div><div class="stat-val">${fmtMoeda(valorFunil)}</div></div>
       </div>
     </div>
 
     <div class="section">
-      <div class="section-title">Pipeline do mês</div>
-      ${htmlSeletorPeriodo()}
+      <div class="section-title">${nomeMesLongo(mesPipeline)}</div>
       <div class="card-grid-2" style="margin-bottom:14px;">
-        <div class="stat-card"><div class="stat-lbl">Negócios iniciados</div><div class="stat-val" style="color:var(--blue)">${pipe.iniciados}</div></div>
-        <div class="stat-card"><div class="stat-lbl">No pipeline (agora)</div><div class="stat-val">${pipe.noPipeline}</div><div class="stat-sub">${fmtMoeda(pipe.valorPipeline)}</div></div>
-        <div class="stat-card"><div class="stat-lbl">Ganhos</div><div class="stat-val" style="color:var(--positivo)">${pipe.ganhos}</div><div class="stat-sub">${fmtMoeda(pipe.valorGanho)}</div></div>
-        <div class="stat-card"><div class="stat-lbl">Perdidos</div><div class="stat-val" style="color:var(--negativo)">${pipe.perdidos}</div><div class="stat-sub">${fmtMoeda(pipe.valorPerdido)}</div></div>
+        <div class="stat-card stat-card-link" onclick="irPara('comercial')"><div class="stat-lbl">Negócios iniciados</div><div class="stat-val" style="color:var(--blue)">${pipe.iniciados}</div><div class="stat-sub">${pipe.atendimentos} atendimento${pipe.atendimentos === 1 ? '' : 's'} no mês</div></div>
+        <div class="stat-card stat-card-link" onclick="irPara('comercial')"><div class="stat-lbl">No pipeline (agora)</div><div class="stat-val">${pipe.noPipeline}</div><div class="stat-sub">${fmtMoeda(pipe.valorPipeline)}</div></div>
+        <div class="stat-card stat-card-link" onclick="irPara('comercial',{ancora:'cm-sec-clientes'})"><div class="stat-lbl">Ganhos</div><div class="stat-val" style="color:var(--positivo)">${pipe.ganhos}</div><div class="stat-sub">${fmtMoeda(pipe.valorGanho)}</div></div>
+        <div class="stat-card stat-card-link" onclick="irPara('comercial',{status:'descartado'})"><div class="stat-lbl">Perdidos</div><div class="stat-val" style="color:var(--negativo)">${pipe.perdidos}</div><div class="stat-sub">${fmtMoeda(pipe.valorPerdido)}</div></div>
       </div>
     </div>
 

@@ -23,7 +23,7 @@ function renderConfig() {
           <button class="btn" onclick="gerarRelatorioFinanceiro()">📄 Relatório Financeiro</button>
           <button class="btn" onclick="gerarRelatorioIntegrado()">📄 Relatório Integrado (Visão 360°)</button>
           <button class="btn" onclick="rlExportarJSON()">⬇ Exportar dados brutos (JSON)</button>
-          <button class="btn" onclick="rlCopiarResumoIA()">📋 Copiar resumo para IA</button>
+          <button class="btn" onclick="rlCopiarResumoIA()">📋 Copiar dados completos para IA (mês a mês)</button>
         </div>
       </div>
     </div>

@@ -15,21 +15,23 @@ if (window.Chart) {
   }
 }
 
-const TABS = ['dashboard-comercial', 'dashboard-financeiro', 'comercial', 'financeiro', 'historico', 'metas', 'config'];
+const TABS = ['dashboard-comercial', 'dashboard-financeiro', 'anual', 'comercial', 'financeiro', 'metas', 'config'];
 const RENDERERS = {
   'dashboard-comercial': renderDashboardComercial,
   'dashboard-financeiro': renderDashboardFinanceiro,
   comercial: renderComercial,
   financeiro: renderFinanceiro,
-  historico: renderHistorico,
+  anual: renderVisaoAnual,
   metas: renderMetasInteligentes,
   config: renderConfig,
 };
 
 let tabAtual = 'dashboard-comercial';
 
-function trocarTab(tab) {
+function trocarTab(tab, opts) {
   tabAtual = tab;
+  // Pelo menu, os dashboards sempre abrem no mês vigente (clicar num card mantém o mês escolhido).
+  if (tab.startsWith('dashboard') && !(opts && opts.manterPeriodo)) State.periodo = mesAtual();
   TABS.forEach((t) => {
     document.getElementById('page-' + t).classList.toggle('active', t === tab);
     document.getElementById('tab-' + t).classList.toggle('active', t === tab);

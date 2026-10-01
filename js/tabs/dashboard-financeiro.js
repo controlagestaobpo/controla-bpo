@@ -172,11 +172,11 @@ function renderDashboardFinanceiro() {
     <div class="section">
       <div class="section-title">Resumo financeiro</div>
       <div class="card-grid-2" style="margin-bottom:14px;">
-        <div class="stat-card"><div class="stat-lbl">Receita</div><div class="stat-val" style="color:var(--positivo)">${fmtMoeda(dre.receitaTotal)}</div><div class="stat-sub">${metaMes ? 'meta: ' + fmtMoeda(metaMes.meta_receita) : 'defina uma meta em Metas'}</div></div>
-        <div class="stat-card"><div class="stat-lbl">Despesas</div><div class="stat-val" style="color:var(--negativo)">${fmtMoeda(despesaTotalMes)}</div></div>
-        <div class="stat-card"><div class="stat-lbl">Lucro líquido</div><div class="stat-val" style="color:${dre.lucroLiquido >= 0 ? 'var(--positivo)' : 'var(--negativo)'}">${fmtMoeda(dre.lucroLiquido)}</div><div class="stat-sub">${metaMes ? 'meta: ' + fmtMoeda(metaMes.meta_lucro) : 'defina uma meta em Metas'}</div></div>
-        <div class="stat-card"><div class="stat-lbl">Margem</div><div class="stat-val">${dre.margem}%</div></div>
-        <div class="stat-card"><div class="stat-lbl">${projecaoLabel}</div><div class="stat-val" style="color:${projecaoMes >= 0 ? 'var(--positivo)' : 'var(--negativo)'}">${fmtMoeda(projecaoMes)}</div><div class="stat-sub">recebimentos − pagamentos previstos</div></div>
+        <div class="stat-card stat-card-link" onclick="irPara('financeiro',{mes:'${mes}',tipo:'receita'})"><div class="stat-lbl">Receita</div><div class="stat-val" style="color:var(--positivo)">${fmtMoeda(dre.receitaTotal)}</div><div class="stat-sub">${metaMes ? 'meta: ' + fmtMoeda(metaMes.meta_receita) : 'defina uma meta em Metas'}</div></div>
+        <div class="stat-card stat-card-link" onclick="irPara('financeiro',{mes:'${mes}',tipo:'despesa'})"><div class="stat-lbl">Despesas</div><div class="stat-val" style="color:var(--negativo)">${fmtMoeda(despesaTotalMes)}</div></div>
+        <div class="stat-card stat-card-link" onclick="irPara('metas')"><div class="stat-lbl">Lucro líquido</div><div class="stat-val" style="color:${dre.lucroLiquido >= 0 ? 'var(--positivo)' : 'var(--negativo)'}">${fmtMoeda(dre.lucroLiquido)}</div><div class="stat-sub">${metaMes ? 'meta: ' + fmtMoeda(metaMes.meta_lucro) : 'defina uma meta em Metas'}</div></div>
+        <div class="stat-card stat-card-link" onclick="irPara('anual')"><div class="stat-lbl">Margem</div><div class="stat-val">${dre.margem}%</div></div>
+        <div class="stat-card stat-card-link" onclick="irPara('financeiro',{mes:'${mes}'})"><div class="stat-lbl">${projecaoLabel}</div><div class="stat-val" style="color:${projecaoMes >= 0 ? 'var(--positivo)' : 'var(--negativo)'}">${fmtMoeda(projecaoMes)}</div><div class="stat-sub">recebimentos − pagamentos previstos</div></div>
       </div>
     </div>
 
@@ -185,8 +185,8 @@ function renderDashboardFinanceiro() {
       <div class="panel" style="border-left:4px solid var(--purple);">
         <div class="panel-sub" style="margin-top:0;">Se todas as contas já lançadas com vencimento em ${nomeMesLongo(mes)} forem recebidas e pagas</div>
         <div class="card-grid-2" style="margin-bottom:0;">
-          <div class="stat-card"><div class="stat-lbl">Receita prevista</div><div class="stat-val" style="color:var(--positivo);font-size:18px;">${fmtMoeda(proj.receitaPrevista)}</div></div>
-          <div class="stat-card"><div class="stat-lbl">Despesas previstas</div><div class="stat-val" style="color:var(--negativo);font-size:18px;">${fmtMoeda(proj.despesaPrevista)}</div></div>
+          <div class="stat-card stat-card-link" onclick="irPara('financeiro',{mes:'${mes}',tipo:'receita'})"><div class="stat-lbl">Receita prevista</div><div class="stat-val" style="color:var(--positivo);font-size:18px;">${fmtMoeda(proj.receitaPrevista)}</div></div>
+          <div class="stat-card stat-card-link" onclick="irPara('financeiro',{mes:'${mes}',tipo:'despesa'})"><div class="stat-lbl">Despesas previstas</div><div class="stat-val" style="color:var(--negativo);font-size:18px;">${fmtMoeda(proj.despesaPrevista)}</div></div>
           <div class="stat-card"><div class="stat-lbl">Lucro líquido previsto</div><div class="stat-val" style="color:${proj.lucroPrevisto >= 0 ? 'var(--positivo)' : 'var(--negativo)'};font-size:18px;">${fmtMoeda(proj.lucroPrevisto)}</div><div class="stat-sub">margem de ${proj.margemPrevista}%</div></div>
         </div>
       </div>

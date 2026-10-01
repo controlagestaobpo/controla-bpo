@@ -65,14 +65,15 @@ function renderComercial() {
     <input type="text" id="cm-busca" class="search-inp" placeholder="Buscar empresa..." oninput="renderProspectsLista()">
     <div class="list" id="cm-prospects-list"></div>
 
-    <div class="section">
+    <div class="section" id="cm-sec-clientes">
       <div class="section-title">Clientes ativos</div>
       <div class="panel-sub" style="margin-top:-4px;">Todo cliente nasce de um prospect fechado — não existe cadastro avulso.</div>
       <div class="simple-list" id="cm-clientes-list" style="margin-bottom:6px;"></div>
     </div>
 
-    <div class="section">
-      <div class="section-title">Motivos de cancelamento</div>
+    <div class="section" id="cm-sec-churn">
+      <div class="section-title">Churn e cancelamentos</div>
+      ${htmlResumoChurn()}
       <div class="simple-list" id="cm-cancelados-list"></div>
     </div>
   `;
@@ -201,15 +202,45 @@ async function salvarEncerramento() {
   renderComercial();
 }
 
+// ===================== CHURN (antiga aba Histórico) =====================
+function gerarInsightChurn(churnRate, totalAllTime) {
+  if (totalAllTime === 0) return 'Ainda não há clientes suficientes pra calcular o churn.';
+  if (churnRate === 0) return 'Nenhum cancelamento registrado — ótima retenção.';
+  if (churnRate <= 10) return `Seu churn de ${churnRate}% está baixo — continue assim.`;
+  if (churnRate <= 25) return `Seu churn de ${churnRate}% é aceitável, mas dá pra melhorar — considere aumentar os pontos de contato com clientes ativos.`;
+  return `Seu churn de ${churnRate}% está alto — vale investigar os motivos de cancelamento mais recorrentes abaixo.`;
+}
+
+function htmlResumoChurn() {
+  const encerrados = State.clientesAtivos.filter((c) => c.status === 'encerrado');
+  const ativos = State.clientesAtivos.filter((c) => c.status === 'ativo');
+  const total = State.clientesAtivos.length;
+  const churnRate = total > 0 ? Math.round(encerrados.length / total * 100) : 0;
+  const porMotivo = {};
+  encerrados.forEach((c) => { const k = c.motivo_cancelamento || 'não informado'; porMotivo[k] = (porMotivo[k] || 0) + 1; });
+  const motivos = Object.entries(porMotivo).sort((a, b) => b[1] - a[1]);
+  return `
+    <div class="card-grid-2" style="margin-bottom:10px;">
+      <div class="stat-card"><div class="stat-lbl">Total de clientes</div><div class="stat-val">${total}</div><div class="stat-sub">desde o início</div></div>
+      <div class="stat-card"><div class="stat-lbl">Ativos</div><div class="stat-val" style="color:var(--positivo)">${ativos.length}</div></div>
+      <div class="stat-card"><div class="stat-lbl">Cancelados</div><div class="stat-val" style="color:var(--negativo)">${encerrados.length}</div></div>
+      <div class="stat-card"><div class="stat-lbl">Churn rate</div><div class="stat-val">${churnRate}%</div></div>
+    </div>
+    <div class="panel" style="border-left:4px solid var(--amber);margin-bottom:10px;">
+      <div style="font-size:12px;color:var(--text2);line-height:1.6;">${gerarInsightChurn(churnRate, total)}</div>
+      ${motivos.length ? `<div style="font-size:11px;color:var(--cinza-claro);margin-top:6px;">Motivos: ${motivos.map(([m, n]) => `${m} (${n})`).join(' · ')}</div>` : ''}
+    </div>`;
+}
+
 function renderCanceladosLista() {
   const el = document.getElementById('cm-cancelados-list');
   if (!el) return;
-  const lista = State.clientesAtivos.filter((c) => c.status === 'encerrado');
+  const lista = State.clientesAtivos.filter((c) => c.status === 'encerrado').sort((a, b) => (b.data_encerramento || '').localeCompare(a.data_encerramento || ''));
   if (!lista.length) { el.innerHTML = '<div class="empty-state">Nenhum cancelamento registrado.</div>'; return; }
   el.innerHTML = lista.map((c) => `<div class="simple-row">
     <div class="simple-row-main">
       <div class="simple-row-title">${c.empresa}</div>
-      <div class="simple-row-sub">${fmtD(c.data_encerramento)} · ${c.motivo_cancelamento || '-'} · cancelado por ${c.quem_cancelou === 'empresa' ? 'nós' : 'cliente'}</div>
+      <div class="simple-row-sub">${fmtD(c.data_encerramento)} · ${c.motivo_cancelamento || '-'} · cancelado por ${c.quem_cancelou === 'empresa' ? 'nós' : 'cliente'}${c.obs ? ' · ' + c.obs : ''}</div>
     </div>
     <span class="badge badge-red">encerrado</span>
   </div>`).join('');

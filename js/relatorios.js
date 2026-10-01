@@ -227,6 +227,7 @@ function rlExportarJSON() {
     gerado_em: new Date().toISOString(),
     perfil: State.perfil,
     prospects: State.prospects,
+    prospect_atendimentos: State.prospectAtendimentos,
     clientes_ativos: State.clientesAtivos,
     receitas: State.receitas,
     despesas: State.despesas,
@@ -248,29 +249,142 @@ function rlExportarJSON() {
   URL.revokeObjectURL(url);
 }
 
-async function rlCopiarResumoIA() {
-  const mes = mesAtual();
-  const dre = montarDRE(mes);
+// ===================== DADOS COMPLETOS PARA IA =====================
+// Monta um texto com TODOS os dados da empresa, mês a mês (realizado), mais projeção,
+// clientes, prospects com histórico e metas — pra colar numa IA e pedir uma análise geral.
+function rlPrimeiroMesComDados() {
+  const datas = [
+    ...State.receitas.filter((r) => r.status === 'ativa' && r.recebido).map((r) => r.data_recebimento),
+    ...State.despesas.filter((d) => d.pago).map((d) => d.data_pagamento),
+    ...State.prospects.map((p) => p.data_visita),
+    ...State.clientesAtivos.map((c) => c.data_fechamento),
+  ].filter((d) => d && d >= '2000-01-01').sort();
+  return datas.length ? datas[0].slice(0, 7) : mesAtual();
+}
+
+function rlAgrupar(lista, chave, valor) {
+  const out = {};
+  lista.forEach((x) => { const k = chave(x) || 'sem informação'; out[k] = (out[k] || 0) + valor(x); });
+  return Object.entries(out).sort((a, b) => b[1] - a[1]);
+}
+
+function gerarTextoDadosIA() {
+  const hoje = hj();
+  const mesHoje = mesAtual();
+  const meses = mesesEntre(rlPrimeiroMesComDados(), mesHoje);
+  const nomeCliente = (id) => (State.clientesAtivos.find((c) => c.id === id) || {}).empresa || 'Sem cliente vinculado';
+  const linhaMoeda = ([k, v]) => `    - ${k}: ${fmtMoeda2(v)}`;
   const clientesAtivos = State.clientesAtivos.filter((c) => c.status === 'ativo');
+  const mrr = clientesAtivos.reduce((s, c) => s + Number(c.ticket_mensal || 0), 0);
   const pipeline = prospectsPipeline();
-  const encerrados = State.clientesAtivos.filter((c) => c.status === 'encerrado');
 
-  let t = `=== CONTROLA GESTÃO BPO — RESUMO ===\nGerado em ${new Date().toLocaleDateString('pt-BR')}\n\n`;
-  t += `COMERCIAL\nClientes ativos: ${clientesAtivos.length} | Prospects em funil: ${pipeline.length} | Cancelados: ${encerrados.length}\n\n`;
-  t += `FINANCEIRO (${nomeMesLongo(mes)})\nReceita: ${fmtMoeda(dre.receitaTotal)} | Despesas: ${fmtMoeda(dre.deducoes + dre.totalDespesasOperacionais)} | Lucro líquido: ${fmtMoeda(dre.lucroLiquido)} | Margem: ${dre.margem}%\n\n`;
-  t += `CLIENTES ATIVOS\n`;
-  clientesAtivos.forEach((c) => { t += `- ${c.empresa} | ${fmtMoeda(c.ticket_mensal)}/mês | fechado em ${fmtD(c.data_fechamento)}\n`; });
-  t += `\nPROSPECTS EM ABERTO\n`;
-  pipeline.forEach((p) => { t += `- ${p.empresa} | ${STATUS_LBL[p.status] || p.status} | ${p.proximo || 'sem próximo passo'}\n`; });
-  t += `\nCANCELAMENTOS\n`;
-  encerrados.forEach((c) => { t += `- ${c.empresa} | ${c.motivo_cancelamento || '-'} | ${fmtD(c.data_encerramento)}\n`; });
-  t += '\n---\nPeça: Analise esses dados do meu negócio de BPO e me diga onde estou indo bem, onde preciso melhorar e quais ações tomar essa semana.';
+  let t = `=== ${State.perfil.nome_empresa || 'CONTROLA GESTÃO BPO'} — DADOS COMPLETOS DA EMPRESA ===\n`;
+  t += `Gerado em ${new Date().toLocaleDateString('pt-BR')}. Empresa de BPO financeiro (terceirização financeira) com contratos mensais.\n`;
+  t += `Regime de caixa: receita/despesa entra no mês em que o dinheiro entrou/saiu. Valores em R$.\n\n`;
 
+  t += `## FOTO DE HOJE (${new Date().toLocaleDateString('pt-BR')})\n`;
+  t += `- Clientes ativos: ${clientesAtivos.length} | Receita recorrente (MRR): ${fmtMoeda2(mrr)}/mês | Ticket médio: ${fmtMoeda2(clientesAtivos.length ? mrr / clientesAtivos.length : 0)}\n`;
+  t += `- Prospects em negociação: ${pipeline.length} (valor ${fmtMoeda2(pipeline.reduce((s, p) => s + Number(p.ticket || 0), 0))}/mês) | Indicações ainda não contatadas: ${indicacoesAContatar().length}\n`;
+  t += `- Clientes já cancelados (desde o início): ${State.clientesAtivos.filter((c) => c.status === 'encerrado').length}\n\n`;
+
+  t += `## MÊS A MÊS (${nomeMesShort(meses[0])} a ${nomeMesShort(mesHoje)}${mesHoje === meses[meses.length - 1] ? ', mês atual parcial' : ''})\n`;
+  t += `Resumo: Mês | Receita | Despesas | Impostos | Lucro líquido | Margem | Clientes ativos (fim) | MRR (fim) | Prospects iniciados | Atendimentos | Ganhos | Perdidos | Cancelamentos\n`;
+  const metricas = meses.map(metricasDoMes);
+  metricas.forEach((m) => {
+    t += `${nomeMesShort(m.mes)} | ${fmtMoeda2(m.receita)} | ${fmtMoeda2(m.despesas)} | ${fmtMoeda2(m.impostos)} | ${fmtMoeda2(m.lucro)} | ${m.margem}% | ${m.clientesAtivos} | ${fmtMoeda2(m.mrr)} | ${m.iniciados} | ${m.atendimentos} | ${m.ganhos} | ${m.perdidos} | ${m.encerrados}\n`;
+  });
+  t += '\n';
+
+  metricas.forEach((m) => {
+    const mes = m.mes;
+    const noMes = (d) => (d || '').slice(0, 7) === mes;
+    const receitas = receitasDoMes(mes);
+    const despesas = despesasDoMes(mes);
+    const meta = metaEfetivaDoMes(mes);
+    t += `### ${nomeMesLongo(mes).toUpperCase()}\n`;
+    t += `Financeiro: receita ${fmtMoeda2(m.receita)} | despesas ${fmtMoeda2(m.despesas)} | lucro ${fmtMoeda2(m.lucro)} | margem ${m.margem}%`;
+    if (meta) t += ` | meta de lucro ${fmtMoeda2(meta.meta_lucro)} (${meta.meta_lucro > 0 ? Math.round(m.lucro / meta.meta_lucro * 100) : 0}% atingido)`;
+    t += '\n';
+    if (receitas.length) {
+      t += `  Receita por cliente:\n${rlAgrupar(receitas, (r) => r.cliente_id ? nomeCliente(r.cliente_id) : (r.descricao || r.categoria), (r) => Number(r.valor || 0)).map(linhaMoeda).join('\n')}\n`;
+      t += `  Receita por categoria:\n${rlAgrupar(receitas, (r) => r.categoria, (r) => Number(r.valor || 0)).map(linhaMoeda).join('\n')}\n`;
+    }
+    if (despesas.length) {
+      t += `  Despesas por categoria › subcategoria:\n${rlAgrupar(despesas, (d) => d.categoria + (d.subcategoria ? ' › ' + d.subcategoria : ''), (d) => Number(d.valor || 0)).map(linhaMoeda).join('\n')}\n`;
+    }
+    const iniciados = State.prospects.filter((p) => p.status !== 'indicado' && noMes(p.data_visita));
+    const ganhos = State.clientesAtivos.filter((c) => noMes(c.data_fechamento));
+    const perdidos = State.prospects.filter((p) => noMes(dataPerdaProspect(p)));
+    const cancelados = State.clientesAtivos.filter((c) => c.status === 'encerrado' && noMes(c.data_encerramento));
+    t += `Comercial: ${m.iniciados} prospects iniciados, ${m.atendimentos} atendimentos, ${m.indicacoesRecebidas} indicações recebidas, ${m.ganhos} ganhos, ${m.perdidos} perdidos, ${m.encerrados} cancelamentos (churn do mês ${m.churn}%)\n`;
+    if (iniciados.length) t += `  Iniciados: ${iniciados.map((p) => `${p.empresa}${p.nicho ? ' (' + p.nicho + ')' : ''}`).join('; ')}\n`;
+    if (ganhos.length) t += `  Ganhos: ${ganhos.map((c) => `${c.empresa} — ${fmtMoeda2(c.ticket_mensal)}/${c.frequencia || 'mês'}, origem ${ORIGEM_LBL[c.origem] || c.origem || '-'}${c.quem_indicou ? ' (indicado por ' + c.quem_indicou + ')' : ''}`).join('; ')}\n`;
+    if (perdidos.length) t += `  Perdidos: ${perdidos.map((p) => `${p.empresa} — ${p.motivo_perda || 'motivo não informado'}`).join('; ')}\n`;
+    if (cancelados.length) t += `  Cancelamentos: ${cancelados.map((c) => `${c.empresa} — ${c.motivo_cancelamento || '-'} (cancelado por ${c.quem_cancelou === 'empresa' ? 'nós' : 'cliente'})`).join('; ')}\n`;
+    t += '\n';
+  });
+
+  t += `## PROJEÇÃO (o que já está lançado pros próximos 6 meses)\n`;
+  for (let i = 0; i <= 6; i++) {
+    const mes = somarMes(mesHoje, i);
+    const rec = State.receitas.filter((r) => r.status === 'ativa' && r.mes_projecao === mes);
+    const desp = State.despesas.filter((d) => d.mes_projecao === mes);
+    const totRec = rec.reduce((s, r) => s + Number(r.valor || 0), 0);
+    const totDesp = desp.reduce((s, d) => s + Number(d.valor || 0), 0);
+    t += `- ${nomeMesShort(mes)}: receitas previstas ${fmtMoeda2(totRec)} | despesas previstas ${fmtMoeda2(totDesp)} | saldo ${fmtMoeda2(totRec - totDesp)}\n`;
+  }
+  const receberAtrasado = State.receitas.filter((r) => r.status === 'ativa' && !r.recebido && r.data < hoje);
+  const pagarAtrasado = State.despesas.filter((d) => !d.pago && d.data < hoje);
+  t += `- Em atraso hoje: ${receberAtrasado.length} recebimentos (${fmtMoeda2(receberAtrasado.reduce((s, r) => s + Number(r.valor || 0), 0))}) e ${pagarAtrasado.length} pagamentos (${fmtMoeda2(pagarAtrasado.reduce((s, d) => s + Number(d.valor || 0), 0))})\n`;
+  receberAtrasado.forEach((r) => { t += `    - a receber: ${r.cliente_id ? nomeCliente(r.cliente_id) : r.descricao || r.categoria} ${fmtMoeda2(r.valor)} venc. ${fmtD(r.data)}\n`; });
+  t += '\n';
+
+  t += `## CLIENTES (todos, desde o início)\n`;
+  State.clientesAtivos.forEach((c) => {
+    const recebido = State.receitas.filter((r) => r.cliente_id === c.id && r.status === 'ativa' && r.recebido).reduce((s, r) => s + Number(r.valor || 0), 0);
+    const produto = State.produtos.find((p) => p.id === c.produto_id);
+    t += `- ${c.empresa} | ${c.status} | desde ${fmtD(c.data_fechamento)}${c.data_encerramento ? ' até ' + fmtD(c.data_encerramento) : ''} | ${fmtMoeda2(c.ticket_mensal)}/${c.frequencia || 'mês'}${produto ? ' | ' + produto.nome : ''} | origem ${ORIGEM_LBL[c.origem] || c.origem || '-'}${c.quem_indicou ? ' (' + c.quem_indicou + ')' : ''} | já recebido ${fmtMoeda2(recebido)}${c.motivo_cancelamento ? ' | cancelou: ' + c.motivo_cancelamento : ''}\n`;
+  });
+  t += '\n';
+
+  t += `## PROSPECTS E HISTÓRICO DE ATENDIMENTOS\n`;
+  [...State.prospects].sort((a, b) => (a.data_visita || '').localeCompare(b.data_visita || '')).forEach((p) => {
+    t += `- ${p.empresa} | ${STATUS_LBL[p.status] || p.status}${p.nicho ? ' | ' + p.nicho : ''} | ticket ${fmtMoeda2(p.ticket)} | 1º contato ${fmtD(p.data_visita)}${p.proximo ? ' | próximo: ' + p.proximo : ''}${p.deadline ? ' até ' + fmtD(p.deadline) : ''}${p.motivo_perda ? ' | perdido: ' + p.motivo_perda : ''}\n`;
+    [...atendimentosDoProspect(p.id)].reverse().forEach((a) => { t += `    · ${fmtD(a.data)} [${STATUS_LBL[a.status] || a.status}] ${a.obs || ''}\n`; });
+  });
+  t += '\n';
+
+  if (State.metasFinanceiras.length) {
+    t += `## METAS DE LUCRO DEFINIDAS\n`;
+    [...State.metasFinanceiras].sort((a, b) => a.mes.localeCompare(b.mes)).forEach((m) => { t += `- ${nomeMesShort(m.mes)}: lucro ${fmtMoeda2(m.meta_lucro)} | receita necessária ${fmtMoeda2(m.meta_receita)}\n`; });
+    t += '\n';
+  }
+
+  t += `---\nPEDIDO: Você é um consultor de gestão de pequenas empresas de serviço. Com base em TODOS os dados acima, faça uma análise geral da saúde da empresa:\n`;
+  t += `1. Saúde financeira: evolução de receita, despesas, lucro e margem mês a mês; despesas que mais pesam e onde cortar; dependência de poucos clientes; caixa e contas em atraso.\n`;
+  t += `2. Comercial: volume e ritmo de prospecção, taxa de conversão, motivos de perda, origem dos clientes (indicação x prospecção), segmentos que mais convertem.\n`;
+  t += `3. Retenção: churn, motivos de cancelamento, receita recorrente e previsibilidade.\n`;
+  t += `4. O que está indo bem e deve ser mantido; o que precisa melhorar; riscos.\n`;
+  t += `5. Um plano de ação priorizado para os próximos 30 e 90 dias, com metas numéricas.\n`;
+  return t;
+}
+
+async function rlCopiarResumoIA() {
+  const t = gerarTextoDadosIA();
   try {
     await navigator.clipboard.writeText(t);
-    alert('Resumo copiado! Cole no Claude ou ChatGPT pra pedir uma análise.');
+    alert('Dados completos copiados! Cole no Claude ou ChatGPT pra pedir a análise.');
   } catch (e) {
-    alert('Não consegui copiar automaticamente — veja o console.');
-    console.log(t);
+    // Sem permissão de área de transferência: baixa como arquivo de texto.
+    const blob = new Blob([t], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `controla-dados-para-ia-${hj()}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    alert('Não consegui copiar automaticamente, então baixei um arquivo .txt com os dados — é só abrir e colar na IA.');
   }
 }
