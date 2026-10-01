@@ -7,13 +7,31 @@ let cmClienteEditId = null; // cliente ativo sendo editado
 let cmEncerrarId = null; // cliente ativo a encerrar
 let cmModoAtendimento = false; // modal aberto pra registrar um novo atendimento num prospect existente
 
-const STATUS_COR = { visita: '#4DB8F2', conversa: '#F5A623', proposta: '#9B7BF0', fechado: '#3DD68C', descartado: '#FF6B81' };
-const STATUS_LBL = { visita: 'Visita', conversa: 'Conversa/Reunião', proposta: 'Proposta enviada', fechado: 'Fechado', descartado: 'Descartado' };
-const STATUS_CLS = { visita: 'badge-blue', conversa: 'badge-amber', proposta: 'badge-purple', fechado: 'badge-green', descartado: 'badge-red' };
+const STATUS_COR = { indicado: '#A9B8CF', visita: '#4DB8F2', conversa: '#F5A623', proposta: '#9B7BF0', fechado: '#3DD68C', descartado: '#FF6B81' };
+const STATUS_LBL = { indicado: 'A contatar', visita: 'Visita', conversa: 'Conversa/Reunião', proposta: 'Proposta enviada', fechado: 'Fechado', descartado: 'Descartado' };
+const STATUS_CLS = { indicado: 'badge-gray', visita: 'badge-blue', conversa: 'badge-amber', proposta: 'badge-purple', fechado: 'badge-green', descartado: 'badge-red' };
 const ORIGEM_LBL = { indicacao: 'Indicação', prospeccao: 'Prospecção', inbound: 'Inbound', outro: 'Outro' };
 
+// Indicações ainda não contatadas ficam guardadas como prospect com status "indicado",
+// mas não contam como prospect (funil, pipeline, iniciados) até o 1º contato.
+const PREFIXO_INDICACAO = 'Indicação de ';
+
+function prospectsAtendidos() {
+  return State.prospects.filter((p) => p.status !== 'indicado');
+}
+
+function indicacoesAContatar() {
+  return State.prospects.filter((p) => p.status === 'indicado');
+}
+
 function prospectsPipeline() {
-  return State.prospects.filter((p) => p.status !== 'fechado' && p.status !== 'descartado');
+  return prospectsAtendidos().filter((p) => p.status !== 'fechado' && p.status !== 'descartado');
+}
+
+// Quem indicou esse prospect (gravado no 1º registro do histórico), ou null.
+function quemIndicouProspect(prospectId) {
+  const origem = atendimentosDoProspect(prospectId).find((a) => a.status === 'indicado' && (a.obs || '').startsWith(PREFIXO_INDICACAO));
+  return origem ? origem.obs.slice(PREFIXO_INDICACAO.length) : null;
 }
 
 // Histórico de atendimentos do prospect, do mais recente pro mais antigo.
@@ -200,7 +218,7 @@ function renderCanceladosLista() {
 // ===================== PROSPECTS =====================
 function renderFiltrosProspect() {
   const fs = document.getElementById('cm-fs');
-  const statusOpts = [['todos', 'Todos'], ['visita', 'Visita'], ['conversa', 'Conversa/Reunião'], ['proposta', 'Proposta'], ['fechado', 'Fechado'], ['descartado', 'Descartado']];
+  const statusOpts = [['todos', 'Todos'], ['indicado', `A contatar (${indicacoesAContatar().length})`], ['visita', 'Visita'], ['conversa', 'Conversa/Reunião'], ['proposta', 'Proposta'], ['fechado', 'Fechado'], ['descartado', 'Descartado']];
   fs.innerHTML = statusOpts.map(([v, l]) => `<span class="pill ${cmFiltroStatus === v ? 'on' : ''}" onclick="cmSetStatus('${v}')">${l}</span>`).join('');
 
   const fd = document.getElementById('cm-fd');
@@ -258,7 +276,7 @@ function renderProspectsLista() {
           <div class="ic-top">
             <div class="ic-nome">${fechou ? '<span style="color:var(--positivo);">✓</span> ' : ''}${p.empresa}</div>
             <div class="ic-acts">
-              <button class="btn btn-xs btn-primary" onclick="abrirModalProspect('${p.id}', true)">+ atendimento</button>
+              <button class="btn btn-xs btn-primary" onclick="abrirModalProspect('${p.id}', true)">${p.status === 'indicado' ? 'registrar 1º contato' : '+ atendimento'}</button>
               <button class="btn btn-xs" onclick="abrirModalProspect('${p.id}')">editar</button>
               <button class="btn btn-xs btn-danger" onclick="excluirProspect('${p.id}')">×</button>
             </div>
@@ -308,6 +326,7 @@ async function excluirAtendimentoProspect(id) {
 function abrirModalProspect(id, modoAtendimento) {
   cmEditId = id || null;
   cmModoAtendimento = !!(id && modoAtendimento);
+  document.getElementById('pr-indicacoes').innerHTML = '';
   document.getElementById('pr-tit').textContent = cmModoAtendimento ? 'Novo atendimento' : (id ? 'Editar prospect' : 'Novo prospect');
   document.getElementById('pr-data-lbl').textContent = cmModoAtendimento ? 'Data do atendimento' : (id ? 'Data do 1º contato' : 'Data do atendimento');
   document.getElementById('pr-perda-req').classList.remove('show');
@@ -339,6 +358,13 @@ function abrirModalProspect(id, modoAtendimento) {
       document.getElementById('pr-obs').value = '';
       document.getElementById('pr-proximo').value = '';
       document.getElementById('pr-deadline').value = '';
+      // 1º contato com uma indicação: já sai do "a contatar"
+      if (p.status === 'indicado') document.getElementById('pr-status').value = 'visita';
+    }
+    const indicou = quemIndicouProspect(id);
+    if (indicou) {
+      document.getElementById('pr-fc-origem').value = 'indicacao';
+      document.getElementById('pr-fc-indicou').value = indicou;
     }
   } else {
     ['pr-empresa', 'pr-contato', 'pr-whatsapp', 'pr-obs', 'pr-proximo', 'pr-deadline', 'pr-motivo', 'pr-fc-indicou'].forEach((i) => document.getElementById(i).value = '');
@@ -353,6 +379,48 @@ function abrirModalProspect(id, modoAtendimento) {
   cmToggleIndicouProspect();
   cmStatusChange();
   abrirOv('ov-prospect');
+}
+
+// ===================== INDICAÇÕES =====================
+function cmAdicionarIndicacao() {
+  const wrap = document.getElementById('pr-indicacoes');
+  const row = document.createElement('div');
+  row.className = 'ind-row';
+  row.innerHTML = `
+    <input type="text" class="ind-nome" placeholder="Empresa / nome *">
+    <input type="text" class="ind-contato" placeholder="Contato">
+    <input type="text" class="ind-whatsapp" placeholder="WhatsApp">
+    <button class="btn btn-xs btn-danger" type="button" onclick="this.parentElement.remove()">×</button>`;
+  wrap.appendChild(row);
+  row.querySelector('.ind-nome').focus();
+}
+
+function cmLerIndicacoes() {
+  return [...document.querySelectorAll('#pr-indicacoes .ind-row')]
+    .map((r) => ({
+      empresa: r.querySelector('.ind-nome').value.trim(),
+      contato: r.querySelector('.ind-contato').value.trim(),
+      whatsapp: r.querySelector('.ind-whatsapp').value.trim(),
+    }))
+    .filter((i) => i.empresa);
+}
+
+// Cria cada indicação como prospect "a contatar", já com quem indicou no histórico.
+async function salvarIndicacoes(empresaQueIndicou, contatoQueIndicou, data) {
+  const indicacoes = cmLerIndicacoes();
+  if (!indicacoes.length) return null;
+  const quem = empresaQueIndicou + (contatoQueIndicou ? ` (${contatoQueIndicou})` : '');
+  const obs = PREFIXO_INDICACAO + quem;
+  const r = await db.from('prospects').insert(indicacoes.map((i) => ({
+    empresa: i.empresa, contato: i.contato, whatsapp: i.whatsapp,
+    data_visita: data, status: 'indicado', nicho: '', ticket: 1000,
+    obs, proximo: 'Ligar',
+  }))).select();
+  if (r.error) return r.error.message;
+  const rh = await db.from('prospect_atendimentos').insert((r.data || []).map((p) => ({
+    prospect_id: p.id, data, status: 'indicado', obs, proximo: 'Ligar',
+  })));
+  return rh.error ? rh.error.message : null;
 }
 
 function cmStatusChange() {
@@ -384,8 +452,9 @@ async function salvarProspect() {
   const prospectAtual = cmEditId ? State.prospects.find((x) => x.id === cmEditId) : null;
   const payload = {
     empresa,
-    // No modo atendimento a data digitada é a do novo contato; a do 1º contato não muda.
-    data_visita: cmModoAtendimento ? prospectAtual.data_visita : dataInformada,
+    // No modo atendimento a data digitada é a do novo contato; a do 1º contato não muda —
+    // exceto quando é uma indicação sendo contatada pela 1ª vez: aí ela vira a data do 1º contato.
+    data_visita: cmModoAtendimento && prospectAtual.status !== 'indicado' ? prospectAtual.data_visita : dataInformada,
     nicho: document.getElementById('pr-nicho').value,
     status,
     contato,
@@ -413,6 +482,9 @@ async function salvarProspect() {
     }]);
     if (rHist.error) alert('O prospect foi salvo, mas o atendimento não entrou no histórico: ' + rHist.error.message);
   }
+
+  const erroIndicacoes = await salvarIndicacoes(empresa, contato, dataInformada);
+  if (erroIndicacoes) alert('O atendimento foi salvo, mas as indicações não: ' + erroIndicacoes);
 
   if (status === 'fechado' && prospectId) {
     const jaTemCliente = State.clientesAtivos.some((c) => c.prospect_id === prospectId);

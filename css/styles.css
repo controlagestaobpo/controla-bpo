@@ -166,6 +166,9 @@ html,body{background:var(--marinho);color:var(--branco);font-family:'Montserrat'
 .ic-badges{display:flex;gap:4px;flex-wrap:wrap;margin-top:4px;}
 .ic-ct{font-size:10px;color:var(--cinza-claro);margin-top:4px;}
 .ic-obs{margin-top:5px;font-size:12px;color:var(--cinza-claro);line-height:1.5;}
+.ind-row{display:grid;grid-template-columns:1.4fr 1fr 1fr auto;gap:6px;align-items:center;margin-bottom:6px;}
+.ind-row input{width:100%;background:rgba(255,255,255,0.05);border:1.5px solid var(--border-forte);border-radius:8px;padding:9px 10px;color:var(--branco);font-size:14px;font-family:inherit;outline:none;min-width:0;}
+@media (max-width:600px){.ind-row{grid-template-columns:1fr 1fr;}.ind-row .ind-nome{grid-column:1 / -1;}}
 .ic-hist{margin-top:7px;font-size:11px;color:var(--cinza-claro);}
 .ic-hist summary{cursor:pointer;font-weight:600;color:var(--azul);}
 .ic-hist-item{margin-top:6px;padding:6px 9px;border-left:2px solid var(--border-forte);}

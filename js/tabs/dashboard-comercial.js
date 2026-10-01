@@ -1,7 +1,7 @@
 let dcCharts = {};
 
 function calcularFunilConversao() {
-  const todos = State.prospects;
+  const todos = prospectsAtendidos();
   const nC = todos.filter((p) => p.status === 'conversa').length;
   const nP = todos.filter((p) => p.status === 'proposta').length;
   const nF = todos.filter((p) => p.status === 'fechado').length;
@@ -44,7 +44,7 @@ function gerarInsightComercial() {
 }
 
 function calcularPipelineDoMes(mes) {
-  const iniciados = State.prospects.filter((p) => (p.data_visita || '').slice(0, 7) === mes);
+  const iniciados = prospectsAtendidos().filter((p) => (p.data_visita || '').slice(0, 7) === mes);
   const ganhos = State.clientesAtivos.filter((c) => (c.data_fechamento || '').slice(0, 7) === mes);
   const perdidos = State.prospects.filter((p) => p.status === 'descartado' && (p.data_visita || '').slice(0, 7) === mes);
   const pipeline = prospectsPipeline();
@@ -100,7 +100,7 @@ function renderDashboardComercial() {
       <div class="section-title">Resumo comercial</div>
       <div class="card-grid-2" style="margin-bottom:14px;">
         <div class="stat-card"><div class="stat-lbl">Clientes ativos</div><div class="stat-val" style="color:var(--positivo)">${clientesAtivos.length}</div><div class="stat-sub">${metaClientes === null ? 'defina uma meta em Metas' : 'meta: ' + metaClientes + ' (p/ bater a meta de lucro)'}</div></div>
-        <div class="stat-card"><div class="stat-lbl">Prospects</div><div class="stat-val" style="color:var(--blue)">${pipeline.length}</div><div class="stat-sub">em funil</div></div>
+        <div class="stat-card"><div class="stat-lbl">Prospects</div><div class="stat-val" style="color:var(--blue)">${pipeline.length}</div><div class="stat-sub">em funil${indicacoesAContatar().length ? ` · ${indicacoesAContatar().length} a contatar` : ''}</div></div>
         <div class="stat-card"><div class="stat-lbl">Taxa conversão</div><div class="stat-val">${taxaConversao}%</div></div>
         <div class="stat-card"><div class="stat-lbl">Valor em funil</div><div class="stat-val">${fmtMoeda(valorFunil)}</div></div>
       </div>

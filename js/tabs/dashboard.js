@@ -55,7 +55,7 @@ function fnBarChartOrdem(canvas, itens, cores, sufixo, printMode) {
 }
 
 function calcularFunil() {
-  const todos = State.prospects;
+  const todos = prospectsAtendidos();
   const nC = todos.filter((p) => p.status === 'conversa').length;
   const nP = todos.filter((p) => p.status === 'proposta').length;
   const nF = todos.filter((p) => p.status === 'fechado').length;
@@ -69,7 +69,7 @@ function calcularFunil() {
 
 function calcularTopSegmentos() {
   const porNicho = {};
-  State.prospects.forEach((p) => {
+  prospectsAtendidos().forEach((p) => {
     if (!p.nicho) return;
     if (!porNicho[p.nicho]) porNicho[p.nicho] = { v: 0, f: 0 };
     porNicho[p.nicho].v += 1;
