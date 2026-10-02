@@ -254,5 +254,12 @@ table.tbl tr:hover td{background:rgba(77,184,242,0.06);}
 .dash-acoes .btn{width:auto;}
 .stat-card{min-width:0;}
 .stat-val{overflow-wrap:break-word;}
-.ranking-row{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);}
-.ranking-row:last-child{border-bottom:none;}
+/* Quem mais indica */
+.ind-bloco{padding:10px 0;border-bottom:1px solid var(--border);}
+.ind-bloco:last-child{border-bottom:none;padding-bottom:0;}
+.ind-nome{font-size:14px;font-weight:800;color:var(--branco);margin-bottom:8px;}
+.ind-stats{display:grid;grid-template-columns:repeat(4,minmax(74px,max-content));gap:8px;margin-bottom:8px;}
+.ind-stat{background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:10px;padding:6px 10px;text-align:center;}
+.ind-stat b{display:block;font-size:18px;font-weight:800;line-height:1.1;}
+.ind-stat span{white-space:nowrap;font-size:10px;color:var(--cinza-claro);text-transform:uppercase;letter-spacing:.4px;}
+.ind-chips{display:flex;flex-wrap:wrap;gap:6px;}

@@ -41,19 +41,29 @@ function prospectsPipeline() {
 // ===== Quem mais indica =====
 const chaveNome = (n) => (n || '').trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
 
-// Agrupa todos os prospects (e clientes) por quem indicou: quantos indicou e quantos fecharam.
+// Agrupa todas as indicações por quem indicou: quantas indicou, quantas fecharam,
+// quantas ainda estão em aberto e quantas não fecharam (descartadas).
+function situacaoIndicado(p) {
+  if (!p || p.status === 'fechado') return 'fechou';
+  if (p.status === 'descartado') return 'perdido';
+  return 'aberto';
+}
+
 function rankingIndicadores() {
   const grupos = {};
-  const add = (quem, empresa, fechou) => {
-    const k = chaveNome(quem);
+  const add = (quem, empresa, situacao) => {
+    const nome = nomeCadastrado(quem);
+    const k = chaveNome(nome);
     if (!k) return;
-    if (!grupos[k]) grupos[k] = { nome: quem.trim(), indicados: [], fechados: 0 };
-    if (grupos[k].indicados.some((e) => chaveNome(e) === chaveNome(empresa))) return;
-    grupos[k].indicados.push(empresa);
-    if (fechou) grupos[k].fechados += 1;
+    if (!grupos[k]) grupos[k] = { nome, indicados: [], fechados: 0, abertos: 0, perdidos: 0 };
+    if (grupos[k].indicados.some((e) => chaveNome(e.empresa) === chaveNome(empresa))) return;
+    grupos[k].indicados.push({ empresa, situacao });
+    if (situacao === 'fechou') grupos[k].fechados += 1;
+    else if (situacao === 'perdido') grupos[k].perdidos += 1;
+    else grupos[k].abertos += 1;
   };
-  State.prospects.forEach((p) => add(p.quem_indicou, p.empresa, p.status === 'fechado'));
-  State.clientesAtivos.forEach((c) => add(c.quem_indicou, c.empresa, true));
+  State.prospects.forEach((p) => add(p.quem_indicou, p.empresa, situacaoIndicado(p)));
+  State.clientesAtivos.forEach((c) => add(c.quem_indicou, c.empresa, 'fechou'));
   return Object.values(grupos).sort((a, b) => b.indicados.length - a.indicados.length || b.fechados - a.fechados);
 }
 
@@ -61,8 +71,12 @@ function rankingIndicadores() {
 function nomeCadastrado(digitado) {
   const nome = (digitado || '').trim();
   if (!nome) return null;
-  const conhecido = [...State.clientesAtivos.map((c) => c.empresa), ...State.prospects.map((p) => p.empresa)].find((n) => chaveNome(n) === chaveNome(nome));
-  return conhecido || nome;
+  const cadastrados = [...new Set([...State.clientesAtivos.map((c) => c.empresa), ...State.prospects.map((p) => p.empresa)].filter(Boolean))];
+  const exato = cadastrados.find((n) => chaveNome(n) === chaveNome(nome));
+  if (exato) return exato;
+  // Nome incompleto ("Andreya" -> "Andreya Pessin"), quando só um cadastro começa assim.
+  const comecaCom = cadastrados.filter((n) => (chaveNome(n) + ' ').startsWith(chaveNome(nome) + ' '));
+  return comecaCom.length === 1 ? comecaCom[0] : nome;
 }
 
 function qtdIndicacoesDe(nome) {
@@ -189,7 +203,7 @@ async function salvarCliente() {
     frequencia: document.getElementById('cl-frequencia').value,
     produto_id: document.getElementById('cl-produto').value || null,
     origem: document.getElementById('cl-origem').value || null,
-    quem_indicou: document.getElementById('cl-origem').value === 'indicacao' ? document.getElementById('cl-indicou').value.trim() : null,
+    quem_indicou: document.getElementById('cl-origem').value === 'indicacao' ? nomeCadastrado(document.getElementById('cl-indicou').value) : null,
     obs: document.getElementById('cl-obs').value.trim(),
   };
   let error;
@@ -599,7 +613,7 @@ async function salvarProspect() {
         frequencia,
         produto_id: document.getElementById('pr-fc-produto').value || null,
         origem,
-        quem_indicou: origem === 'indicacao' ? document.getElementById('pr-fc-indicou').value.trim() : null,
+        quem_indicou: origem === 'indicacao' ? nomeCadastrado(document.getElementById('pr-fc-indicou').value) : null,
       }]).select().single();
       const novoClienteId = rCliente.data && rCliente.data.id;
 

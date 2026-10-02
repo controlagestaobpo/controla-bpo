@@ -286,7 +286,7 @@ function gerarTextoDadosIA() {
   t += `- Clientes ativos: ${clientesAtivos.length} | Receita recorrente (MRR): ${fmtMoeda2(mrr)}/mês | Ticket médio: ${fmtMoeda2(clientesAtivos.length ? mrr / clientesAtivos.length : 0)}\n`;
   t += `- Prospects em negociação: ${pipeline.length} (valor ${fmtMoeda2(pipeline.reduce((s, p) => s + Number(p.ticket || 0), 0))}/mês) | Indicações ainda não contatadas: ${indicacoesAContatar().length}\n`;
   t += `- Pausados pra retomar depois: ${prospectsParaRetomar().map((p) => `${p.empresa} (em ${fmtD(p.retorno)})`).join(', ') || 'nenhum'}\n`;
-  t += `- Quem mais indica: ${rankingIndicadores().map((r) => `${r.nome}: ${r.indicados.length} indicações, ${r.fechados} fechadas`).join(' | ') || 'nenhuma indicação registrada'}\n`;
+  t += `- Quem mais indica: ${rankingIndicadores().map((r) => `${r.nome}: indicou ${r.indicados.length} (${r.fechados} fechou, ${r.abertos} em aberto, ${r.perdidos} não fechou — ${r.indicados.map((i) => i.empresa).join(', ')})`).join(' | ') || 'nenhuma indicação registrada'}\n`;
   t += `- Clientes já cancelados (desde o início): ${State.clientesAtivos.filter((c) => c.status === 'encerrado').length}\n\n`;
 
   t += `## MÊS A MÊS (${nomeMesShort(meses[0])} a ${nomeMesShort(mesHoje)}${mesHoje === meses[meses.length - 1] ? ', mês atual parcial' : ''})\n`;
