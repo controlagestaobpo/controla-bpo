@@ -109,7 +109,7 @@ function renderVisaoAnual() {
         ${avCard('Conversão', conversao + '%', `${coorte.filter((p) => p.status === 'fechado').length} de ${coorte.length} iniciados viraram cliente`, '', `irPara('dashboard-comercial',{mes:'${ultimoMes}'})`)}
         ${avCard('Cancelamentos', soma('encerrados'), 'contratos encerrados no período', soma('encerrados') ? 'var(--negativo)' : '', `irPara('comercial',{ancora:'cm-sec-churn'})`)}
         ${avCard('Clientes ativos', ultimo ? ultimo.clientesAtivos : 0, `no fim de ${nomeMesShort(ultimoMes)}`, 'var(--positivo)', `irPara('comercial',{ancora:'cm-sec-clientes'})`)}
-        ${avCard('Receita recorrente', fmtMoeda(ultimo ? ultimo.mrr : 0) + '/mês', `contratos ativos no fim de ${nomeMesShort(ultimoMes)}`, '', `irPara('comercial',{ancora:'cm-sec-clientes'})`)}
+        ${avCard('Receita recorrente', fmtMoeda(ultimo ? ultimo.mrr : 0), `por mês · contratos ativos no fim de ${nomeMesShort(ultimoMes)}`, '', `irPara('comercial',{ancora:'cm-sec-clientes'})`)}
       </div>
       <div class="panel"><div class="tbl-wrap"><table class="tbl av-tbl">
         <tr><th>Mês</th><th>Iniciados</th><th>Atend.</th><th>Ganhos</th><th>Perdidos</th><th>Cancel.</th><th>Ativos</th><th>MRR</th></tr>

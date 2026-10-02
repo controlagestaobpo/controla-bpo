@@ -226,7 +226,7 @@ function irPara(tab, opts) {
   opts = opts || {};
   if (opts.mes) State.periodo = opts.mes;
   if (tab === 'financeiro' && typeof fnFiltroTipo !== 'undefined') fnFiltroTipo = opts.tipo || 'todos';
-  if (tab === 'comercial' && typeof cmFiltroStatus !== 'undefined') { cmFiltroStatus = opts.status || 'todos'; cmFiltroPeriodo = 'todos'; cmDataEspecifica = ''; }
+  if (tab === 'comercial' && typeof cmFiltroStatus !== 'undefined') { cmFiltroStatus = opts.status || 'aberto'; cmFiltroPeriodo = 'todos'; cmDataEspecifica = ''; }
   trocarTab(tab, { manterPeriodo: true });
   if (opts.ancora) {
     const alvo = document.getElementById(opts.ancora);

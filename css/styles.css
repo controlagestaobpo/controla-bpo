@@ -249,3 +249,8 @@ table.tbl tr:hover td{background:rgba(77,184,242,0.06);}
 .av-tbl td{white-space:nowrap;}
 .av-linha{cursor:pointer;}
 .av-linha:hover td{background:rgba(77,184,242,0.08);}
+
+.dash-acoes{display:flex;justify-content:flex-end;margin:0 16px 12px;}
+.dash-acoes .btn{width:auto;}
+.stat-card{min-width:0;}
+.stat-val{overflow-wrap:break-word;}

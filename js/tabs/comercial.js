@@ -1,5 +1,5 @@
 // ===== estado local de filtros do funil de prospects =====
-let cmFiltroStatus = 'todos';
+let cmFiltroStatus = 'aberto'; // padrão: só o que ainda está em negociação
 let cmFiltroPeriodo = 'todos';
 let cmDataEspecifica = '';
 let cmEditId = null; // prospect sendo editado
@@ -30,6 +30,8 @@ function prospectsPipeline() {
 
 // Quem indicou esse prospect (gravado no 1º registro do histórico), ou null.
 function quemIndicouProspect(prospectId) {
+  const p = State.prospects.find((x) => x.id === prospectId);
+  if (p && p.quem_indicou) return p.quem_indicou;
   const origem = atendimentosDoProspect(prospectId).find((a) => a.status === 'indicado' && (a.obs || '').startsWith(PREFIXO_INDICACAO));
   return origem ? origem.obs.slice(PREFIXO_INDICACAO.length) : null;
 }
@@ -249,7 +251,7 @@ function renderCanceladosLista() {
 // ===================== PROSPECTS =====================
 function renderFiltrosProspect() {
   const fs = document.getElementById('cm-fs');
-  const statusOpts = [['todos', 'Todos'], ['indicado', `A contatar (${indicacoesAContatar().length})`], ['visita', 'Visita'], ['conversa', 'Conversa/Reunião'], ['proposta', 'Proposta'], ['fechado', 'Fechado'], ['descartado', 'Descartado']];
+  const statusOpts = [['aberto', 'Em aberto'], ['todos', 'Todos'], ['indicado', `A contatar (${indicacoesAContatar().length})`], ['visita', 'Visita'], ['conversa', 'Conversa/Reunião'], ['proposta', 'Proposta'], ['fechado', 'Fechado'], ['descartado', 'Descartado']];
   fs.innerHTML = statusOpts.map(([v, l]) => `<span class="pill ${cmFiltroStatus === v ? 'on' : ''}" onclick="cmSetStatus('${v}')">${l}</span>`).join('');
 
   const fd = document.getElementById('cm-fd');
@@ -265,7 +267,9 @@ function cmLimparData() { cmDataEspecifica = ''; cmFiltroPeriodo = 'todos'; rend
 
 function cmAplicarFiltros(lista) {
   let l = [...lista];
-  if (cmFiltroStatus !== 'todos') l = l.filter((p) => p.status === cmFiltroStatus);
+  // "Em aberto": descartados e fechados não estão mais em negociação.
+  if (cmFiltroStatus === 'aberto') l = l.filter((p) => p.status !== 'fechado' && p.status !== 'descartado');
+  else if (cmFiltroStatus !== 'todos') l = l.filter((p) => p.status === cmFiltroStatus);
   if (cmFiltroPeriodo === 'esp' && cmDataEspecifica) l = l.filter((p) => ultimoContato(p) === cmDataEspecifica);
   else if (cmFiltroPeriodo === 'hoje') l = l.filter((p) => ultimoContato(p) === hj());
   else if (cmFiltroPeriodo === 'ontem') l = l.filter((p) => ultimoContato(p) === ont());
@@ -315,6 +319,7 @@ function renderProspectsLista() {
           <div class="ic-badges">
             <span class="badge ${STATUS_CLS[p.status] || 'badge-blue'}" style="${fechou ? 'font-weight:800;' : ''}">${fechou ? '✓ Fechou' : STATUS_LBL[p.status] || p.status}</span>
             ${p.nicho ? `<span class="badge badge-gray">${p.nicho}</span>` : ''}
+            ${p.quem_indicou ? `<span class="badge badge-purple">indicado por ${p.quem_indicou}</span>` : ''}
             ${deadlineBadge}
             ${p.motivo_perda ? `<span class="badge badge-red">${p.motivo_perda}</span>` : ''}
           </div>
@@ -381,8 +386,8 @@ function abrirModalProspect(id, modoAtendimento) {
     document.getElementById('pr-motivo').value = p.motivo_perda || '';
     document.getElementById('pr-fc-ticket').value = p.ticket || '';
     document.getElementById('pr-fc-frequencia').value = 'mensal';
-    document.getElementById('pr-fc-origem').value = 'prospeccao';
-    document.getElementById('pr-fc-indicou').value = '';
+    document.getElementById('pr-fc-origem').value = p.origem || 'prospeccao';
+    document.getElementById('pr-fc-indicou').value = p.quem_indicou || '';
     if (cmModoAtendimento) {
       // Mantém os dados da empresa; o que é do atendimento começa em branco.
       document.getElementById('pr-data').value = hj();
@@ -445,7 +450,7 @@ async function salvarIndicacoes(empresaQueIndicou, contatoQueIndicou, data) {
   const r = await db.from('prospects').insert(indicacoes.map((i) => ({
     empresa: i.empresa, contato: i.contato, whatsapp: i.whatsapp,
     data_visita: data, status: 'indicado', nicho: '', ticket: 1000,
-    obs, proximo: 'Ligar',
+    obs, proximo: 'Ligar', origem: 'indicacao', quem_indicou: quem,
   }))).select();
   if (r.error) return r.error.message;
   const rh = await db.from('prospect_atendimentos').insert((r.data || []).map((p) => ({
@@ -495,6 +500,8 @@ async function salvarProspect() {
     proximo: document.getElementById('pr-proximo').value,
     deadline: document.getElementById('pr-deadline').value || null,
     motivo_perda: status === 'descartado' ? document.getElementById('pr-motivo').value : null,
+    origem: document.getElementById('pr-fc-origem').value || null,
+    quem_indicou: document.getElementById('pr-fc-origem').value === 'indicacao' ? document.getElementById('pr-fc-indicou').value.trim() || null : null,
   };
   let error, prospectId = cmEditId;
   if (cmEditId) {
@@ -580,7 +587,33 @@ async function salvarProspect() {
   State.prospects = r.data || [];
   State.prospectAtendimentos = rh.data || [];
   cmModoAtendimento = false;
-  renderComercial();
+  // Pode ter sido aberto pelo Dashboard: atualiza a tela que estiver aberta.
+  (RENDERERS[tabAtual] || renderComercial)();
+}
+
+// ===================== NOVO ATENDIMENTO PELO DASHBOARD =====================
+function abrirEscolherProspect() {
+  document.getElementById('ep-busca').value = '';
+  renderEscolherProspect();
+  abrirOv('ov-escolher-prospect');
+  setTimeout(() => document.getElementById('ep-busca').focus(), 50);
+}
+
+function renderEscolherProspect() {
+  const q = document.getElementById('ep-busca').value.trim().toLowerCase();
+  const ordem = { indicado: 0, visita: 1, conversa: 1, proposta: 1, fechado: 2, descartado: 3 };
+  const lista = State.prospects
+    .filter((p) => !q || (p.empresa || '').toLowerCase().includes(q) || (p.contato || '').toLowerCase().includes(q))
+    .sort((a, b) => (ordem[a.status] ?? 1) - (ordem[b.status] ?? 1) || (a.empresa || '').localeCompare(b.empresa || ''));
+  const el = document.getElementById('ep-lista');
+  if (!lista.length) { el.innerHTML = '<div class="empty-state">Nenhum prospect encontrado — use "+ Novo prospect".</div>'; return; }
+  el.innerHTML = lista.map((p) => `<div class="simple-row" style="cursor:pointer;" onclick="fecharOv('ov-escolher-prospect');abrirModalProspect('${p.id}', true)">
+    <div class="simple-row-main">
+      <div class="simple-row-title">${p.empresa}</div>
+      <div class="simple-row-sub">${[p.contato, 'último contato ' + fmtD(ultimoContato(p))].filter(Boolean).join(' · ')}</div>
+    </div>
+    <span class="badge ${STATUS_CLS[p.status] || 'badge-blue'}">${STATUS_LBL[p.status] || p.status}</span>
+  </div>`).join('');
 }
 
 async function excluirProspect(id) {

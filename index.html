@@ -116,6 +116,17 @@
       <div class="fr"><label>Contato (nome)</label><input type="text" id="pr-contato"></div>
       <div class="fr"><label>WhatsApp</label><input type="text" id="pr-whatsapp"></div>
     </div>
+    <div class="fg">
+      <div class="fr"><label>Como chegou até você?</label>
+        <select id="pr-fc-origem" onchange="cmToggleIndicouProspect()">
+          <option value="prospeccao">Prospecção</option>
+          <option value="indicacao">Indicação</option>
+          <option value="inbound">Inbound</option>
+          <option value="outro">Outro</option>
+        </select>
+      </div>
+      <div class="fr" id="row-fc-indicou" style="display:none;"><label>Quem indicou?</label><input type="text" id="pr-fc-indicou" placeholder="Ex: Andreya Pessin"></div>
+    </div>
     <div class="fr"><label>Ticket mensal (R$)</label><input type="number" id="pr-ticket" min="0"></div>
     <div class="fr"><label>O que aconteceu</label><textarea id="pr-obs" placeholder="Dor identificada, como foi a conversa, objeções..."></textarea></div>
     <div class="fr" id="row-perda" style="display:none;">
@@ -137,17 +148,6 @@
         </div>
       </div>
       <div class="fr"><label>Produto / Serviço</label><select id="pr-fc-produto"></select></div>
-      <div class="fg">
-        <div class="fr"><label>Como chegou até você?</label>
-          <select id="pr-fc-origem" onchange="cmToggleIndicouProspect()">
-            <option value="prospeccao">Prospecção</option>
-            <option value="indicacao">Indicação</option>
-            <option value="inbound">Inbound</option>
-            <option value="outro">Outro</option>
-          </select>
-        </div>
-        <div class="fr" id="row-fc-indicou" style="display:none;"><label>Quem indicou?</label><input type="text" id="pr-fc-indicou"></div>
-      </div>
       <div class="badge badge-green" id="pr-fc-ja-cliente" style="display:none;margin-bottom:10px;">Este prospect já virou cliente — edite os dados do contrato em "Clientes ativos".</div>
     </div>
     <div class="sec-div">Próximo passo</div>
@@ -171,6 +171,21 @@
     <div class="mda">
       <button class="btn" onclick="fecharOv('ov-prospect')">Cancelar</button>
       <button class="btn btn-primary" onclick="salvarProspect()">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL ESCOLHER PROSPECT (novo atendimento a partir do Dashboard) -->
+<div class="ov" id="ov-escolher-prospect">
+  <div class="md">
+    <div class="md-handle"></div>
+    <h3>Novo atendimento</h3>
+    <div class="panel-sub">Escolha com quem foi o atendimento, ou cadastre um prospect novo.</div>
+    <input type="text" id="ep-busca" class="search-inp" style="margin:0 0 10px;" placeholder="Buscar empresa ou contato..." oninput="renderEscolherProspect()">
+    <div class="simple-list" id="ep-lista" style="max-height:50vh;overflow-y:auto;"></div>
+    <div class="mda">
+      <button class="btn" onclick="fecharOv('ov-escolher-prospect')">Cancelar</button>
+      <button class="btn btn-primary" onclick="fecharOv('ov-escolher-prospect');abrirModalProspect()">+ Novo prospect</button>
     </div>
   </div>
 </div>

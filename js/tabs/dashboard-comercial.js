@@ -97,11 +97,14 @@ function renderDashboardComercial() {
   const el = document.getElementById('page-dashboard-comercial');
   el.innerHTML = `
     ${htmlSeletorPeriodo()}
+    <div class="dash-acoes">
+      <button class="btn btn-primary" onclick="abrirEscolherProspect()">+ Novo atendimento</button>
+    </div>
     <div class="section">
       <div class="section-title">Situação atual</div>
       <div class="card-grid-2" style="margin-bottom:14px;">
         <div class="stat-card stat-card-link" onclick="irPara('comercial',{ancora:'cm-sec-clientes'})"><div class="stat-lbl">Clientes ativos</div><div class="stat-val" style="color:var(--positivo)">${clientesAtivos.length}</div><div class="stat-sub">${metaClientes === null ? 'defina uma meta em Metas' : 'meta: ' + metaClientes + ' (p/ bater a meta de lucro)'}</div></div>
-        <div class="stat-card stat-card-link" onclick="irPara('comercial')"><div class="stat-lbl">Prospects</div><div class="stat-val" style="color:var(--blue)">${pipeline.length}</div><div class="stat-sub">em funil${indicacoesAContatar().length ? ` · ${indicacoesAContatar().length} a contatar` : ''}</div></div>
+        <div class="stat-card stat-card-link" onclick="irPara('comercial')"><div class="stat-lbl">Prospects</div><div class="stat-val" style="color:var(--blue)">${pipeline.length}</div><div class="stat-sub">em negociação${pipeline.length ? ': ' + pipeline.slice(0, 3).map((p) => p.empresa).join(', ') + (pipeline.length > 3 ? '…' : '') : ''}${indicacoesAContatar().length ? ` · ${indicacoesAContatar().length} a contatar` : ''}</div></div>
         <div class="stat-card stat-card-link" onclick="irPara('anual')"><div class="stat-lbl">Taxa conversão</div><div class="stat-val">${taxaConversao}%</div><div class="stat-sub">desde o início</div></div>
         <div class="stat-card stat-card-link" onclick="irPara('comercial')"><div class="stat-lbl">Valor em funil</div><div class="stat-val">${fmtMoeda(valorFunil)}</div></div>
       </div>
