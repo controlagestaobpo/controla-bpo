@@ -84,11 +84,15 @@ function renderDashboardComercial() {
   const h = hj();
   const acoes = [];
   State.prospects.forEach((p) => {
-    if (p.deadline && p.deadline <= h && p.status !== 'fechado' && p.status !== 'descartado') {
+    if (p.status === 'retomar' && p.retorno && p.retorno <= h) {
+      acoes.push({ texto: `${p.empresa} — retomar contato`, tag: p.retorno < h ? `desde ${fmtD(p.retorno)}` : 'hoje' });
+    } else if (p.deadline && p.deadline <= h && p.status !== 'fechado' && p.status !== 'descartado' && !prospectPausado(p)) {
       const atrasado = p.deadline < h;
       acoes.push({ texto: `${p.empresa} — ${p.proximo || 'próximo passo'}`, tag: atrasado ? `atrasado ${fmtD(p.deadline)}` : 'hoje' });
     }
   });
+  const paraRetomar = prospectsParaRetomar();
+  const ranking = rankingIndicadores();
 
   const funilConv = calcularFunilConversao();
   const indicacoes = State.clientesAtivos.filter((c) => c.origem === 'indicacao');
@@ -104,7 +108,7 @@ function renderDashboardComercial() {
       <div class="section-title">Situação atual</div>
       <div class="card-grid-2" style="margin-bottom:14px;">
         <div class="stat-card stat-card-link" onclick="irPara('comercial',{ancora:'cm-sec-clientes'})"><div class="stat-lbl">Clientes ativos</div><div class="stat-val" style="color:var(--positivo)">${clientesAtivos.length}</div><div class="stat-sub">${metaClientes === null ? 'defina uma meta em Metas' : 'meta: ' + metaClientes + ' (p/ bater a meta de lucro)'}</div></div>
-        <div class="stat-card stat-card-link" onclick="irPara('comercial')"><div class="stat-lbl">Prospects</div><div class="stat-val" style="color:var(--blue)">${pipeline.length}</div><div class="stat-sub">em negociação${pipeline.length ? ': ' + pipeline.slice(0, 3).map((p) => p.empresa).join(', ') + (pipeline.length > 3 ? '…' : '') : ''}${indicacoesAContatar().length ? ` · ${indicacoesAContatar().length} a contatar` : ''}</div></div>
+        <div class="stat-card stat-card-link" onclick="irPara('comercial')"><div class="stat-lbl">Prospects</div><div class="stat-val" style="color:var(--blue)">${pipeline.length}</div><div class="stat-sub">em negociação${pipeline.length ? ': ' + pipeline.slice(0, 3).map((p) => p.empresa).join(', ') + (pipeline.length > 3 ? '…' : '') : ''}${indicacoesAContatar().length ? ` · ${indicacoesAContatar().length} a contatar` : ''}${paraRetomar.length ? ` · ${paraRetomar.length} pra retomar (próx. ${fmtD(paraRetomar[0].retorno)})` : ''}</div></div>
         <div class="stat-card stat-card-link" onclick="irPara('anual')"><div class="stat-lbl">Taxa conversão</div><div class="stat-val">${taxaConversao}%</div><div class="stat-sub">desde o início</div></div>
         <div class="stat-card stat-card-link" onclick="irPara('comercial')"><div class="stat-lbl">Valor em funil</div><div class="stat-val">${fmtMoeda(valorFunil)}</div></div>
       </div>
@@ -168,6 +172,13 @@ function renderDashboardComercial() {
       </div>
       <div class="chart-box panel" id="cm-origem-wrap">
         <div style="position:relative;height:170px;"><canvas id="cm-chart-origem"></canvas></div>
+      </div>
+      <div class="panel" style="margin-top:10px;">
+        <div class="panel-title">Quem mais indica</div>
+        ${ranking.length ? ranking.map((r) => `<div class="ranking-row">
+          <div><div style="font-size:13px;font-weight:700;">${r.nome}</div><div style="font-size:11px;color:var(--cinza-claro);">${r.indicados.join(', ')}</div></div>
+          <div style="text-align:right;white-space:nowrap;"><div style="font-size:15px;font-weight:800;">${r.indicados.length}</div><div style="font-size:10px;color:var(--positivo);">${r.fechados} fechou</div></div>
+        </div>`).join('') : '<div class="empty-state" style="padding:12px;">Quando você cadastrar um prospect com origem "Indicação" e informar quem indicou, o ranking aparece aqui.</div>'}
       </div>
     </div>
 

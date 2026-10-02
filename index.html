@@ -107,6 +107,7 @@
           <option value="visita">Visita</option>
           <option value="conversa">Conversa/Reunião</option>
           <option value="proposta">Proposta enviada</option>
+          <option value="retomar">Retomar depois</option>
           <option value="fechado">Fechado</option>
           <option value="descartado">Descartado</option>
         </select>
@@ -116,19 +117,13 @@
       <div class="fr"><label>Contato (nome)</label><input type="text" id="pr-contato"></div>
       <div class="fr"><label>WhatsApp</label><input type="text" id="pr-whatsapp"></div>
     </div>
-    <div class="fg">
-      <div class="fr"><label>Como chegou até você?</label>
-        <select id="pr-fc-origem" onchange="cmToggleIndicouProspect()">
-          <option value="prospeccao">Prospecção</option>
-          <option value="indicacao">Indicação</option>
-          <option value="inbound">Inbound</option>
-          <option value="outro">Outro</option>
-        </select>
-      </div>
-      <div class="fr" id="row-fc-indicou" style="display:none;"><label>Quem indicou?</label><input type="text" id="pr-fc-indicou" placeholder="Ex: Andreya Pessin"></div>
-    </div>
     <div class="fr"><label>Ticket mensal (R$)</label><input type="number" id="pr-ticket" min="0"></div>
     <div class="fr"><label>O que aconteceu</label><textarea id="pr-obs" placeholder="Dor identificada, como foi a conversa, objeções..."></textarea></div>
+    <div class="fr" id="row-retorno" style="display:none;">
+      <label>Retomar em *</label>
+      <input type="date" id="pr-retorno">
+      <div class="panel-sub" style="margin:4px 0 0;">Até essa data ele não conta como prospect em negociação. Na data, volta pro funil e aparece em "Ações imediatas".</div>
+    </div>
     <div class="fr" id="row-perda" style="display:none;">
       <label>Motivo da perda *</label>
       <select id="pr-motivo"><option value="">Selecione o motivo</option></select>
@@ -164,10 +159,25 @@
       </div>
       <div class="fr"><label>Deadline</label><input type="date" id="pr-deadline"></div>
     </div>
-    <div class="sec-div">Indicações</div>
-    <div class="panel-sub" style="margin-top:-4px;">Esse cliente indicou alguém? Salve aqui pra não perder — entram como "a contatar" e só contam como prospect depois do 1º contato.</div>
-    <div id="pr-indicacoes"></div>
-    <button class="btn btn-sm" type="button" style="margin-bottom:12px;" onclick="cmAdicionarIndicacao()">+ adicionar indicação</button>
+    <div class="sec-div">Origem</div>
+    <div class="fg">
+      <div class="fr"><label>Como chegou até você?</label>
+        <select id="pr-fc-origem" onchange="cmToggleIndicouProspect()">
+          <option value="prospeccao">Prospecção</option>
+          <option value="indicacao">Indicação</option>
+          <option value="inbound">Inbound</option>
+          <option value="outro">Outro</option>
+        </select>
+      </div>
+      <div class="fr" id="row-fc-indicou" style="display:none;"><label>Quem indicou?</label><input type="text" id="pr-fc-indicou" list="lista-indicadores" placeholder="Comece a digitar o nome..." autocomplete="off"></div>
+    </div>
+    <datalist id="lista-indicadores"></datalist>
+    <div id="pr-sec-indicacoes" style="display:none;">
+      <div class="sec-div">Indicou alguém nesse atendimento?</div>
+      <div class="panel-sub" style="margin-top:-4px;">Se ele passou contatos de outras pessoas, salve aqui — entram como "A contatar", já com ele como quem indicou.</div>
+      <div id="pr-indicacoes"></div>
+      <button class="btn btn-sm" type="button" style="margin-bottom:12px;" onclick="cmAdicionarIndicacao()">+ adicionar indicação</button>
+    </div>
     <div class="mda">
       <button class="btn" onclick="fecharOv('ov-prospect')">Cancelar</button>
       <button class="btn btn-primary" onclick="salvarProspect()">Salvar</button>

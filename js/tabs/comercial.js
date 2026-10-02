@@ -7,9 +7,9 @@ let cmClienteEditId = null; // cliente ativo sendo editado
 let cmEncerrarId = null; // cliente ativo a encerrar
 let cmModoAtendimento = false; // modal aberto pra registrar um novo atendimento num prospect existente
 
-const STATUS_COR = { indicado: '#A9B8CF', visita: '#4DB8F2', conversa: '#F5A623', proposta: '#9B7BF0', fechado: '#3DD68C', descartado: '#FF6B81' };
-const STATUS_LBL = { indicado: 'A contatar', visita: 'Visita', conversa: 'Conversa/Reunião', proposta: 'Proposta enviada', fechado: 'Fechado', descartado: 'Descartado' };
-const STATUS_CLS = { indicado: 'badge-gray', visita: 'badge-blue', conversa: 'badge-amber', proposta: 'badge-purple', fechado: 'badge-green', descartado: 'badge-red' };
+const STATUS_COR = { indicado: '#A9B8CF', retomar: '#34D3D3', visita: '#4DB8F2', conversa: '#F5A623', proposta: '#9B7BF0', fechado: '#3DD68C', descartado: '#FF6B81' };
+const STATUS_LBL = { indicado: 'A contatar', retomar: 'Retomar depois', visita: 'Visita', conversa: 'Conversa/Reunião', proposta: 'Proposta enviada', fechado: 'Fechado', descartado: 'Descartado' };
+const STATUS_CLS = { indicado: 'badge-gray', retomar: 'badge-gray', visita: 'badge-blue', conversa: 'badge-amber', proposta: 'badge-purple', fechado: 'badge-green', descartado: 'badge-red' };
 const ORIGEM_LBL = { indicacao: 'Indicação', prospeccao: 'Prospecção', inbound: 'Inbound', outro: 'Outro' };
 
 // Indicações ainda não contatadas ficam guardadas como prospect com status "indicado",
@@ -24,8 +24,50 @@ function indicacoesAContatar() {
   return State.prospects.filter((p) => p.status === 'indicado');
 }
 
+// "Retomar depois": pausado até a data de retorno — não conta como em negociação até lá.
+// Na data (ou depois), volta a contar e aparece em "Ações imediatas".
+function prospectPausado(p) {
+  return p.status === 'retomar' && !!p.retorno && p.retorno > hj();
+}
+
+function prospectsParaRetomar() {
+  return State.prospects.filter(prospectPausado).sort((a, b) => a.retorno.localeCompare(b.retorno));
+}
+
 function prospectsPipeline() {
-  return prospectsAtendidos().filter((p) => p.status !== 'fechado' && p.status !== 'descartado');
+  return prospectsAtendidos().filter((p) => p.status !== 'fechado' && p.status !== 'descartado' && !prospectPausado(p));
+}
+
+// ===== Quem mais indica =====
+const chaveNome = (n) => (n || '').trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+
+// Agrupa todos os prospects (e clientes) por quem indicou: quantos indicou e quantos fecharam.
+function rankingIndicadores() {
+  const grupos = {};
+  const add = (quem, empresa, fechou) => {
+    const k = chaveNome(quem);
+    if (!k) return;
+    if (!grupos[k]) grupos[k] = { nome: quem.trim(), indicados: [], fechados: 0 };
+    if (grupos[k].indicados.some((e) => chaveNome(e) === chaveNome(empresa))) return;
+    grupos[k].indicados.push(empresa);
+    if (fechou) grupos[k].fechados += 1;
+  };
+  State.prospects.forEach((p) => add(p.quem_indicou, p.empresa, p.status === 'fechado'));
+  State.clientesAtivos.forEach((c) => add(c.quem_indicou, c.empresa, true));
+  return Object.values(grupos).sort((a, b) => b.indicados.length - a.indicados.length || b.fechados - a.fechados);
+}
+
+// Usa a grafia do nome já cadastrado (cliente ou prospect), pra não separar "andreya" de "Andreya Pessin".
+function nomeCadastrado(digitado) {
+  const nome = (digitado || '').trim();
+  if (!nome) return null;
+  const conhecido = [...State.clientesAtivos.map((c) => c.empresa), ...State.prospects.map((p) => p.empresa)].find((n) => chaveNome(n) === chaveNome(nome));
+  return conhecido || nome;
+}
+
+function qtdIndicacoesDe(nome) {
+  const g = rankingIndicadores().find((r) => chaveNome(r.nome) === chaveNome(nome));
+  return g ? g.indicados.length : 0;
 }
 
 // Quem indicou esse prospect (gravado no 1º registro do histórico), ou null.
@@ -97,7 +139,7 @@ function renderClientesAtivosLista() {
     return `<div class="simple-row">
       <div class="simple-row-main">
         <div class="simple-row-title">${c.empresa}</div>
-        <div class="simple-row-sub">${fmtD(c.data_fechamento)} · ${c.contato || 'sem contato'} · ${fmtMoeda(c.ticket_mensal)}/mês${produto ? ' · ' + produto.nome : ''}</div>
+        <div class="simple-row-sub">${fmtD(c.data_fechamento)} · ${c.contato || 'sem contato'} · ${fmtMoeda(c.ticket_mensal)}/mês${produto ? ' · ' + produto.nome : ''}${qtdIndicacoesDe(c.empresa) ? ` · <span style="color:var(--purple);">indicou ${qtdIndicacoesDe(c.empresa)}</span>` : ''}</div>
       </div>
       <div class="simple-row-acts">
         <span class="badge badge-green">ativo</span>
@@ -251,7 +293,7 @@ function renderCanceladosLista() {
 // ===================== PROSPECTS =====================
 function renderFiltrosProspect() {
   const fs = document.getElementById('cm-fs');
-  const statusOpts = [['aberto', 'Em aberto'], ['todos', 'Todos'], ['indicado', `A contatar (${indicacoesAContatar().length})`], ['visita', 'Visita'], ['conversa', 'Conversa/Reunião'], ['proposta', 'Proposta'], ['fechado', 'Fechado'], ['descartado', 'Descartado']];
+  const statusOpts = [['aberto', 'Em aberto'], ['todos', 'Todos'], ['indicado', `A contatar (${indicacoesAContatar().length})`], ['retomar', `Retomar depois (${State.prospects.filter((p) => p.status === 'retomar').length})`], ['visita', 'Visita'], ['conversa', 'Conversa/Reunião'], ['proposta', 'Proposta'], ['fechado', 'Fechado'], ['descartado', 'Descartado']];
   fs.innerHTML = statusOpts.map(([v, l]) => `<span class="pill ${cmFiltroStatus === v ? 'on' : ''}" onclick="cmSetStatus('${v}')">${l}</span>`).join('');
 
   const fd = document.getElementById('cm-fd');
@@ -268,7 +310,7 @@ function cmLimparData() { cmDataEspecifica = ''; cmFiltroPeriodo = 'todos'; rend
 function cmAplicarFiltros(lista) {
   let l = [...lista];
   // "Em aberto": descartados e fechados não estão mais em negociação.
-  if (cmFiltroStatus === 'aberto') l = l.filter((p) => p.status !== 'fechado' && p.status !== 'descartado');
+  if (cmFiltroStatus === 'aberto') l = l.filter((p) => p.status !== 'fechado' && p.status !== 'descartado' && !prospectPausado(p));
   else if (cmFiltroStatus !== 'todos') l = l.filter((p) => p.status === cmFiltroStatus);
   if (cmFiltroPeriodo === 'esp' && cmDataEspecifica) l = l.filter((p) => ultimoContato(p) === cmDataEspecifica);
   else if (cmFiltroPeriodo === 'hoje') l = l.filter((p) => ultimoContato(p) === hj());
@@ -319,6 +361,7 @@ function renderProspectsLista() {
           <div class="ic-badges">
             <span class="badge ${STATUS_CLS[p.status] || 'badge-blue'}" style="${fechou ? 'font-weight:800;' : ''}">${fechou ? '✓ Fechou' : STATUS_LBL[p.status] || p.status}</span>
             ${p.nicho ? `<span class="badge badge-gray">${p.nicho}</span>` : ''}
+            ${p.status === 'retomar' && p.retorno ? `<span class="badge ${p.retorno <= h ? 'badge-red' : 'badge-gray'}">${p.retorno <= h ? 'retomar agora' : 'retomar em ' + fmtD(p.retorno)}</span>` : ''}
             ${p.quem_indicou ? `<span class="badge badge-purple">indicado por ${p.quem_indicou}</span>` : ''}
             ${deadlineBadge}
             ${p.motivo_perda ? `<span class="badge badge-red">${p.motivo_perda}</span>` : ''}
@@ -363,6 +406,11 @@ function abrirModalProspect(id, modoAtendimento) {
   cmEditId = id || null;
   cmModoAtendimento = !!(id && modoAtendimento);
   document.getElementById('pr-indicacoes').innerHTML = '';
+  // Registrar indicações que ESSE contato passou só faz sentido num atendimento com ele.
+  document.getElementById('pr-sec-indicacoes').style.display = cmModoAtendimento ? '' : 'none';
+  const nomes = [...new Set([...State.clientesAtivos.map((c) => c.empresa), ...State.prospects.map((x) => x.empresa)].filter(Boolean))].sort();
+  document.getElementById('lista-indicadores').innerHTML = nomes.map((n) => `<option value="${n.replace(/"/g, '&quot;')}">`).join('');
+  document.getElementById('pr-retorno').value = '';
   document.getElementById('pr-tit').textContent = cmModoAtendimento ? 'Novo atendimento' : (id ? 'Editar prospect' : 'Novo prospect');
   document.getElementById('pr-data-lbl').textContent = cmModoAtendimento ? 'Data do atendimento' : (id ? 'Data do 1º contato' : 'Data do atendimento');
   document.getElementById('pr-perda-req').classList.remove('show');
@@ -383,6 +431,7 @@ function abrirModalProspect(id, modoAtendimento) {
     document.getElementById('pr-obs').value = p.obs || '';
     document.getElementById('pr-proximo').value = p.proximo || '';
     document.getElementById('pr-deadline').value = p.deadline || '';
+    document.getElementById('pr-retorno').value = p.retorno || '';
     document.getElementById('pr-motivo').value = p.motivo_perda || '';
     document.getElementById('pr-fc-ticket').value = p.ticket || '';
     document.getElementById('pr-fc-frequencia').value = 'mensal';
@@ -396,6 +445,7 @@ function abrirModalProspect(id, modoAtendimento) {
       document.getElementById('pr-deadline').value = '';
       // 1º contato com uma indicação: já sai do "a contatar"
       if (p.status === 'indicado') document.getElementById('pr-status').value = 'visita';
+      if (p.status === 'retomar') { document.getElementById('pr-status').value = 'conversa'; document.getElementById('pr-retorno').value = ''; }
     }
     const indicou = quemIndicouProspect(id);
     if (indicou) {
@@ -445,7 +495,8 @@ function cmLerIndicacoes() {
 async function salvarIndicacoes(empresaQueIndicou, contatoQueIndicou, data) {
   const indicacoes = cmLerIndicacoes();
   if (!indicacoes.length) return null;
-  const quem = empresaQueIndicou + (contatoQueIndicou ? ` (${contatoQueIndicou})` : '');
+  // Guarda só o nome da empresa, pra juntar todas as indicações dela no ranking "Quem mais indica".
+  const quem = empresaQueIndicou;
   const obs = PREFIXO_INDICACAO + quem;
   const r = await db.from('prospects').insert(indicacoes.map((i) => ({
     empresa: i.empresa, contato: i.contato, whatsapp: i.whatsapp,
@@ -462,6 +513,7 @@ async function salvarIndicacoes(empresaQueIndicou, contatoQueIndicou, data) {
 function cmStatusChange() {
   const st = document.getElementById('pr-status').value;
   document.getElementById('row-perda').style.display = st === 'descartado' ? 'block' : 'none';
+  document.getElementById('row-retorno').style.display = st === 'retomar' ? 'block' : 'none';
   document.getElementById('pr-perda-req').classList.remove('show');
 
   const jaTemCliente = cmEditId && State.clientesAtivos.some((c) => c.prospect_id === cmEditId);
@@ -478,6 +530,10 @@ async function salvarProspect() {
   const empresa = document.getElementById('pr-empresa').value.trim();
   if (!empresa) { alert('Informe o nome da empresa.'); return; }
   const status = document.getElementById('pr-status').value;
+  if (status === 'retomar' && !document.getElementById('pr-retorno').value) {
+    alert('Informe a data em que você vai retomar o contato.');
+    return;
+  }
   if (status === 'descartado' && !document.getElementById('pr-motivo').value) {
     document.getElementById('pr-perda-req').classList.add('show');
     return;
@@ -500,8 +556,9 @@ async function salvarProspect() {
     proximo: document.getElementById('pr-proximo').value,
     deadline: document.getElementById('pr-deadline').value || null,
     motivo_perda: status === 'descartado' ? document.getElementById('pr-motivo').value : null,
+    retorno: status === 'retomar' ? document.getElementById('pr-retorno').value : null,
     origem: document.getElementById('pr-fc-origem').value || null,
-    quem_indicou: document.getElementById('pr-fc-origem').value === 'indicacao' ? document.getElementById('pr-fc-indicou').value.trim() || null : null,
+    quem_indicou: document.getElementById('pr-fc-origem').value === 'indicacao' ? nomeCadastrado(document.getElementById('pr-fc-indicou').value) : null,
   };
   let error, prospectId = cmEditId;
   if (cmEditId) {
