@@ -83,7 +83,7 @@ function renderVisaoAnual() {
       <div class="section-title">Financeiro · ${avDescricaoPeriodo(meses)}</div>
       <div class="card-grid-2" style="margin-bottom:14px;">
         ${avCard('Receita', fmtMoeda(receita), `média de ${fmtMoeda(receita / nMeses)}/mês`, 'var(--positivo)', `irPara('financeiro',{mes:'${ultimoMes}',tipo:'receita'})`)}
-        ${avCard('Despesas', fmtMoeda(despesas), `média de ${fmtMoeda(despesas / nMeses)}/mês`, 'var(--negativo)', `irPara('financeiro',{mes:'${ultimoMes}',tipo:'despesa'})`)}
+        ${avCard('Despesas', fmtMoeda(despesas), `média de ${fmtMoeda(despesas / nMeses)}/mês`, '', `irPara('financeiro',{mes:'${ultimoMes}',tipo:'despesa'})`)}
         ${avCard('Lucro líquido', fmtMoeda(lucro), `média de ${fmtMoeda(lucro / nMeses)}/mês`, lucro >= 0 ? 'var(--positivo)' : 'var(--negativo)', `irPara('dashboard-financeiro',{mes:'${ultimoMes}'})`)}
         ${avCard('Margem', margem + '%', `impostos: ${fmtMoeda(impostos)}`, '', `irPara('dashboard-financeiro',{mes:'${ultimoMes}'})`)}
       </div>
@@ -130,7 +130,7 @@ function renderVisaoAnual() {
         labels: meses.map(nomeMesShort),
         datasets: [
           { type: 'bar', label: 'Receita', data: dados.map((d) => d.receita), backgroundColor: '#3DD68C', borderRadius: 3 },
-          { type: 'bar', label: 'Despesas', data: dados.map((d) => d.despesas), backgroundColor: '#FF6B81', borderRadius: 3 },
+          { type: 'bar', label: 'Despesas', data: dados.map((d) => d.despesas), backgroundColor: '#7F93B5', borderRadius: 3 },
           { type: 'line', label: 'Lucro', data: dados.map((d) => d.lucro), borderColor: '#4DB8F2', backgroundColor: '#4DB8F2', tension: 0.3, pointRadius: 3 },
         ],
       },

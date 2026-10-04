@@ -60,7 +60,7 @@ function calcularFunil() {
   const nP = todos.filter((p) => p.status === 'proposta').length;
   const nF = todos.filter((p) => p.status === 'fechado').length;
   return [
-    { nome: 'Visitas totais', valor: todos.length, cor: '#4DB8F2' },
+    { nome: 'Visitas totais', valor: todos.length, cor: '#6C8EF5' },
     { nome: 'Chegaram em conversa', valor: nC + nP + nF, cor: '#F5A623' },
     { nome: 'Propostas enviadas', valor: nP + nF, cor: '#9B7BF0' },
     { nome: 'Clientes fechados', valor: nF, cor: '#3DD68C' },

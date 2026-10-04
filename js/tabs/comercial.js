@@ -7,9 +7,9 @@ let cmClienteEditId = null; // cliente ativo sendo editado
 let cmEncerrarId = null; // cliente ativo a encerrar
 let cmModoAtendimento = false; // modal aberto pra registrar um novo atendimento num prospect existente
 
-const STATUS_COR = { indicado: '#A9B8CF', retomar: '#34D3D3', visita: '#4DB8F2', conversa: '#F5A623', proposta: '#9B7BF0', fechado: '#3DD68C', descartado: '#FF6B81' };
+const STATUS_COR = { indicado: '#A9B8CF', retomar: '#34D3D3', visita: '#6C8EF5', conversa: '#F5A623', proposta: '#9B7BF0', fechado: '#3DD68C', descartado: '#FF6B81' };
 const STATUS_LBL = { indicado: 'A contatar', retomar: 'Retomar depois', visita: 'Visita', conversa: 'Conversa/Reunião', proposta: 'Proposta enviada', fechado: 'Fechado', descartado: 'Descartado' };
-const STATUS_CLS = { indicado: 'badge-gray', retomar: 'badge-gray', visita: 'badge-blue', conversa: 'badge-amber', proposta: 'badge-purple', fechado: 'badge-green', descartado: 'badge-red' };
+const STATUS_CLS = { indicado: 'badge-gray', retomar: 'badge-pausado', visita: 'badge-info', conversa: 'badge-amber', proposta: 'badge-purple', fechado: 'badge-green', descartado: 'badge-red' };
 const ORIGEM_LBL = { indicacao: 'Indicação', prospeccao: 'Prospecção', inbound: 'Inbound', outro: 'Outro' };
 
 // Indicações ainda não contatadas ficam guardadas como prospect com status "indicado",
@@ -375,7 +375,7 @@ function renderProspectsLista() {
           <div class="ic-badges">
             <span class="badge ${STATUS_CLS[p.status] || 'badge-blue'}" style="${fechou ? 'font-weight:800;' : ''}">${fechou ? '✓ Fechou' : STATUS_LBL[p.status] || p.status}</span>
             ${p.nicho ? `<span class="badge badge-gray">${p.nicho}</span>` : ''}
-            ${p.status === 'retomar' && p.retorno ? `<span class="badge ${p.retorno <= h ? 'badge-red' : 'badge-gray'}">${p.retorno <= h ? 'retomar agora' : 'retomar em ' + fmtD(p.retorno)}</span>` : ''}
+            ${p.status === 'retomar' && p.retorno ? `<span class="badge ${p.retorno <= h ? 'badge-red' : 'badge-pausado'}">${p.retorno <= h ? 'retomar agora' : 'retomar em ' + fmtD(p.retorno)}</span>` : ''}
             ${p.quem_indicou ? `<span class="badge badge-purple">indicado por ${p.quem_indicou}</span>` : ''}
             ${deadlineBadge}
             ${p.motivo_perda ? `<span class="badge badge-red">${p.motivo_perda}</span>` : ''}

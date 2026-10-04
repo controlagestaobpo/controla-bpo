@@ -180,10 +180,10 @@ function renderDashboardComercial() {
           <div class="ind-stats">
             <div class="ind-stat"><b>${r.indicados.length}</b><span>indicou</span></div>
             <div class="ind-stat"><b style="color:var(--positivo)">${r.fechados}</b><span>fechou</span></div>
-            <div class="ind-stat"><b style="color:var(--azul)">${r.abertos}</b><span>em aberto</span></div>
+            <div class="ind-stat"><b style="color:var(--info-texto)">${r.abertos}</b><span>em aberto</span></div>
             <div class="ind-stat"><b style="color:var(--negativo)">${r.perdidos}</b><span>não fechou</span></div>
           </div>
-          <div class="ind-chips">${r.indicados.map((i) => `<span class="badge ${i.situacao === 'fechou' ? 'badge-green' : i.situacao === 'perdido' ? 'badge-red' : 'badge-blue'}">${i.situacao === 'fechou' ? '✓ ' : ''}${i.empresa}</span>`).join('')}</div>
+          <div class="ind-chips">${r.indicados.map((i) => `<span class="badge ${i.situacao === 'fechou' ? 'badge-green' : i.situacao === 'perdido' ? 'badge-red' : 'badge-info'}">${i.situacao === 'fechou' ? '✓ ' : ''}${i.empresa}</span>`).join('')}</div>
         </div>`).join('') : '<div class="empty-state" style="padding:12px;">Quando você cadastrar um prospect com origem "Indicação" e informar quem indicou, o ranking aparece aqui.</div>'}
       </div>
     </div>

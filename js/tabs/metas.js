@@ -107,7 +107,7 @@ function renderMetasInteligentes() {
       <div class="section-title">Dados de ${tituloPeriodo}</div>
       <div class="card-grid-2" style="margin-bottom:4px;">
         <div class="stat-card"><div class="stat-lbl">Receita bruta</div><div class="stat-val" style="color:var(--positivo)">${fmtMoeda(dados.totais.receita)}</div>${mtModo === 'periodo' ? `<div class="stat-sub">${fmtMoeda(dados.receitaBruta)}/mês</div>` : ''}</div>
-        <div class="stat-card"><div class="stat-lbl">Despesas totais</div><div class="stat-val" style="color:var(--negativo)">${fmtMoeda(dados.totais.despesas)}</div>${mtModo === 'periodo' ? `<div class="stat-sub">${fmtMoeda(dados.despesasTotais)}/mês</div>` : ''}</div>
+        <div class="stat-card"><div class="stat-lbl">Despesas totais</div><div class="stat-val">${fmtMoeda(dados.totais.despesas)}</div>${mtModo === 'periodo' ? `<div class="stat-sub">${fmtMoeda(dados.despesasTotais)}/mês</div>` : ''}</div>
         <div class="stat-card"><div class="stat-lbl">Lucro líquido</div><div class="stat-val">${fmtMoeda(dados.totais.lucro)}</div>${mtModo === 'periodo' ? `<div class="stat-sub">${fmtMoeda(dados.lucroLiquido)}/mês</div>` : ''}</div>
         <div class="stat-card"><div class="stat-lbl">Margem</div><div class="stat-val">${dados.margem}%</div></div>
         <div class="stat-card"><div class="stat-lbl">Clientes ativos</div><div class="stat-val">${dados.clientesAtivos}</div></div>
@@ -123,7 +123,7 @@ function renderMetasInteligentes() {
       <div class="panel-sub" style="margin-top:-4px;">Se ${mtModo === 'mes' ? 'esse mês se repetir' : 'a média mensal desse período se repetir'} por 12 meses.</div>
       <div class="card-grid-2" style="margin-bottom:4px;">
         <div class="stat-card"><div class="stat-lbl">Receita anualizada</div><div class="stat-val" style="color:var(--positivo)">${fmtMoeda(dados.receitaBruta * 12)}</div></div>
-        <div class="stat-card"><div class="stat-lbl">Despesas anualizadas</div><div class="stat-val" style="color:var(--negativo)">${fmtMoeda(dados.despesasTotais * 12)}</div></div>
+        <div class="stat-card"><div class="stat-lbl">Despesas anualizadas</div><div class="stat-val">${fmtMoeda(dados.despesasTotais * 12)}</div></div>
         <div class="stat-card"><div class="stat-lbl">Lucro líquido anualizado</div><div class="stat-val" style="color:${dados.lucroLiquido >= 0 ? 'var(--positivo)' : 'var(--negativo)'}">${fmtMoeda(dados.lucroLiquido * 12)}</div></div>
       </div>
     </div>

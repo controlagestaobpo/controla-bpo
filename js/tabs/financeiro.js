@@ -160,7 +160,7 @@ function renderFluxoCaixa(mes) {
         ${it.sub ? `<div class="fluxo-desc-sub">${it.sub}</div>` : ''}
         <span class="badge ${st.cls}" style="margin-top:4px;display:inline-block;">${st.label}</span>
       </div>
-      <div class="fluxo-valor" style="color:${it.tipo === 'receita' ? 'var(--positivo)' : 'var(--negativo)'}">${it.tipo === 'receita' ? '+' : '−'}${fmtMoeda2(it.valor)}</div>
+      <div class="fluxo-valor" style="color:${it.tipo === 'receita' ? 'var(--positivo)' : 'var(--branco)'}">${it.tipo === 'receita' ? '+' : '−'}${fmtMoeda2(it.valor)}</div>
       <div class="fluxo-acts">
         <button class="btn btn-xs" onclick="${it.tipo === 'receita' ? 'abrirModalReceita' : 'abrirModalDespesa'}('${it.id}')">editar</button>
         <button class="btn btn-xs btn-danger" onclick="${it.tipo === 'receita' ? 'excluirReceita' : 'excluirDespesa'}('${it.id}')">×</button>
@@ -243,7 +243,7 @@ function renderFinanceiro() {
         <div class="stat-card"><div class="stat-lbl">A receber</div><div class="stat-val" style="color:var(--blue)">${fmtMoeda(resumo.totalReceber)}</div></div>
         <div class="stat-card"><div class="stat-lbl">Recebido</div><div class="stat-val" style="color:var(--positivo)">${fmtMoeda(resumo.totalRecebido)}</div></div>
         <div class="stat-card"><div class="stat-lbl">A pagar</div><div class="stat-val" style="color:var(--amber)">${fmtMoeda(resumo.totalPagar)}</div></div>
-        <div class="stat-card"><div class="stat-lbl">Pago</div><div class="stat-val" style="color:var(--negativo)">${fmtMoeda(resumo.totalPago)}</div></div>
+        <div class="stat-card"><div class="stat-lbl">Pago</div><div class="stat-val">${fmtMoeda(resumo.totalPago)}</div></div>
       </div>
     </div>
 
@@ -261,7 +261,7 @@ function renderFinanceiro() {
       <div class="panel-sub" style="margin-top:-4px;">Organizado por vencimento. Retiradas de lucro e pró-labore entram como despesa, categoria "Pessoal". O DRE e os gráficos (regime de caixa) estão no Dashboard Financeiro.</div>
       <div style="display:flex;gap:8px;margin-bottom:10px;">
         <button class="btn btn-primary btn-sm" style="flex:1;" onclick="abrirModalReceita()">+ Receita</button>
-        <button class="btn btn-sm" style="flex:1;border-color:rgba(255,107,129,0.4);color:var(--negativo);" onclick="abrirModalDespesa()">+ Despesa</button>
+        <button class="btn btn-sm" style="flex:1;" onclick="abrirModalDespesa()">+ Despesa</button>
       </div>
       <div class="frow" id="fn-filtro-tipo" style="margin-bottom:10px;"></div>
       <div class="list" id="fn-fluxo-list" style="padding:0;"></div>

@@ -42,7 +42,8 @@ function showSaving() {
 function abrirOv(id) { document.getElementById(id).classList.add('open'); }
 function fecharOv(id) { document.getElementById(id).classList.remove('open'); }
 
-const CORES_CATEGORIA = ['#4DB8F2', '#3DD68C', '#F5A623', '#9B7BF0', '#FF6B81', '#34D3D3', '#EA580C', '#A9B8CF', '#6C8EF5', '#E8749A'];
+// Cores de categoria nos gráficos: sem o verde e o vermelho, que no app significam bom/ruim.
+const CORES_CATEGORIA = ['#4DB8F2', '#9B7BF0', '#34D3D3', '#F5A623', '#E8749A', '#6C8EF5', '#A9B8CF', '#C4A3F7', '#7FD6F5', '#F7C873'];
 
 // ===== Navegador de período (mês/ano) — Dashboard e Financeiro =====
 function somarMes(ym, delta) {

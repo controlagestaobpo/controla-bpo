@@ -136,7 +136,7 @@ function gerarRelatorioFinanceiro() {
         labels: historico.map((m) => nomeMesShort(m)),
         datasets: [
           { label: 'Receita', data: dreHistorico.map((d) => d.receitaTotal), backgroundColor: '#3DD68C', borderRadius: 3 },
-          { label: 'Despesas', data: dreHistorico.map((d) => d.deducoes + d.totalDespesasOperacionais), backgroundColor: '#FF6B81', borderRadius: 3 },
+          { label: 'Despesas', data: dreHistorico.map((d) => d.deducoes + d.totalDespesasOperacionais), backgroundColor: '#7F93B5', borderRadius: 3 },
         ],
       },
       options: {
