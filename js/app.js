@@ -26,7 +26,7 @@ const RENDERERS = {
   config: renderConfig,
 };
 
-let tabAtual = 'dashboard-comercial';
+let tabAtual = 'financeiro'; // tela inicial: lançamentos financeiros (uso mais frequente)
 
 function trocarTab(tab, opts) {
   tabAtual = tab;
@@ -93,10 +93,12 @@ async function mostrarApp() {
   document.getElementById('reset-screen').classList.remove('show');
   document.getElementById('app').style.display = 'flex';
   initSidebar();
-  document.getElementById('page-dashboard-comercial').innerHTML = '<div class="empty-state">Carregando...</div>';
+  document.getElementById('page-financeiro').innerHTML = '<div class="empty-state">Carregando...</div>';
+  document.getElementById('page-financeiro').classList.add('active');
+  document.getElementById('tab-financeiro').classList.add('active');
   await carregarTudo();
   State.periodo = mesAtual();
-  trocarTab('dashboard-comercial');
+  trocarTab('financeiro');
 }
 
 // ===== Esqueci minha senha =====
