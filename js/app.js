@@ -15,13 +15,14 @@ if (window.Chart) {
   }
 }
 
-const TABS = ['dashboard-comercial', 'dashboard-financeiro', 'anual', 'comercial', 'financeiro', 'metas', 'config'];
+const TABS = ['dashboard-comercial', 'dashboard-financeiro', 'anual', 'relatorios', 'comercial', 'financeiro', 'metas', 'config'];
 const RENDERERS = {
   'dashboard-comercial': renderDashboardComercial,
   'dashboard-financeiro': renderDashboardFinanceiro,
   comercial: renderComercial,
   financeiro: renderFinanceiro,
   anual: renderVisaoAnual,
+  relatorios: renderRelatorios,
   metas: renderMetasInteligentes,
   config: renderConfig,
 };

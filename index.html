@@ -61,6 +61,7 @@
       <div class="nav-item" id="tab-dashboard-comercial" onclick="trocarTab('dashboard-comercial')">Dashboard Comercial</div>
       <div class="nav-item" id="tab-dashboard-financeiro" onclick="trocarTab('dashboard-financeiro')">Dashboard Financeiro</div>
       <div class="nav-item" id="tab-anual" onclick="trocarTab('anual')">Visão anual</div>
+      <div class="nav-item" id="tab-relatorios" onclick="trocarTab('relatorios')">Relatórios</div>
       <div class="nav-item" id="tab-comercial" onclick="trocarTab('comercial')">Comercial</div>
       <div class="nav-item" id="tab-financeiro" onclick="trocarTab('financeiro')">Financeiro</div>
       <div class="nav-item" id="tab-metas" onclick="trocarTab('metas')">Metas</div>
@@ -84,6 +85,7 @@
     <div class="page" id="page-comercial"></div>
     <div class="page" id="page-financeiro"></div>
     <div class="page" id="page-anual"></div>
+    <div class="page" id="page-relatorios"></div>
     <div class="page" id="page-metas"></div>
     <div class="page" id="page-config"></div>
   </div>
@@ -294,7 +296,9 @@
       </div>
       <div class="fr" id="row-rc-intervalo" style="display:none;"><label>A cada quantos dias?</label><input type="number" id="rc-intervalo-dias" min="1" value="30"></div>
     </div>
-    <div class="fr"><label style="display:flex;align-items:center;gap:8px;text-transform:none;letter-spacing:0;"><input type="checkbox" id="rc-recebido"> Já recebi esse valor</label></div>
+    <div class="fr"><label style="display:flex;align-items:center;gap:8px;text-transform:none;letter-spacing:0;"><input type="checkbox" id="rc-recebido" onchange="fnToggleDataPagamento('rc')"> Já recebi esse valor</label></div>
+    <div class="fr" id="row-rc-data-pag" style="display:none;"><label>Data em que recebeu</label><input type="date" id="rc-data-pag">
+      <div class="panel-sub" style="margin:4px 0 0;">O vencimento acima não muda — esta é a data em que o dinheiro entrou.</div></div>
     <div class="mda">
       <button class="btn" onclick="fecharOv('ov-receita')">Cancelar</button>
       <button class="btn btn-primary" onclick="salvarReceita()">Salvar</button>
@@ -331,7 +335,9 @@
       <div class="fr" id="row-ds-intervalo" style="display:none;"><label>A cada quantos dias?</label><input type="number" id="ds-intervalo-dias" min="1" value="30"></div>
     </div>
     <div class="fr" id="row-recorrente-ate" style="display:none;"><label>Até quando? (opcional)</label><input type="date" id="ds-recorrente-ate"></div>
-    <div class="fr" id="row-pago"><label style="display:flex;align-items:center;gap:8px;text-transform:none;letter-spacing:0;"><input type="checkbox" id="ds-pago"> <span id="ds-pago-lbl">Já paguei essa despesa</span></label></div>
+    <div class="fr" id="row-pago"><label style="display:flex;align-items:center;gap:8px;text-transform:none;letter-spacing:0;"><input type="checkbox" id="ds-pago" onchange="fnToggleDataPagamento('ds')"> <span id="ds-pago-lbl">Já paguei essa despesa</span></label></div>
+    <div class="fr" id="row-ds-data-pag" style="display:none;"><label>Data em que pagou</label><input type="date" id="ds-data-pag">
+      <div class="panel-sub" style="margin:4px 0 0;">O vencimento acima não muda — esta é a data em que o dinheiro saiu.</div></div>
     <div class="mda">
       <button class="btn" onclick="fecharOv('ov-despesa')">Cancelar</button>
       <button class="btn btn-primary" onclick="salvarDespesa()">Salvar</button>
@@ -345,7 +351,9 @@
   <div class="md">
     <div class="md-handle"></div>
     <h3 id="cd-tit">Confirmar recebimento</h3>
+    <div class="cd-resumo" id="cd-resumo"></div>
     <div class="fr"><label id="cd-lbl">Data em que recebeu</label><input type="date" id="cd-data"></div>
+    <div class="panel-sub" style="margin-top:-4px;">O vencimento não muda. A data acima é quando o dinheiro de fato entrou/saiu — é ela que vale no DRE e nos relatórios.</div>
     <div class="mda">
       <button class="btn" onclick="fecharOv('ov-confirmar-data')">Cancelar</button>
       <button class="btn btn-primary" onclick="cdConfirmar()">Confirmar</button>
@@ -473,6 +481,7 @@
 <script src="js/tabs/dashboard-comercial.js"></script>
 <script src="js/tabs/dashboard-financeiro.js"></script>
 <script src="js/tabs/anual.js"></script>
+<script src="js/tabs/relatorios-saude.js"></script>
 <script src="js/tabs/metas.js"></script>
 <script src="js/tabs/config.js"></script>
 <script src="js/relatorios.js"></script>

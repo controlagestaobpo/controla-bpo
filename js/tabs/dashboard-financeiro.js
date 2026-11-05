@@ -153,6 +153,36 @@ function svgVelocimetro(pct) {
   `;
 }
 
+// Quadro "Em atraso": tudo que já venceu e não foi pago/recebido, de qualquer mês.
+function htmlContasEmAtraso() {
+  const at = contasEmAtraso();
+  const h = hj();
+  const dias = (venc) => Math.round((new Date(h + 'T12:00:00') - new Date(venc + 'T12:00:00')) / 86400000);
+  if (!at.receber.length && !at.pagar.length) {
+    return `<div class="section"><div class="section-title">Em atraso</div>
+      <div class="panel atraso-ok">✓ Nada em atraso — todas as contas vencidas foram pagas e recebidas.</div></div>`;
+  }
+  const lista = (itens, tipo) => itens.slice(0, 6).map((x) => `<div class="atraso-item">
+      <div class="atraso-item-main"><div class="atraso-nome">${x.nome}</div><div class="atraso-sub">venceu ${fnDataBR(x.venc)} · ${dias(x.venc)} dia${dias(x.venc) === 1 ? '' : 's'}</div></div>
+      <div class="atraso-valor">${fmtMoeda2(x.valor)}</div>
+      <button class="btn btn-xs" onclick="abrirModalConfirmarData('${tipo}','${x.id}','${x.venc}')">${tipo === 'receita' ? 'recebi' : 'paguei'}</button>
+    </div>`).join('') + (itens.length > 6 ? `<div class="atraso-sub" style="padding-top:6px;">+ ${itens.length - 6} outro${itens.length - 6 === 1 ? '' : 's'}</div>` : '');
+  const bloco = (titulo, itens, total, tipo) => `<div class="panel atraso-bloco">
+      <div class="atraso-topo">
+        <div><div class="stat-lbl">${titulo}</div><div class="stat-val" style="color:var(--negativo)">${fmtMoeda2(total)}</div></div>
+        <div class="atraso-sub" style="text-align:right;">${itens.length} lançamento${itens.length === 1 ? '' : 's'}${itens.length ? `<br>mais antigo há ${dias(itens[0].venc)} dias` : ''}</div>
+      </div>
+      ${itens.length ? lista(itens, tipo) : '<div class="atraso-sub">Nada em atraso.</div>'}
+    </div>`;
+  return `<div class="section">
+    <div class="section-title" style="color:var(--negativo);">Em atraso</div>
+    <div class="chart-row">
+      ${bloco('A receber em atraso', at.receber, at.totalReceber, 'receita')}
+      ${bloco('A pagar em atraso', at.pagar, at.totalPagar, 'despesa')}
+    </div>
+  </div>`;
+}
+
 function renderDashboardFinanceiro() {
   if (!State.periodo) State.periodo = mesAtual();
   const mes = State.periodo;
@@ -179,6 +209,8 @@ function renderDashboardFinanceiro() {
         <div class="stat-card stat-card-link" onclick="irPara('financeiro',{mes:'${mes}'})"><div class="stat-lbl">${projecaoLabel}</div><div class="stat-val" style="color:${projecaoMes >= 0 ? 'var(--positivo)' : 'var(--negativo)'}">${fmtMoeda(projecaoMes)}</div><div class="stat-sub">recebimentos − pagamentos previstos</div></div>
       </div>
     </div>
+
+    ${htmlContasEmAtraso()}
 
     <div class="section">
       <div class="section-title">Projeção de fechamento do mês</div>

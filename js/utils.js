@@ -236,3 +236,18 @@ function irPara(tab, opts) {
     window.scrollTo(0, 0);
   }
 }
+
+// ===== Contas em atraso (vencidas e ainda não pagas/recebidas, de qualquer mês) =====
+function contasEmAtraso(hoje) {
+  const h = hoje || hj();
+  const nomeCliente = (id) => (State.clientesAtivos.find((c) => c.id === id) || {}).empresa;
+  const receber = State.receitas
+    .filter((r) => r.status === 'ativa' && !r.recebido && r.data && r.data < h)
+    .map((r) => ({ tipo: 'receita', id: r.id, venc: r.data, valor: Number(r.valor || 0), nome: nomeCliente(r.cliente_id) || r.descricao || r.categoria || 'Receita' }));
+  const pagar = State.despesas
+    .filter((d) => !d.pago && d.data && d.data < h)
+    .map((d) => ({ tipo: 'despesa', id: d.id, venc: d.data, valor: Number(d.valor || 0), nome: [d.categoria, d.descricao].filter(Boolean).join(' · ') || 'Despesa' }));
+  const ordenar = (l) => l.sort((a, b) => a.venc.localeCompare(b.venc));
+  const total = (l) => l.reduce((s, x) => s + x.valor, 0);
+  return { receber: ordenar(receber), pagar: ordenar(pagar), totalReceber: total(receber), totalPagar: total(pagar) };
+}

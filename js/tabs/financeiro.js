@@ -14,16 +14,46 @@ function clientesSemRecorrenciaNoMes(mes) {
 }
 
 // ===================== HELPERS DE PAGO/RECEBIDO =====================
+// Vencimento (data) e data do pagamento/recebimento são coisas diferentes:
+// o vencimento organiza as contas; a data em que o dinheiro entrou/saiu é a do DRE.
+function fnDataBR(iso) {
+  return iso ? new Date(iso + 'T12:00:00').toLocaleDateString('pt-BR') : '';
+}
+
+function fnDiasEntre(de, ate) {
+  return Math.round((new Date(ate + 'T12:00:00') - new Date(de + 'T12:00:00')) / 86400000);
+}
+
+// Mostra/esconde o campo "Data em que pagou/recebeu" conforme o checkbox.
+function fnToggleDataPagamento(prefixo) {
+  const marcado = document.getElementById(prefixo === 'rc' ? 'rc-recebido' : 'ds-pago').checked;
+  document.getElementById(`row-${prefixo}-data-pag`).style.display = marcado ? 'block' : 'none';
+  const campo = document.getElementById(`${prefixo}-data-pag`);
+  if (marcado && !campo.value) {
+    const venc = document.getElementById(`${prefixo}-data`).value;
+    // Lançamento novo de algo já pago: sugere o próprio vencimento; senão, hoje.
+    campo.value = venc && venc <= hj() && !(prefixo === 'rc' ? fnReceitaEditId : fnDespesaEditId) ? venc : hj();
+  }
+}
+
 function fnSyncRecebidoCheckbox() {
   if (fnReceitaEditId) return;
   const data = document.getElementById('rc-data').value;
   document.getElementById('rc-recebido').checked = !!data && data <= hj();
+  document.getElementById('rc-data-pag').value = '';
+  fnToggleDataPagamento('rc');
 }
 
 function fnSyncPagoCheckbox() {
   if (fnDespesaEditId) return;
   const data = document.getElementById('ds-data').value;
   document.getElementById('ds-pago').checked = !!data && data <= hj();
+  document.getElementById('ds-data-pag').value = '';
+  fnToggleDataPagamento('ds');
+}
+
+function fnLerDataPagamento(prefixo) {
+  return document.getElementById(`${prefixo}-data-pag`).value || hj();
 }
 
 function fnToggleParcelar() {
@@ -77,8 +107,13 @@ function fnToggleRecorrenciaReceita() {
 }
 
 // ===================== STATUS DA CONTA (vencido / vence hoje / a vencer / pago) =====================
-function fnStatusConta(dataVencimento, pago) {
-  if (pago) return { label: 'Pago', cls: 'badge-green' };
+function fnStatusConta(dataVencimento, pago, dataPagamento, tipo) {
+  const verbo = tipo === 'receita' ? 'Recebido' : 'Pago';
+  if (pago) {
+    if (!dataPagamento) return { label: verbo, cls: 'badge-green' };
+    const atraso = fnDiasEntre(dataVencimento, dataPagamento);
+    return { label: `${verbo} em ${fnDataBR(dataPagamento).slice(0, 5)}${atraso > 0 ? ` · ${atraso}d de atraso` : ''}`, cls: atraso > 0 ? 'badge-amber' : 'badge-green' };
+  }
   const h = hj();
   if (dataVencimento < h) return { label: 'Vencido', cls: 'badge-red' };
   if (dataVencimento === h) return { label: 'Vence hoje', cls: 'badge-amber' };
@@ -105,7 +140,7 @@ function fluxoDoPeriodo(mes) {
       tipo: 'receita', id: r.id, data: r.data, valor: Number(r.valor || 0),
       titulo: cliente ? cliente.empresa : (r.categoria || 'Receita'),
       sub: [r.categoria, r.subcategoria, r.descricao].filter(Boolean).join(' · '),
-      confirmado: r.recebido,
+      confirmado: r.recebido, dataPag: r.data_recebimento,
       parcela: r.parcela_total > 1 ? `${r.parcela_atual}/${r.parcela_total}` : null,
     };
   });
@@ -113,7 +148,7 @@ function fluxoDoPeriodo(mes) {
     tipo: 'despesa', id: d.id, data: d.data, valor: Number(d.valor || 0),
     titulo: d.categoria,
     sub: [d.subcategoria, d.descricao].filter(Boolean).join(' · '),
-    confirmado: d.pago,
+    confirmado: d.pago, dataPag: d.data_pagamento,
     parcela: d.parcela_total > 1 ? `${d.parcela_atual}/${d.parcela_total}` : null,
   }));
   return [...receitas, ...despesas].sort((a, b) => (b.data || '').localeCompare(a.data || ''));
@@ -148,7 +183,7 @@ function renderFluxoCaixa(mes) {
     const totalDia = linhas.reduce((s, it) => s + (it.tipo === 'receita' ? it.valor : -it.valor), 0);
     const header = `<div class="day-hdr"><div class="day-tit">${fmtD(d)}</div><div class="day-cnt">${linhas.length}</div><div class="day-hdr-total" style="color:${totalDia >= 0 ? 'var(--positivo)' : 'var(--negativo)'}">${totalDia >= 0 ? '+' : '−'}${fmtMoeda2(Math.abs(totalDia))}</div></div>`;
     const rows = linhas.map((it) => {
-      const st = fnStatusConta(it.data, it.confirmado);
+      const st = fnStatusConta(it.data, it.confirmado, it.dataPag, it.tipo);
       const toggleFn = it.tipo === 'receita'
         ? (it.confirmado ? `fnDesmarcarRecebido('${it.id}')` : `abrirModalConfirmarData('receita','${it.id}','${it.data}')`)
         : (it.confirmado ? `fnDesmarcarPago('${it.id}')` : `abrirModalConfirmarData('despesa','${it.id}','${it.data}')`);
@@ -174,12 +209,22 @@ function renderFluxoCaixa(mes) {
 let cdTipo = null;
 let cdId = null;
 
-function abrirModalConfirmarData(tipo, id, dataSugerida) {
+function abrirModalConfirmarData(tipo, id, dataVencimento) {
   cdTipo = tipo;
   cdId = id;
+  const item = (tipo === 'receita' ? State.receitas : State.despesas).find((x) => x.id === id) || {};
+  const venc = dataVencimento || item.data;
+  const nome = tipo === 'receita'
+    ? ((State.clientesAtivos.find((c) => c.id === item.cliente_id) || {}).empresa || item.descricao || item.categoria || 'Receita')
+    : [item.categoria, item.descricao].filter(Boolean).join(' · ');
+  const atraso = venc ? fnDiasEntre(venc, hj()) : 0;
   document.getElementById('cd-tit').textContent = tipo === 'receita' ? 'Confirmar recebimento' : 'Confirmar pagamento';
   document.getElementById('cd-lbl').textContent = tipo === 'receita' ? 'Data em que recebeu' : 'Data em que pagou';
-  document.getElementById('cd-data').value = dataSugerida || hj();
+  document.getElementById('cd-resumo').innerHTML = `
+    <div class="cd-linha"><span>${nome}</span><strong>${fmtMoeda2(Number(item.valor || 0))}</strong></div>
+    <div class="cd-linha"><span>Vencimento</span><strong>${fnDataBR(venc)}${atraso > 0 ? ` <span class="badge badge-red">${atraso} dia${atraso === 1 ? '' : 's'} de atraso</span>` : ''}</strong></div>`;
+  // Sugere hoje (normalmente é quando se dá baixa); dá pra trocar pra data real.
+  document.getElementById('cd-data').value = hj();
   abrirOv('ov-confirmar-data');
 }
 
@@ -191,13 +236,13 @@ function cdConfirmar() {
   else fnMarcarPago(cdId, data);
 }
 
-async function fnMarcarPago(id, dataVencimento) {
-  const { error } = await db.from('despesas').update({ pago: true, data_pagamento: dataVencimento || hj() }).eq('id', id);
+async function fnMarcarPago(id, dataPagamento) {
+  const { error } = await db.from('despesas').update({ pago: true, data_pagamento: dataPagamento || hj() }).eq('id', id);
   if (error) { alert('Erro: ' + error.message); return; }
   showSaving();
   const r = await db.from('despesas').select('*').order('data', { ascending: true });
   State.despesas = r.data || [];
-  renderFinanceiro();
+  (RENDERERS[tabAtual] || renderFinanceiro)();
 }
 
 async function fnDesmarcarPago(id) {
@@ -209,13 +254,13 @@ async function fnDesmarcarPago(id) {
   renderFinanceiro();
 }
 
-async function fnMarcarRecebido(id, dataVencimento) {
-  const { error } = await db.from('receitas').update({ recebido: true, data_recebimento: dataVencimento || hj() }).eq('id', id);
+async function fnMarcarRecebido(id, dataPagamento) {
+  const { error } = await db.from('receitas').update({ recebido: true, data_recebimento: dataPagamento || hj() }).eq('id', id);
   if (error) { alert('Erro: ' + error.message); return; }
   showSaving();
   const r = await db.from('receitas').select('*').order('data', { ascending: true });
   State.receitas = r.data || [];
-  renderFinanceiro();
+  (RENDERERS[tabAtual] || renderFinanceiro)();
 }
 
 async function fnDesmarcarRecebido(id) {
@@ -347,6 +392,8 @@ function abrirModalReceita(id) {
     selProd.value = r.produto_id || '';
     document.getElementById('rc-descricao').value = r.descricao || '';
     document.getElementById('rc-recebido').checked = r.recebido;
+    document.getElementById('rc-data-pag').value = r.data_recebimento || '';
+    fnToggleDataPagamento('rc');
     document.getElementById('row-rc-recorrente').style.display = 'none';
     document.getElementById('row-rc-frequencia').style.display = 'none';
   } else {
@@ -379,7 +426,7 @@ async function salvarReceita() {
   if (fnReceitaEditId) {
     const payload = {
       valor, data, mes_projecao: data.slice(0, 7), categoria, subcategoria, produto_id, descricao,
-      recebido, data_recebimento: recebido ? hj() : null,
+      recebido, data_recebimento: recebido ? fnLerDataPagamento('rc') : null,
     };
     ({ error } = await db.from('receitas').update(payload).eq('id', fnReceitaEditId));
   } else if (recorrente) {
@@ -393,14 +440,14 @@ async function salvarReceita() {
       recorrencia_frequencia: frequencia, recorrencia_intervalo_dias: frequencia === 'personalizado' ? parseInt(intervaloDias) || 30 : null,
       grupo_recorrencia: grupoId,
       recebido: i === 0 ? recebido : false,
-      data_recebimento: i === 0 && recebido ? hj() : null,
+      data_recebimento: i === 0 && recebido ? fnLerDataPagamento('rc') : null,
     }));
     ({ error } = await db.from('receitas').insert(linhas));
   } else {
     const payload = {
       valor, data, mes_projecao: data.slice(0, 7), categoria, subcategoria, produto_id, descricao,
       e_recorrente: false, origem: 'manual',
-      recebido, data_recebimento: recebido ? hj() : null,
+      recebido, data_recebimento: recebido ? fnLerDataPagamento('rc') : null,
     };
     ({ error } = await db.from('receitas').insert([payload]));
   }
@@ -462,6 +509,8 @@ function abrirModalDespesa(id) {
     document.getElementById('ds-recorrente').checked = false;
     document.getElementById('ds-recorrente-ate').value = d.recorrente_ate || '';
     document.getElementById('ds-pago').checked = d.pago;
+    document.getElementById('ds-data-pag').value = d.data_pagamento || '';
+    fnToggleDataPagamento('ds');
     document.getElementById('row-parcelar').style.display = 'none';
     document.getElementById('row-recorrente-row').style.display = 'none';
     document.getElementById('ds-pago-lbl').textContent = 'Já paguei essa despesa';
@@ -501,7 +550,7 @@ async function salvarDespesa() {
       mes_projecao: data.slice(0, 7),
       descricao: descricaoBase,
       pago,
-      data_pagamento: pago ? hj() : null,
+      data_pagamento: pago ? fnLerDataPagamento('ds') : null,
     };
     ({ error } = await db.from('despesas').update(payload).eq('id', fnDespesaEditId));
   } else if (recorrente) {
@@ -519,7 +568,7 @@ async function salvarDespesa() {
       recorrencia_frequencia: frequencia, recorrencia_intervalo_dias: frequencia === 'personalizado' ? parseInt(intervaloDias) || 30 : null,
       grupo_recorrencia: grupoId,
       pago: i === 0 ? pago : false,
-      data_pagamento: i === 0 && pago ? hj() : null,
+      data_pagamento: i === 0 && pago ? fnLerDataPagamento('ds') : null,
     }));
     ({ error } = await db.from('despesas').insert(linhas));
   } else if (qtdParcelas > 1) {
@@ -536,7 +585,7 @@ async function salvarDespesa() {
         parcela_total: qtdParcelas,
         grupo_parcelamento: grupoId,
         pago: i === 0 ? pago : false,
-        data_pagamento: i === 0 && pago ? hj() : null,
+        data_pagamento: i === 0 && pago ? fnLerDataPagamento('ds') : null,
       });
     }
     ({ error } = await db.from('despesas').insert(parcelas));
@@ -547,7 +596,7 @@ async function salvarDespesa() {
       descricao: descricaoBase,
       e_recorrente: false,
       pago,
-      data_pagamento: pago ? hj() : null,
+      data_pagamento: pago ? fnLerDataPagamento('ds') : null,
     };
     ({ error } = await db.from('despesas').insert([payload]));
   }

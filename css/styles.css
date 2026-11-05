@@ -312,3 +312,39 @@ table.tbl tr:last-child td{border-bottom:none;}
   .btn:active,.btn-login:active,.pill:active,.periodo-btn:active,.sidebar-toggle:active,.stat-card-link:active,.simple-row[onclick]:active{transform:none;}
   @media (hover:hover) and (pointer:fine){ .stat-card-link:hover{transform:none;} }
 }
+
+/* ===== Em atraso (Dashboard Financeiro) e confirmação de pagamento ===== */
+.atraso-ok{border-left:4px solid var(--positivo);color:var(--positivo);font-size:12px;font-weight:600;}
+.atraso-bloco{border-left:4px solid var(--negativo);}
+.atraso-topo{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:8px;}
+.atraso-item{display:flex;align-items:center;gap:10px;padding:7px 0;border-top:1px solid var(--border);}
+.atraso-item-main{flex:1;min-width:0;}
+.atraso-nome{font-size:12.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.atraso-sub{font-size:11px;color:var(--cinza-claro);}
+.atraso-valor{font-size:13px;font-weight:800;white-space:nowrap;font-variant-numeric:tabular-nums;}
+.cd-resumo{background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:10px;padding:8px 12px;margin-bottom:12px;}
+.cd-linha{display:flex;justify-content:space-between;align-items:center;gap:10px;font-size:12.5px;padding:3px 0;}
+.cd-linha span:first-child{color:var(--cinza-claro);}
+
+/* ===== Relatórios (saúde financeira) ===== */
+.rp-diag-topo{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;}
+.rp-diag-status{font-size:24px;font-weight:800;line-height:1.1;}
+.rp-diag-cont{display:flex;gap:6px;flex-wrap:wrap;}
+.rp-ind-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:8px;}
+.rp-ind{background:var(--marinho2);border:1px solid var(--border);border-left:4px solid;border-radius:12px;padding:11px 13px;min-width:0;}
+.rp-ind-val{font-size:18px;font-weight:800;line-height:1.2;font-variant-numeric:tabular-nums;overflow-wrap:break-word;}
+.rp-ind-det{font-size:11px;color:var(--cinza-claro);margin-top:3px;display:flex;gap:6px;align-items:baseline;}
+.rp-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;transform:translateY(-1px);}
+.rp-ponto{display:flex;gap:8px;align-items:flex-start;padding:8px 0;border-top:1px solid var(--border);font-size:12.5px;line-height:1.5;}
+.rp-ponto:first-of-type{border-top:none;}
+.rp-ponto .badge{flex-shrink:0;margin-top:2px;}
+.rp-check{color:var(--positivo);font-weight:800;flex-shrink:0;}
+.rp-barra{padding:6px 0;}
+.rp-barra-topo{display:flex;justify-content:space-between;gap:10px;font-size:12px;margin-bottom:4px;font-variant-numeric:tabular-nums;}
+.rp-barra-topo span:first-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+@media (max-width:600px){
+  .rp-ind-grid{grid-template-columns:repeat(2,minmax(0,1fr));}
+  .rp-ind{padding:10px 11px;}
+  .rp-ind-val{font-size:16px;}
+  .av-filtros .av-modos{width:100%;justify-content:center;}
+}
